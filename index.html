@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão Escolar - Fundamental I</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-container h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .dashboard {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e2e8f0;
+        }
+
+        .dashboard-header h2 {
+            color: #2d3748;
+            font-size: 2em;
+        }
+
+        .dashboard-header .user-info {
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #f56565;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .card p {
+            color: #718096;
+            line-height: 1.6;
+        }
+
+        .card .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .card.direcao { border-left-color: #e53e3e; }
+        .card.secretaria { border-left-color: #38a169; }
+        .card.coordenacao { border-left-color: #d69e2e; }
+        .card.professor { border-left-color: #3182ce; }
+        .card.especialista { border-left-color: #805ad5; }
+
+        .turmas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .turma-item {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3748;
+            transition: background 0.3s;
+        }
+
+        .turma-item:hover {
+            background: #e2e8f0;
+            cursor: pointer;
+        }
+
+        .turma-item .ano {
+            font-size: 0.8em;
+            color: #718096;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .professores-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .professor-item {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #3182ce;
+        }
+
+        .professor-item .especialidade {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏫 Sistema de Gestão Escolar</h1>
+            <p>Escola Fundamental I - 1º ao 5º Ano (Turmas A a E)</p>
+        </div>
+
+        <!-- Tela de Login -->
+        <div id="loginContainer" class="login-container">
+            <h2>🔐 Acesso ao Sistema</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="cargo">Selecione seu Cargo</label>
+                    <select id="cargo" required>
+                        <option value="">-- Escolha --</option>
+                        <option value="direcao">Direção</option>
+                        <option value="vice-direcao">Vice-Direção</option>
+                        <option value="secretaria">Secretaria Escolar</option>
+                        <option value="coordenacao">Coordenação Pedagógica</option>
+                        <option value="professor-regente">Professor Regente</option>
+                        <option value="professor-artes">Professor de Artes</option>
+                        <option value="professor-musica">Professor de Música</option>
+                        <option value="professor-ingles">Professor de Inglês</option>
+                        <option value="professor-ef">Professor de Educação Física</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nome">Seu Nome</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome" required>
+                </div>
+                <button type="submit" class="btn">Entrar no Sistema</button>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div class="dashboard-header">
+                <div>
+                    <h2 id="dashboardTitle">📊 Painel de Controle</h2>
+                    <p id="userDisplay" class="user-info"></p>
+                </div>
+                <button onclick="logout()" class="btn-logout">🚪 Sair</button>
+            </div>
+
+            <!-- Cards dinâmicos -->
+            <div id="cardsContainer" class="cards-grid"></div>
+            
+            <!-- Turmas -->
+            <div id="turmasSection" class="hidden">
+                <h3 style="margin-top: 30px; color: #2d3748;">📚 Turmas do Fundamental I</h3>
+                <div id="turmasContainer" class="turmas-grid"></div>
+            </div>
+
+            <!-- Professores -->
+            <div id="professoresSection" class="hidden">
+                <h3 style="margin-top: 30px; color: #2d3748;">👨‍🏫 Corpo Docente</h3>
+                <div id="professoresContainer" class="professores-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados da escola
+        const escolaData = {
+            turmas: [
+                '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
+                '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
+                '3º Ano A', '3º Ano B', '3º Ano C', '3º Ano D', '3º Ano E',
+                '4º Ano A', '4º Ano B', '4º Ano C', '4º Ano D', '4º Ano E',
+                '5º Ano A', '5º Ano B', '5º Ano C', '5º Ano D', '5º Ano E'
+            ],
+            professores: [
+                { nome: 'Prof. Carlos Silva', tipo: 'Regente', turma: '1º Ano A' },
+                { nome: 'Prof. Maria Santos', tipo: 'Regente', turma: '2º Ano B' },
+                { nome: 'Prof. João Pereira', tipo: 'Regente', turma: '3º Ano C' },
+                { nome: 'Prof. Ana Oliveira', tipo: 'Regente', turma: '4º Ano D' },
+                { nome: 'Prof. Roberto Lima', tipo: 'Regente', turma: '5º Ano E' },
+                { nome: 'Prof. Paula Mendes', tipo: 'Artes', turma: 'Todos' },
+                { nome: 'Prof. Ricardo Faria', tipo: 'Música', turma: 'Todos' },
+                { nome: 'Prof. Sandra Costa', tipo: 'Inglês', turma: 'Todos' },
+                { nome: 'Prof. Marcos Rocha', tipo: 'Educação Física', turma: 'Todos' }
+            ]
+        };
+
+        // Mapeamento de cargos para funcionalidades
+        const cargoConfig = {
+            'direcao': {
+                titulo: '👔 Direção',
+                descricao: 'Gestão administrativa e estratégica da escola',
+                cores: 'direcao',
+                funcionalidades: [
+                    '📊 Relatórios Gerenciais',
+                    '📄 Aprovação de Documentos',
+                    '💰 Visão Financeira',
+                    '📋 Planejamento Estratégico',
+                    '📢 Comunicações Oficiais',
+                    '👥 Gestão de Pessoal'
+                ]
+            },
+            'vice-direcao': {
+                titulo: '👔 Vice-Direção',
+                descricao: 'Apoio à gestão e substituição da direção',
+                cores: 'direcao',
+                funcionalidades: [
+                    '📊 Relatórios Gerenciais',
+                    '📄 Aprovação de Documentos',
+                    '👥 Gestão de Pessoal',
+                    '📋 Planejamento Estratégico',
+                    '🎯 Acompanhamento de Projetos'
+                ]
+            },
+            'secretaria': {
+                titulo: '📁 Secretaria Escolar',
+                descricao: 'Gestão documental e administrativa',
+                cores: 'secretaria',
+                funcionalidades: [
+                    '📝 Matrículas e Rematrículas',
+                    '📄 Documentação dos Alunos',
+                    '📜 Históricos Escolares',
+                    '📋 Atestados e Declarações',
+                    '📅 Agenda de Reuniões',
+                    '🗂️ Arquivo de Documentos'
+                ]
+            },
+            'coordenacao': {
+                titulo: '📚 Coordenação Pedagógica',
+                descricao: 'Orientação e acompanhamento pedagógico',
+                cores: 'coordenacao',
+                funcionalidades: [
+                    '🎯 Acompanhamento Pedagógico',
+                    '📝 Planejamento de Aulas',
+                    '📚 Formação Continuada',
+                    '📊 Avaliações e Resultados',
+                    '💡 Orientação aos Professores',
+                    '🌟 Projetos Especiais'
+                ]
+            },
+            'professor-regente': {
+                titulo: '👨‍🏫 Professor Regente',
+                descricao: 'Responsável por uma turma específica',
+                cores: 'professor',
+                funcionalidades: [
+                    '📝 Diário de Classe',
+                    '📋 Plano de Aula',
+                    '👥 Lista de Alunos',
+                    '📊 Lançamento de Notas',
+                    '📈 Frequência dos Alunos',
+                    '📚 Atividades e Projetos'
+                ]
+            },
+            'professor-artes': {
+                titulo: '🎨 Professor de Artes',
+                descricao: 'Especialista em Artes Visuais',
+                cores: 'especialista',
+                funcionalidades: [
+                    '🎨 Plano de Aulas de Artes',
+                    '🖼️ Projetos Artísticos',
+                    '📊 Avaliações de Artes',
+                    '🎭 Eventos Culturais',
+                    '📝 Diário de Classe'
+                ]
+            },
+            'professor-musica': {
+                titulo: '🎵 Professor de Música',
+                descricao: 'Especialista em Educação Musical',
+                cores: 'especialista',
+                funcionalidades: [
+                    '🎵 Plano de Aulas de Música',
+                    '🎶 Projetos Musicais',
+                    '📊 Avaliações de Música',
+                    '🎼 Eventos Musicais',
+                    '📝 Diário de Classe'
+                ]
+            },
+            'professor-ingles': {
+                titulo: '🌎 Professor de Inglês',
+                descricao: 'Especialista em Língua Inglesa',
+                cores: 'especialista',
+                funcionalidades: [
+                    '🌎 Plano de Aulas de Inglês',
+                    '📚 Projetos de Inglês',
+                    '📊 Avaliações de Inglês',
+                    '🎭 Eventos em Inglês',
+                    '📝 Diário de Classe'
+                ]
+            },
+            'professor-ef': {
+                titulo: '🏃 Professor de Educação Física',
+                descricao: 'Especialista em Atividades Físicas',
+                cores: 'especialista',
+                funcionalidades: [
+                    '🏃 Plano de Aulas de EF',
+                    '🏆 Projetos Esportivos',
+                    '📊 Avaliações de EF',
+                    '🏅 Eventos Esportivos',
+                    '📝 Diário de Classe'
+                ]
+            }
+        };
+
+        // Função de Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cargo = document.getElementById('cargo').value;
+            const nome = document.getElementById('nome').value.trim();
+
+            if (!cargo || !nome) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            // Esconde login e mostra dashboard
+            document.getElementById('loginContainer').style.display = 'none';
+            const dashboard = document.getElementById('dashboard');
+            dashboard.classList.add('active');
+
+            // Configura dashboard
+            const config = cargoConfig[cargo];
+            document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
+            document.getElementById('userDisplay').textContent = `👤 ${nome} - ${config.titulo}`;
+
+            // Renderiza cards
+            renderCards(config);
+            
+            // Renderiza turmas (exceto para secretaria e direção)
+            if (cargo !== 'secretaria' && cargo !== 'direcao' && cargo !== 'vice-direcao') {
+                document.getElementById('turmasSection').classList.remove('hidden');
+                renderTurmas();
+            } else {
+                document.getElementById('turmasSection').classList.add('hidden');
+            }
+
+            // Renderiza professores (apenas para coordenação e direção)
+            if (cargo === 'coordenacao' || cargo === 'direcao' || cargo === 'vice-direcao') {
+                document.getElementById('professoresSection').classList.remove('hidden');
+                renderProfessores();
+            } else {
+                document.getElementById('professoresSection').classList.add('hidden');
+            }
+        });
+
+        function renderCards(config) {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = `
+                <div class="card ${config.cores}">
+                    <h3>📌 ${config.titulo}</h3>
+                    <p>${config.descricao}</p>
+                    <span class="badge">Acesso Ativo</span>
+                </div>
+                ${config.funcionalidades.map(func => `
+                    <div class="card ${config.cores}">
+                        <h3>${func}</h3>
+                        <p>Funcionalidade disponível para ${config.titulo}</p>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderTurmas() {
+            const container = document.getElementById('turmasContainer');
+            container.innerHTML = escolaData.turmas.map(turma => `
+                <div class="turma-item">
+                    ${turma}
+                    <span class="ano">Fundamental I</span>
+                </div>
+            `).join('');
+        }
+
+        function renderProfessores() {
+            const container = document.getElementById('professoresContainer');
+            container.innerHTML = escolaData.professores.map(prof => `
+                <div class="professor-item">
+                    <strong>${prof.nome}</strong>
+                    <div class="especialidade">${prof.tipo} - ${prof.turma}</div>
+                </div>
+            `).join('');
+        }
+
+        function logout() {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            
+            // Limpa containers
+            document.getElementById('cardsContainer').innerHTML = '';
+            document.getElementById('turmasContainer').innerHTML = '';
+            document.getElementById('professoresContainer').innerHTML = '';
+            
+            // Esconde seções
+            document.getElementById('turmasSection').classList.add('hidden');
+            document.getElementById('professoresSection').classList.add('hidden');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Garante que o login esteja visível
+            document.getElementById('loginContainer').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
