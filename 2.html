@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Escolar - Atribuição de Turmas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 450px;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-container h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(56, 161, 105, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 15px rgba(229, 62, 62, 0.4);
+        }
+
+        .dashboard {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .dashboard-header h2 {
+            color: #2d3748;
+            font-size: 2em;
+        }
+
+        .dashboard-header .user-info {
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #f56565;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .card p {
+            color: #718096;
+            line-height: 1.6;
+        }
+
+        .card .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .card.direcao { border-left-color: #e53e3e; }
+        .card.secretaria { border-left-color: #38a169; }
+        .card.coordenacao { border-left-color: #d69e2e; }
+        .card.professor { border-left-color: #3182ce; }
+        .card.especialista { border-left-color: #805ad5; }
+
+        .turmas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .turma-item {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3748;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .turma-item:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        .turma-item.selected {
+            border-color: #667eea;
+            background: #ebf4ff;
+        }
+
+        .turma-item .ano {
+            font-size: 0.8em;
+            color: #718096;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .turma-item .status {
+            font-size: 0.7em;
+            color: #48bb78;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .professores-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .professor-item {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #3182ce;
+        }
+
+        .professor-item .especialidade {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .professor-item .turmas-atribuidas {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .professor-item .turma-tag {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .atribuicao-container {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .atribuicao-container h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #a0aec0;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #e53e3e;
+        }
+
+        .modal h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .registro-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .registro-item .data {
+            color: #718096;
+            font-size: 0.85em;
+        }
+
+        .registro-item .conteudo {
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #edf2f7;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e2e8f0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .registros-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏫 Sistema de Gestão Escolar</h1>
+            <p>Escola Fundamental I - 1º ao 5º Ano (Turmas A a E)</p>
+            <p style="font-size: 0.9em; color: #667eea; margin-top: 5px;">🔄 Coordenador atribui turmas aos professores</p>
+        </div>
+
+        <!-- Tela de Login -->
+        <div id="loginContainer" class="login-container">
+            <h2>🔐 Acesso ao Sistema</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="cargo">Selecione seu Cargo</label>
+                    <select id="cargo" required>
+                        <option value="">-- Escolha --</option>
+                        <option value="direcao">Direção</option>
+                        <option value="vice-direcao">Vice-Direção</option>
+                        <option value="secretaria">Secretaria Escolar</option>
+                        <option value="coordenacao">Coordenação Pedagógica</option>
+                        <option value="professor-regente">Professor Regente</option>
+                        <option value="professor-artes">Professor de Artes</option>
+                        <option value="professor-musica">Professor de Música</option>
+                        <option value="professor-ingles">Professor de Inglês</option>
+                        <option value="professor-ef">Professor de Educação Física</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nome">Seu Nome</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome" required>
+                </div>
+                <button type="submit" class="btn">Entrar no Sistema</button>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div class="dashboard-header">
+                <div>
+                    <h2 id="dashboardTitle">📊 Painel de Controle</h2>
+                    <p id="userDisplay" class="user-info"></p>
+                </div>
+                <button onclick="logout()" class="btn-logout">🚪 Sair</button>
+            </div>
+
+            <!-- Cards dinâmicos -->
+            <div id="cardsContainer" class="cards-grid"></div>
+            
+            <!-- Turmas -->
+            <div id="turmasSection" class="hidden">
+                <h3 style="margin-top: 30px; color: #2d3748;">📚 Minhas Turmas</h3>
+                <div id="turmasContainer" class="turmas-grid"></div>
+            </div>
+
+            <!-- Área do Coordenador - Atribuição de Turmas -->
+            <div id="atribuicaoSection" class="hidden">
+                <div class="atribuicao-container">
+                    <h3>📋 Atribuição de Turmas aos Professores</h3>
+                    <p style="color: #718096; margin-bottom: 15px;">
+                        Selecione um professor e atribua as turmas que ele irá lecionar.
+                    </p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="professorSelect">Professor</label>
+                            <select id="professorSelect">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="turmaSelect">Turma</label>
+                            <select id="turmaSelect">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button onclick="atribuirTurma()" class="btn btn-secondary" style="width: auto;">➕ Atribuir Turma</button>
+                        <button onclick="removerTurma()" class="btn btn-danger" style="width: auto;">❌ Remover Turma</button>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #2d3748;">📌 Professores e suas Turmas</h4>
+                        <div id="professoresAtribuidos" class="professores-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Área do Professor - Registros da Turma -->
+            <div id="registrosSection" class="hidden">
+                <div class="atribuicao-container">
+                    <h3>📝 Registros da Turma</h3>
+                    
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('chamada')">✅ Chamada</button>
+                        <button class="tab" onclick="switchTab('notas')">📊 Notas</button>
+                        <button class="tab" onclick="switchTab('conteudos')">📚 Conteúdos</button>
+                        <button class="tab" onclick="switchTab('observacoes')">✏️ Observações</button>
+                    </div>
+                    
+                    <!-- Chamada -->
+                    <div id="tab-chamada" class="tab-content active">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="dataChamada" value="2026-08-13">
+                        </div>
+                        <div class="form-group">
+                            <label>Alunos Presentes</label>
+                            <div id="alunosChamada"></div>
+                        </div>
+                        <button onclick="salvarChamada()" class="btn btn-secondary btn-small">💾 Salvar Chamada</button>
+                        <div id="registrosChamada" class="registros-list" style="margin-top: 20px;"></div>
+                    </div>
+                    
+                    <!-- Notas -->
+                    <div id="tab-notas" class="tab-content">
+                        <div class="form-group">
+                            <label>Aluno</label>
+                            <select id="alunoNota"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nota (0-10)</label>
+                            <input type="number" id="notaValor" min="0" max="10" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Bimestre</label>
+                            <select id="bimestreNota">
+                                <option value="1">1º Bimestre</option>
+                                <option value="2">2º Bimestre</option>
+                                <option value="3">3º Bimestre</option>
+                                <option value="4">4º Bimestre</option>
+                            </select>
+                        </div>
+                        <button onclick="salvarNota()" class="btn btn-secondary btn-small">💾 Salvar Nota</button>
+                        <div id="registrosNotas" class="registros-list" style="margin-top: 20px;"></div>
+                    </div>
+                    
+                    <!-- Conteúdos -->
+                    <div id="tab-conteudos" class="tab-content">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="dataConteudo" value="2026-08-13">
+                        </div>
+                        <div class="form-group">
+                            <label>Conteúdo Ministrado</label>
+                            <textarea id="conteudoText" placeholder="Descreva o conteúdo trabalhado em aula..."></textarea>
+                        </div>
+                        <button onclick="salvarConteudo()" class="btn btn-secondary btn-small">💾 Salvar Conteúdo</button>
+                        <div id="registrosConteudos" class="registros-list" style="margin-top: 20px;"></div>
+                    </div>
+                    
+                    <!-- Observações -->
+                    <div id="tab-observacoes" class="tab-content">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="dataObservacao" value="2026-08-13">
+                        </div>
+                        <div class="form-group">
+                            <label>Aluno</label>
+                            <select id="alunoObservacao"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Observação</label>
+                            <textarea id="observacaoText" placeholder="Registre observações sobre o aluno..."></textarea>
+                        </div>
+                        <button onclick="salvarObservacao()" class="btn btn-secondary btn-small">💾 Salvar Observação</button>
+                        <div id="registrosObservacoes" class="registros-list" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DADOS DA ESCOLA
+        // ============================================
+        const escolaData = {
+            turmas: [
+                '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
+                '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
+                '3º Ano A', '3º Ano B', '3º Ano C', '3º Ano D', '3º Ano E',
+                '4º Ano A', '4º Ano B', '4º Ano C', '4º Ano D', '4º Ano E',
+                '5º Ano A', '5º Ano B', '5º Ano C', '5º Ano D', '5º Ano E'
+            ],
+            alunos: [
+                'Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 
+                'Eduarda Lima', 'Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira',
+                'Isabela Almeida', 'João Pereira', 'Karina Mendes', 'Leonardo Carvalho',
+                'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes', 'Paulo Gomes',
+                'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro',
+                'Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos',
+                'Yuri Moreira', 'Zara Oliveira'
+            ],
+            professores: [
+                { id: 'p1', nome: 'Prof. Carlos Silva', tipo: 'Regente' },
+                { id: 'p2', nome: 'Prof. Maria Santos', tipo: 'Regente' },
+                { id: 'p3', nome: 'Prof. João Pereira', tipo: 'Regente' },
+                { id: 'p4', nome: 'Prof. Ana Oliveira', tipo: 'Regente' },
+                { id: 'p5', nome: 'Prof. Roberto Lima', tipo: 'Regente' },
+                { id: 'p6', nome: 'Prof. Paula Mendes', tipo: 'Artes' },
+                { id: 'p7', nome: 'Prof. Ricardo Faria', tipo: 'Música' },
+                { id: 'p8', nome: 'Prof. Sandra Costa', tipo: 'Inglês' },
+                { id: 'p9', nome: 'Prof. Marcos Rocha', tipo: 'Educação Física' }
+            ]
+        };
+
+        // ============================================
+        // BANCO DE DADOS EM MEMÓRIA
+        // ============================================
+        let db = {
+            atribuicoes: {
+                // 'professorId': ['Turma A', 'Turma B']
+                'p1': ['1º Ano A'],
+                'p2': ['2º Ano B'],
+                'p3': ['3º Ano C'],
+                'p4': ['4º Ano D'],
+                'p5': ['5º Ano E'],
+                'p6': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p7': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p8': ['4º Ano D', '5º Ano E'],
+                'p9': ['1º Ano A', '2º Ano B', '3º Ano C', '4º Ano D', '5º Ano E']
+            },
+            registros: {
+                // 'turma': {
+                //   chamada: [{data, presentes: []}],
+                //   notas: [{aluno, nota, bimestre}],
+                //   conteudos: [{data, conteudo}],
+                //   observacoes: [{data, aluno, observacao}]
+                // }
+            }
+        };
+
+        // Estado atual
+        let currentUser = {
+            cargo: '',
+            nome: '',
+            turmas: [] // turmas atribuídas ao professor
+        };
+
+        // ============================================
+        // FUNÇÕES DE INICIALIZAÇÃO
+        // ============================================
+        function initAlunosForTurma(turma) {
+            // Simula alunos por turma
+            const alunosPorTurma = {};
+            escolaData.turmas.forEach((t, index) => {
+                const start = (index * 3) % escolaData.alunos.length;
+                alunosPorTurma[t] = escolaData.alunos.slice(start, start + 5);
+                if (alunosPorTurma[t].length < 5) {
+                    alunosPorTurma[t] = [...alunosPorTurma[t], ...escolaData.alunos.slice(0, 5 - alunosPorTurma[t].length)];
+                }
+            });
+            return alunosPorTurma[turma] || ['Aluno 1', 'Aluno 2', 'Aluno 3', 'Aluno 4', 'Aluno 5'];
+        }
+
+        function getAlunosByTurma(turma) {
+            const alunosPorTurma = {
+                '1º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '1º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '1º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '1º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '1º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '2º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '2º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '2º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '2º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '2º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '3º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '3º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '3º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '3º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '3º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '4º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '4º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '4º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '4º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '4º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '5º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '5º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '5º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '5º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '5º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira']
+            };
+            return alunosPorTurma[turma] || ['Aluno 1', 'Aluno 2', 'Aluno 3', 'Aluno 4', 'Aluno 5'];
+        }
+
+        function getTurmasByProfessor(profId) {
+            return db.atribuicoes[profId] || [];
+        }
+
+        function getProfessorById(id) {
+            return escolaData.professores.find(p => p.id === id);
+        }
+
+        // ============================================
+        // CONFIGURAÇÃO DE CARGOS
+        // ============================================
+        const cargoConfig = {
+            'direcao': {
+                titulo: '👔 Direção',
+                cores: 'direcao',
+                funcionalidades: ['Relatórios Gerenciais', 'Aprovação de Documentos', 'Visão Financeira', 'Planejamento Estratégico']
+            },
+            'vice-direcao': {
+                titulo: '👔 Vice-Direção',
+                cores: 'direcao',
+                funcionalidades: ['Relatórios Gerenciais', 'Aprovação de Documentos', 'Gestão de Pessoal']
+            },
+            'secretaria': {
+                titulo: '📁 Secretaria Escolar',
+                cores: 'secretaria',
+                funcionalidades: ['Matrículas', 'Documentação', 'Históricos', 'Atestados']
+            },
+            'coordenacao': {
+                titulo: '📚 Coordenação Pedagógica',
+                cores: 'coordenacao',
+                funcionalidades: ['Acompanhamento Pedagógico', 'Planejamento de Aulas', 'Formação Continuada', 'Avaliações', 'ATRIBUIR TURMAS AOS PROFESSORES']
+            },
+            'professor-regente': {
+                titulo: '👨‍🏫 Professor Regente',
+                cores: 'professor',
+                funcionalidades: ['Diário de Classe', 'Plano de Aula', 'Lista de Alunos', 'Lançamento de Notas', 'Frequência']
+            },
+            'professor-artes': {
+                titulo: '🎨 Professor de Artes',
+                cores: 'especialista',
+                funcionalidades: ['Plano de Aulas de Artes', 'Projetos Artísticos', 'Avaliações de Artes', 'Eventos Culturais']
+            },
+            'professor-musica': {
+                titulo: '🎵 Professor de Música',
+                cores: 'especialista',
+                funcionalidades: ['Plano de Aulas de Música', 'Projetos Musicais', 'Avaliações de Música']
+            },
+            'professor-ingles': {
+                titulo: '🌎 Professor de Inglês',
+                cores: 'especialista',
+                funcionalidades: ['Plano de Aulas de Inglês', 'Projetos de Inglês', 'Avaliações de Inglês']
+            },
+            'professor-ef': {
+                titulo: '🏃 Professor de Educação Física',
+                cores: 'especialista',
+                funcionalidades: ['Plano de Aulas de EF', 'Projetos Esportivos', 'Avaliações de EF']
+            }
+        };
+
+        // ============================================
+        // LOGIN
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cargo = document.getElementById('cargo').value;
+            const nome = document.getElementById('nome').value.trim();
+
+            if (!cargo || !nome) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            currentUser.cargo = cargo;
+            currentUser.nome = nome;
+
+            // Carrega turmas do professor
+            if (cargo.startsWith('professor')) {
+                const profId = getProfessorIdByNome(nome);
+                if (profId) {
+                    currentUser.turmas = getTurmasByProfessor(profId);
+                } else {
+                    currentUser.turmas = [];
+                }
+            }
+
+            // Esconde login e mostra dashboard
+            document.getElementById('loginContainer').style.display = 'none';
+            const dashboard = document.getElementById('dashboard');
+            dashboard.classList.add('active');
+
+            // Configura dashboard
+            const config = cargoConfig[cargo];
+            document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
+            document.getElementById('userDisplay').textContent = `👤 ${nome} - ${config.titulo}`;
+
+            // Renderiza painel
+            renderDashboard(cargo);
+        });
+
+        function getProfessorIdByNome(nome) {
+            const prof = escolaData.professores.find(p => p.nome === nome);
+            return prof ? prof.id : null;
+        }
+
+        // ============================================
+        // RENDERIZAÇÃO DO DASHBOARD
+        // ============================================
+        function renderDashboard(cargo) {
+            const config = cargoConfig[cargo];
+            
+            // Cards
+            renderCards(config);
+            
+            // Esconde todas as seções primeiro
+            document.getElementById('turmasSection').classList.add('hidden');
+            document.getElementById('atribuicaoSection').classList.add('hidden');
+            document.getElementById('registrosSection').classList.add('hidden');
+
+            // Mostra seções conforme cargo
+            if (cargo === 'coordenacao') {
+                document.getElementById('atribuicaoSection').classList.remove('hidden');
+                carregarProfessoresAtribuicao();
+                carregarTurmasSelect();
+            }
+            
+            if (cargo.startsWith('professor')) {
+                document.getElementById('turmasSection').classList.remove('hidden');
+                document.getElementById('registrosSection').classList.remove('hidden');
+                renderMinhasTurmas();
+                carregarAlunosSelects();
+            }
+        }
+
+        function renderCards(config) {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = `
+                <div class="card ${config.cores}">
+                    <h3>📌 ${config.titulo}</h3>
+                    <p>Bem-vindo ao seu painel de controle</p>
+                    <span class="badge">Acesso Ativo</span>
+                </div>
+                ${config.funcionalidades.map(func => `
+                    <div class="card ${config.cores}">
+                        <h3>${func}</h3>
+                        <p>Funcionalidade disponível para ${config.titulo}</p>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // ============================================
+        // MINHAS TURMAS (Professor)
+        // ============================================
+        let turmaSelecionada = null;
+
+        function renderMinhasTurmas() {
+            const container = document.getElementById('turmasContainer');
+            
+            if (currentUser.turmas.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #718096;">
+                        <p>📭 Nenhuma turma atribuída ainda.</p>
+                        <p style="font-size: 0.9em;">Entre em contato com a coordenação.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = currentUser.turmas.map(turma => `
+                <div class="turma-item ${turmaSelecionada === turma ? 'selected' : ''}" 
+                     onclick="selecionarTurma('${turma}')">
+                    ${turma}
+                    <span class="ano">Fundamental I</span>
+                    <span class="status">✅ Ativa</span>
+                </div>
+            `).join('');
+
+            // Seleciona a primeira turma por padrão
+            if (!turmaSelecionada && currentUser.turmas.length > 0) {
+                selecionarTurma(currentUser.turmas[0]);
+            }
+        }
+
+        function selecionarTurma(turma) {
+            turmaSelecionada = turma;
+            renderMinhasTurmas();
+            
+            // Atualiza os registros
+            carregarRegistros(turma);
+            
+            // Atualiza selects de alunos
+            carregarAlunosSelects();
+        }
+
+        // ============================================
+        // REGISTROS DA TURMA (Professor)
+        // ============================================
+        function getRegistrosTurma(turma) {
+            if (!db.registros[turma]) {
+                db.registros[turma] = {
+                    chamada: [],
+                    notas: [],
+                    conteudos: [],
+                    observacoes: []
+                };
+            }
+            return db.registros[turma];
+        }
+
+        function carregarRegistros(turma) {
+            if (!turma) return;
+            
+            const registros = getRegistrosTurma(turma);
+            
+            // Chamada
+            renderChamada(registros.chamada);
+            
+            // Notas
+            renderNotas(registros.notas);
+            
+            // Conteúdos
+            renderConteudos(registros.conteudos);
+            
+            // Observações
+            renderObservacoes(registros.observacoes);
+        }
+
+        // ============================================
+        // CHAMADA
+        // ============================================
+        function renderChamada(chamadas) {
+            const container = document.getElementById('registrosChamada');
+            if (chamadas.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum registro de chamada.</p>';
+                return;
+            }
+            container.innerHTML = chamadas.slice().reverse().map(c => `
+                <div class="registro-item">
+                    <div class="data">📅 ${c.data}</div>
+                    <div class="conteudo">✅ Presentes: ${c.presentes.length} alunos</div>
+                    <div style="font-size: 0.9em; color: #718096;">${c.presentes.join(', ')}</div>
+                </div>
+            `).join('');
+        }
+
+        function carregarAlunosChamada() {
+            if (!turmaSelecionada) return;
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            const container = document.getElementById('alunosChamada');
+            
+            container.innerHTML = alunos.map(aluno => `
+                <div style="display: flex; align-items: center; gap: 10px; margin: 5px 0;">
+                    <input type="checkbox" id="chk_${aluno}" value="${aluno}" checked>
+                    <label for="chk_${aluno}">${aluno}</label>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('dataChamada').addEventListener('change', function() {
+            carregarAlunosChamada();
+        });
+
+        function salvarChamada() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataChamada').value;
+            const checkboxes = document.querySelectorAll('#alunosChamada input[type="checkbox"]:checked');
+            const presentes = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (presentes.length === 0) {
+                alert('Marque pelo menos um aluno presente!');
+                return;
+            }
+            
+            const registros = getRegistrosTurma(turmaSelecionada);
+            registros.chamada.push({ data, presentes });
+            
+            renderChamada(registros.chamada);
+            alert('✅ Chamada salva com sucesso!');
+            
+            // Marca todos como presentes novamente
+            document.querySelectorAll('#alunosChamada input[type="checkbox"]').forEach(cb => cb.checked = true);
+        }
+
+        // ============================================
+        // NOTAS
+        // ============================================
+        function renderNotas(notas) {
+            const container = document.getElementById('registrosNotas');
+            if (notas.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhuma nota registrada.</p>';
+                return;
+            }
+            container.innerHTML = notas.slice().reverse().map(n => `
+                <div class="registro-item">
+                    <div class="data">📊 ${n.aluno} - ${n.bimestre}º Bimestre</div>
+                    <div class="conteudo">Nota: ${n.nota}</div>
+                </div>
+            `).join('');
+        }
+
+        function carregarAlunosSelects() {
+            if (!turmaSelecionada) return;
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            
+            ['alunoNota', 'alunoObservacao'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.innerHTML = alunos.map(aluno => 
+                        `<option value="${aluno}">${aluno}</option>`
+                    ).join('');
+                }
+            });
+        }
+
+        function salvarNota() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const aluno = document.getElementById('alunoNota').value;
+            const nota = parseFloat(document.getElementById('notaValor').value);
+            const bimestre = document.getElementById('bimestreNota').value;
+            
+            if (isNaN(nota) || nota < 0 || nota > 10) {
+                alert('Digite uma nota válida entre 0 e 10.');
+                return;
+            }
+            
+            const registros = getRegistrosTurma(turmaSelecionada);
+            registros.notas.push({ aluno, nota, bimestre });
+            
+            renderNotas(registros.notas);
+            document.getElementById('notaValor').value = '';
+            alert('✅ Nota salva com sucesso!');
+        }
+
+        // ============================================
+        // CONTEÚDOS
+        // ============================================
+        function renderConteudos(conteudos) {
+            const container = document.getElementById('registrosConteudos');
+            if (conteudos.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum conteúdo registrado.</p>';
+                return;
+            }
+            container.innerHTML = conteudos.slice().reverse().map(c => `
+                <div class="registro-item">
+                    <div class="data">📚 ${c.data}</div>
+                    <div class="conteudo">${c.conteudo}</div>
+                </div>
+            `).join('');
+        }
+
+        function salvarConteudo() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataConteudo').value;
+            const conteudo = document.getElementById('conteudoText').value.trim();
+            
+            if (!conteudo) {
+                alert('Digite o conteúdo ministrado.');
+                return;
+            }
+            
+            const registros = getRegistrosTurma(turmaSelecionada);
+            registros.conteudos.push({ data, conteudo });
+            
+            renderConteudos(registros.conteudos);
+            document.getElementById('conteudoText').value = '';
+            alert('✅ Conteúdo salvo com sucesso!');
+        }
+
+        // ============================================
+        // OBSERVAÇÕES
+        // ============================================
+        function renderObservacoes(observacoes) {
+            const container = document.getElementById('registrosObservacoes');
+            if (observacoes.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhuma observação registrada.</p>';
+                return;
+            }
+            container.innerHTML = observacoes.slice().reverse().map(o => `
+                <div class="registro-item">
+                    <div class="data">✏️ ${o.data} - ${o.aluno}</div>
+                    <div class="conteudo">${o.observacao}</div>
+                </div>
+            `).join('');
+        }
+
+        function salvarObservacao() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataObservacao').value;
+            const aluno = document.getElementById('alunoObservacao').value;
+            const observacao = document.getElementById('observacaoText').value.trim();
+            
+            if (!observacao) {
+                alert('Digite a observação.');
+                return;
+            }
+            
+            const registros = getRegistrosTurma(turmaSelecionada);
+            registros.observacoes.push({ data, aluno, observacao });
+            
+            renderObservacoes(registros.observacoes);
+            document.getElementById('observacaoText').value = '';
+            alert('✅ Observação salva com sucesso!');
+        }
+
+        // ============================================
+        // TABS
+        // ============================================
+        function switchTab(tab) {
+            // Atualiza botões
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // Atualiza conteúdos
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            // Carrega dados específicos
+            if (tab === 'chamada' && turmaSelecionada) {
+                carregarAlunosChamada();
+            }
+        }
+
+        // ============================================
+        // ATRIBUIÇÃO DE TURMAS (Coordenador)
+        // ============================================
+        function carregarProfessoresAtribuicao() {
+            const select = document.getElementById('professorSelect');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.professores.map(p => 
+                    `<option value="${p.id}">${p.nome} (${p.tipo})</option>`
+                ).join('');
+            
+            // Carrega lista de professores atribuídos
+            renderProfessoresAtribuidos();
+        }
+
+        function carregarTurmasSelect() {
+            const select = document.getElementById('turmaSelect');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.turmas.map(t => 
+                    `<option value="${t}">${t}</option>`
+                ).join('');
+        }
+
+        function renderProfessoresAtribuidos() {
+            const container = document.getElementById('professoresAtribuidos');
+            container.innerHTML = escolaData.professores.map(prof => {
+                const turmas = getTurmasByProfessor(prof.id);
+                return `
+                    <div class="professor-item">
+                        <strong>${prof.nome}</strong>
+                        <div class="especialidade">${prof.tipo}</div>
+                        <div class="turmas-atribuidas">
+                            ${turmas.length > 0 ? turmas.map(t => 
+                                `<span class="turma-tag">${t}</span>`
+                            ).join('') : '<span style="color: #a0aec0; font-size: 0.9em;">Nenhuma turma atribuída</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function atribuirTurma() {
+            const profId = document.getElementById('professorSelect').value;
+            const turma = document.getElementById('turmaSelect').value;
+            
+            if (!profId || !turma) {
+                alert('Selecione um professor e uma turma.');
+                return;
+            }
+            
+            if (!db.atribuicoes[profId]) {
+                db.atribuicoes[profId] = [];
+            }
+            
+            if (db.atribuicoes[profId].includes(turma)) {
+                alert('Esta turma já está atribuída a este professor.');
+                return;
+            }
+            
+            db.atribuicoes[profId].push(turma);
+            renderProfessoresAtribuidos();
+            
+            // Atualiza se o professor logado for o mesmo
+            const prof = getProfessorById(profId);
+            if (prof && prof.nome === currentUser.nome) {
+                currentUser.turmas = getTurmasByProfessor(profId);
+                renderMinhasTurmas();
+            }
+            
+            alert(`✅ Turma ${turma} atribuída a ${getProfessorById(profId).nome} com sucesso!`);
+        }
+
+        function removerTurma() {
+            const profId = document.getElementById('professorSelect').value;
+            const turma = document.getElementById('turmaSelect').value;
+            
+            if (!profId || !turma) {
+                alert('Selecione um professor e uma turma.');
+                return;
+            }
+            
+            if (!db.atribuicoes[profId] || !db.atribuicoes[profId].includes(turma)) {
+                alert('Esta turma não está atribuída a este professor.');
+                return;
+            }
+            
+            if (!confirm(`Remover a turma ${turma} do professor ${getProfessorById(profId).nome}?`)) {
+                return;
+            }
+            
+            db.atribuicoes[profId] = db.atribuicoes[profId].filter(t => t !== turma);
+            renderProfessoresAtribuidos();
+            
+            // Atualiza se o professor logado for o mesmo
+            const prof = getProfessorById(profId);
+            if (prof && prof.nome === currentUser.nome) {
+                currentUser.turmas = getTurmasByProfessor(profId);
+                renderMinhasTurmas();
+            }
+            
+            alert(`✅ Turma ${turma} removida de ${getProfessorById(profId).nome}.`);
+        }
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        function logout() {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            
+            // Limpa containers
+            document.getElementById('cardsContainer').innerHTML = '';
+            document.getElementById('turmasContainer').innerHTML = '';
+            
+            // Reset estado
+            turmaSelecionada = null;
+            currentUser = { cargo: '', nome: '', turmas: [] };
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('dataChamada').valueAsDate = new Date();
+            document.getElementById('dataConteudo').valueAsDate = new Date();
+            document.getElementById('dataObservacao').valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>
