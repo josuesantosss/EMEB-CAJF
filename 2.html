@@ -649,26 +649,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .debug-console {
-            background: #1a1a2e;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 15px;
-            display: none;
-        }
-        .debug-console.active {
-            display: block;
-        }
-        .debug-console .error { color: #ff6b6b; }
-        .debug-console .success { color: #51cf66; }
-        .debug-console .info { color: #4dabf7; }
-        .debug-console .warn { color: #fcc419; }
-
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8em;
@@ -710,11 +690,6 @@
         <!-- Tela de Login -->
         <div id="loginContainer" class="login-container" style="display: none;">
             <h2>🔐 Acesso ao Sistema</h2>
-            
-            <div style="text-align: right; margin-bottom: 10px;">
-                <button onclick="toggleDebug()" class="btn btn-small" style="width: auto; padding: 5px 15px; font-size: 12px;">🐛 Debug</button>
-            </div>
-            
             <form id="loginForm">
                 <div class="form-group">
                     <label for="cargo">Selecione seu Cargo</label>
@@ -740,10 +715,6 @@
 
             <div style="margin-top: 15px; text-align: center; font-size: 0.9em; color: #718096;">
                 <span id="dataStatus">📊 Aguardando dados...</span>
-            </div>
-            
-            <div id="debugConsole" class="debug-console">
-                <div id="debugContent"></div>
             </div>
         </div>
 
@@ -1000,36 +971,15 @@
         };
 
         // ============================================
-        // FUNÇÃO DE DEBUG
+        // DADOS CARREGADOS DA API
         // ============================================
-        let debugLogs = [];
-
-        function logDebug(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            debugLogs.push({ timestamp, message, type });
-            
-            const debugContent = document.getElementById('debugContent');
-            if (debugContent) {
-                const colors = {
-                    error: '#ff6b6b',
-                    success: '#51cf66',
-                    info: '#4dabf7',
-                    warn: '#fcc419'
-                };
-                const line = document.createElement('div');
-                line.style.color = colors[type] || '#ffffff';
-                line.textContent = `[${timestamp}] ${message}`;
-                debugContent.appendChild(line);
-                debugContent.scrollTop = debugContent.scrollHeight;
-            }
-            
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-
-        function toggleDebug() {
-            const console = document.getElementById('debugConsole');
-            console.classList.toggle('active');
-        }
+        let dadosAPI = {
+            alunos: [],
+            professores: [],
+            relatoriosGerados: [],
+            relatoriosSolicitados: [],
+            atribuicoes: []
+        };
 
         // ============================================
         // FUNÇÃO PARA CONSUMIR A API GAS
@@ -1048,7 +998,7 @@
                     }
                 }
 
-                logDebug(`📡 Chamando API: ${acao}`, 'info');
+                console.log(`📡 Chamando API: ${acao}`, params);
 
                 const response = await fetch(url);
                 
@@ -1057,10 +1007,10 @@
                 }
 
                 const data = await response.json();
-                logDebug(`✅ Resposta recebida (${acao})`, 'success');
+                console.log(`✅ Resposta da API (${acao}):`, data);
                 return data;
             } catch (error) {
-                logDebug(`❌ Erro na API (${acao}): ${error.message}`, 'error');
+                console.error(`❌ Erro na API (${acao}):`, error);
                 return { success: false, error: error.message || 'Erro desconhecido' };
             }
         }
@@ -1072,156 +1022,66 @@
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('active');
             document.getElementById('loadingMessage').textContent = '🔄 Carregando dados da API...';
-            
-            logDebug('🚀 Iniciando carregamento de dados...', 'info');
 
             try {
                 const resultado = await consumirAPI('lerTodasAbas');
-
-                logDebug(`📊 Resultado: success=${resultado.success}`, resultado.success ? 'success' : 'error');
 
                 if (resultado.success) {
                     const dados = resultado.dados || {};
                     
                     // ============================================
-                    // INSPECIONAR ABAS DISPONÍVEIS
-                    // ============================================
-                    const abasDisponiveis = Object.keys(dados);
-                    logDebug(`📋 Abas disponíveis: ${abasDisponiveis.join(', ')}`, 'info');
-                    
-                    // ============================================
-                    // PROCESSAR TURMAS_ALUNOS - CORRIGIDO
+                    // PROCESSAR ALUNOS
                     // ============================================
                     if (dados.TURMAS_ALUNOS) {
                         const dadosBrutos = dados.TURMAS_ALUNOS.dados || [];
-                        logDebug(`📊 TURMAS_ALUNOS: ${dadosBrutos.length} registros brutos`, 'info');
-                        
-                        if (dadosBrutos.length > 0) {
-                            // Mostra o primeiro registro para inspeção
-                            logDebug(`📋 Primeiro registro: ${JSON.stringify(dadosBrutos[0])}`, 'info');
-                            
-                            // Mostra todas as chaves disponíveis
-                            const chaves = Object.keys(dadosBrutos[0]);
-                            logDebug(`📋 Chaves disponíveis: ${chaves.join(', ')}`, 'info');
-                        }
-                        
-                        // NORMALIZA OS DADOS - Procura por qualquer variação do nome das colunas
                         dadosAPI.alunos = dadosBrutos
-                            .filter(item => {
-                                // Procura por Turma em qualquer formato
-                                const turma = item.Turma || item.turma || item['Turma'] || item['turma'] || '';
-                                // Procura por Nome_Aluno em qualquer formato
-                                const nome = item.Nome_Aluno || item.Nome || item.nome || item['Nome_Aluno'] || item['Nome'] || '';
-                                return turma && nome;
-                            })
-                            .map(item => {
-                                // Função para buscar valor da chave ignorando espaços
-                                const getValue = (keys) => {
-                                    for (let key of keys) {
-                                        if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
-                                            return String(item[key]).trim();
-                                        }
-                                    }
-                                    return '';
-                                };
-                                
-                                return {
-                                    Turma: getValue(['Turma', 'turma', 'TURMA']),
-                                    Nome_Aluno: getValue(['Nome_Aluno', 'Nome', 'nome', 'NOME_ALUNO']),
-                                    ID_Aluno: getValue(['ID_Aluno', 'ID', 'id', 'Id']),
-                                    Ativo: getValue(['Ativo', 'ativo', 'ATIVO']).toUpperCase() || 'SIM'
-                                };
-                            });
+                            .filter(item => item.Turma && item.Nome_Aluno)
+                            .map(item => ({
+                                Turma: String(item.Turma || '').trim(),
+                                Nome_Aluno: String(item.Nome_Aluno || '').trim(),
+                                ID_Aluno: String(item.ID_Aluno || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
+                            }));
                         
-                        logDebug(`📊 Alunos processados: ${dadosAPI.alunos.length}`, 'success');
-                        
-                        // Mostra os primeiros alunos processados
-                        if (dadosAPI.alunos.length > 0) {
-                            logDebug(`📋 Primeiros alunos: ${JSON.stringify(dadosAPI.alunos.slice(0, 3))}`, 'info');
-                        }
-                    } else {
-                        logDebug(`⚠️ Aba TURMAS_ALUNOS não encontrada`, 'warn');
+                        console.log(`📊 Alunos carregados: ${dadosAPI.alunos.length}`);
+                        console.log('📋 Primeiros alunos:', dadosAPI.alunos.slice(0, 3));
                     }
 
                     // ============================================
-                    // PROCESSAR PROFESSORES - CORRIGIDO
+                    // PROCESSAR PROFESSORES
                     // ============================================
                     if (dados.PROFESSORES) {
                         const dadosBrutos = dados.PROFESSORES.dados || [];
-                        logDebug(`📊 PROFESSORES: ${dadosBrutos.length} registros brutos`, 'info');
-                        
-                        if (dadosBrutos.length > 0) {
-                            logDebug(`📋 Primeiro registro PROFESSORES: ${JSON.stringify(dadosBrutos[0])}`, 'info');
-                            const chaves = Object.keys(dadosBrutos[0]);
-                            logDebug(`📋 Chaves disponíveis em PROFESSORES: ${chaves.join(', ')}`, 'info');
-                        }
-                        
-                        const getValue = (keys) => {
-                            for (let key of keys) {
-                                if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
-                                    return String(item[key]).trim();
-                                }
-                            }
-                            return '';
-                        };
-                        
                         dadosAPI.professores = dadosBrutos
-                            .filter(item => {
-                                const id = getValue(['ID_Professor', 'ID', 'id', 'Id']);
-                                const nome = getValue(['Nome', 'nome', 'NOME']);
-                                return id && nome;
-                            })
+                            .filter(item => item.ID_Professor && item.Nome)
                             .map(item => ({
-                                ID_Professor: getValue(['ID_Professor', 'ID', 'id', 'Id']),
-                                Nome: getValue(['Nome', 'nome', 'NOME']),
-                                Tipo: getValue(['Tipo', 'tipo', 'TIPO']),
-                                Ativo: getValue(['Ativo', 'ativo', 'ATIVO']).toUpperCase() || 'SIM'
+                                ID_Professor: String(item.ID_Professor || '').trim(),
+                                Nome: String(item.Nome || '').trim(),
+                                Tipo: String(item.Tipo || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
                             }));
                         
-                        logDebug(`📊 Professores processados: ${dadosAPI.professores.length}`, 'success');
-                    } else {
-                        logDebug(`⚠️ Aba PROFESSORES não encontrada`, 'warn');
+                        console.log(`📊 Professores carregados: ${dadosAPI.professores.length}`);
+                        console.log('📋 Primeiros professores:', dadosAPI.professores.slice(0, 3));
                     }
 
                     // ============================================
-                    // PROCESSAR ATRIBUIÇÕES - CORRIGIDO
+                    // PROCESSAR ATRIBUIÇÕES
                     // ============================================
                     if (dados.ATRIBUICOES) {
                         const dadosBrutos = dados.ATRIBUICOES.dados || [];
-                        logDebug(`📊 ATRIBUICOES: ${dadosBrutos.length} registros brutos`, 'info');
-                        
-                        if (dadosBrutos.length > 0) {
-                            logDebug(`📋 Primeiro registro ATRIBUICOES: ${JSON.stringify(dadosBrutos[0])}`, 'info');
-                            const chaves = Object.keys(dadosBrutos[0]);
-                            logDebug(`📋 Chaves disponíveis em ATRIBUICOES: ${chaves.join(', ')}`, 'info');
-                        }
-                        
-                        const getValue = (keys) => {
-                            for (let key of keys) {
-                                if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
-                                    return String(item[key]).trim();
-                                }
-                            }
-                            return '';
-                        };
-                        
                         dadosAPI.atribuicoes = dadosBrutos
-                            .filter(item => {
-                                const id = getValue(['ID_Professor', 'ID', 'id', 'Id']);
-                                const turma = getValue(['Turma', 'turma', 'TURMA']);
-                                return id && turma;
-                            })
+                            .filter(item => item.ID_Professor && item.Turma)
                             .map(item => ({
-                                ID_Professor: getValue(['ID_Professor', 'ID', 'id', 'Id']),
-                                Nome_Professor: getValue(['Nome_Professor', 'Nome', 'nome', 'NOME']),
-                                Tipo: getValue(['Tipo', 'tipo', 'TIPO']),
-                                Turma: getValue(['Turma', 'turma', 'TURMA']),
-                                Ativo: getValue(['Ativo', 'ativo', 'ATIVO']).toUpperCase() || 'SIM'
+                                ID_Professor: String(item.ID_Professor || '').trim(),
+                                Nome_Professor: String(item.Nome_Professor || '').trim(),
+                                Tipo: String(item.Tipo || '').trim(),
+                                Turma: String(item.Turma || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
                             }));
                         
-                        logDebug(`📊 Atribuições processadas: ${dadosAPI.atribuicoes.length}`, 'success');
-                    } else {
-                        logDebug(`⚠️ Aba ATRIBUICOES não encontrada`, 'warn');
+                        console.log(`📊 Atribuições carregadas: ${dadosAPI.atribuicoes.length}`);
+                        console.log('📋 Primeiras atribuições:', dadosAPI.atribuicoes.slice(0, 3));
                     }
 
                     // ============================================
@@ -1239,7 +1099,7 @@
                                 Status: String(item.Status || 'Pendente').trim()
                             }));
                         
-                        logDebug(`📊 Relatórios solicitados: ${dadosAPI.relatoriosSolicitados.length}`, 'info');
+                        console.log(`📊 Relatórios solicitados: ${dadosAPI.relatoriosSolicitados.length}`);
                     }
 
                     // ============================================
@@ -1256,14 +1116,13 @@
                     loading.classList.remove('active');
                     document.getElementById('loginContainer').style.display = 'block';
 
-                    logDebug(`✅ Carregamento concluído com sucesso!`, 'success');
                     return true;
                 } else {
                     throw new Error(resultado.error || 'Erro ao carregar dados');
                 }
 
             } catch (error) {
-                logDebug(`❌ Erro ao carregar dados: ${error.message}`, 'error');
+                console.error('❌ Erro ao carregar dados:', error);
                 document.getElementById('loadingMessage').textContent = '❌ Erro ao carregar dados. Usando dados de exemplo.';
                 document.getElementById('loadingMessage').style.color = '#e53e3e';
                 
@@ -1278,7 +1137,7 @@
         // DADOS DE EXEMPLO (FALLBACK)
         // ============================================
         function carregarDadosExemplo() {
-            logDebug('📊 Carregando dados de exemplo (fallback)...', 'warn');
+            console.log('📊 Carregando dados de exemplo (fallback)...');
             
             dadosAPI.alunos = [
                 { Turma: '1º Ano A', Nome_Aluno: 'Ana Silva', Ativo: 'SIM' },
@@ -1315,16 +1174,12 @@
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('loadingMessage').textContent = '✅ Dados de exemplo carregados!';
             document.getElementById('loadingMessage').style.color = '#48bb78';
-            
-            logDebug('✅ Dados de exemplo carregados!', 'success');
         }
 
         // ============================================
         // FUNÇÃO PARA ATUALIZAR BANCO DE DADOS LOCAL
         // ============================================
         function atualizarBancoDados() {
-            logDebug('🔄 Atualizando banco de dados local...', 'info');
-            
             // ============================================
             // ATUALIZAR ALUNOS POR TURMA
             // ============================================
@@ -1342,7 +1197,7 @@
                 }
             });
             escolaData.alunos = novosAlunos;
-            logDebug(`📊 Alunos por turma: ${Object.keys(novosAlunos).length} turmas`, 'info');
+            console.log('📊 Alunos por turma:', escolaData.alunos);
 
             // ============================================
             // ATUALIZAR PROFESSORES
@@ -1357,7 +1212,7 @@
                     }))
                     .filter(p => p.id && p.nome);
             }
-            logDebug(`📊 Professores: ${escolaData.professores.length}`, 'info');
+            console.log('📊 Professores:', escolaData.professores);
 
             // ============================================
             // ATUALIZAR ATRIBUIÇÕES
@@ -1379,7 +1234,7 @@
                 });
                 db.atribuicoes = novasAtribuicoes;
             }
-            logDebug(`📊 Atribuições: ${Object.keys(db.atribuicoes).length} professores com turmas`, 'info');
+            console.log('📊 Atribuições:', db.atribuicoes);
 
             // ============================================
             // ATUALIZAR LISTA DE TURMAS
@@ -1390,6 +1245,7 @@
                 turmas.forEach(t => turmasSet.add(t));
             });
             
+            // Garantir que as turmas padrão existam
             const turmasPadrao = [
                 '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
                 '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
@@ -1402,7 +1258,7 @@
             if (turmasSet.size > 0) {
                 escolaData.turmas = Array.from(turmasSet).sort();
             }
-            logDebug(`📊 Turmas disponíveis: ${escolaData.turmas.length}`, 'info');
+            console.log('📊 Turmas:', escolaData.turmas);
 
             // ============================================
             // ATUALIZAR SOLICITAÇÕES
@@ -1422,7 +1278,12 @@
             // ============================================
             inicializarNotas();
 
-            logDebug('✅ Banco de dados atualizado com sucesso!', 'success');
+            console.log('✅ Banco de dados atualizado:', {
+                turmas: escolaData.turmas.length,
+                alunos: Object.keys(escolaData.alunos).length,
+                professores: escolaData.professores.length,
+                atribuicoes: Object.keys(db.atribuicoes).length
+            });
         }
 
         // ============================================
