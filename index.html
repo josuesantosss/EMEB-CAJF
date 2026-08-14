@@ -643,9 +643,55 @@
                 flex: 1 1 100%;
             }
         }
+        
+        /* Adicione estilos para loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>🔄 Carregando dados da planilha...</h3>
+            <p style="color: #718096;">Aguarde enquanto sincronizamos com o Google Sheets</p>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🏫 Sistema de Gestão Escolar</h1>
@@ -676,19 +722,17 @@
                     <label for="nome">Seu Nome</label>
                     <input type="text" id="nome" placeholder="Digite seu nome" required>
                 </div>
-                <div class="form-group">
-                    <label for="sheetId">ID da Google Planilha (opcional)</label>
-                    <input type="text" id="sheetId" placeholder="Cole o ID da planilha">
-                    <small style="color: #718096; display: block; margin-top: 5px;">
-                        Deixe em branco para usar dados locais (demo)
-                    </small>
-                </div>
                 <button type="submit" class="btn">Entrar no Sistema</button>
             </form>
+            <div style="margin-top: 15px; text-align: center; font-size: 0.9em; color: #718096;">
+                <span id="dataStatus">📊 Conectado à planilha: Escola Fundamental I</span>
+            </div>
         </div>
 
         <!-- Dashboard -->
         <div id="dashboard" class="dashboard">
+            <!-- ... (mesmo conteúdo do dashboard) ... -->
+            <!-- Mantenha todo o HTML do dashboard que você já tinha -->
             <div class="dashboard-header">
                 <div>
                     <h2 id="dashboardTitle">📊 Painel de Controle</h2>
@@ -696,7 +740,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                     <span id="syncStatus" class="sync-status synced">✅ Sincronizado</span>
-                    <button onclick="syncWithSheets()" class="btn btn-secondary btn-small">🔄 Sincronizar</button>
+                    <button onclick="carregarDadosPlanilha()" class="btn btn-secondary btn-small">🔄 Recarregar</button>
                     <button onclick="logout()" class="btn-logout">🚪 Sair</button>
                 </div>
             </div>
@@ -706,25 +750,19 @@
 
             <!-- ÁREA DO PROFESSOR -->
             <div id="professorArea" class="hidden">
-                <!-- Minhas Turmas -->
                 <div id="turmasSection" class="hidden">
                     <h3 style="margin-top: 30px; color: #2d3748;">📚 Minhas Turmas</h3>
                     <div id="turmasContainer" class="turmas-grid"></div>
                 </div>
-
-                <!-- Registros da Turma -->
                 <div id="registrosSection" class="hidden">
                     <div class="section-container">
                         <h3>📝 Registros da Turma: <span id="turmaSelecionadaNome">-</span></h3>
-
                         <div class="tabs">
                             <button class="tab active" onclick="switchTab('notas')">📊 Notas Bimestrais</button>
                             <button class="tab" onclick="switchTab('presencas')">✅ Presenças</button>
                             <button class="tab" onclick="switchTab('relatorios')">📄 Relatórios</button>
                             <button class="tab" onclick="switchTab('observacoes')">✏️ Observações</button>
                         </div>
-
-                        <!-- NOTAS BIMESTRAIS -->
                         <div id="tab-notas" class="tab-content active">
                             <div class="table-container">
                                 <table id="tabelaNotas">
@@ -739,9 +777,7 @@
                                             <th>Ações</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tabelaNotasBody">
-                                        <!-- Gerado dinamicamente -->
-                                    </tbody>
+                                    <tbody id="tabelaNotasBody"></tbody>
                                 </table>
                             </div>
                             <div style="margin-top: 15px;">
@@ -749,8 +785,6 @@
                                 <button onclick="calcularMedias()" class="btn btn-small">📊 Calcular Médias</button>
                             </div>
                         </div>
-
-                        <!-- PRESENÇAS -->
                         <div id="tab-presencas" class="tab-content">
                             <div class="form-row">
                                 <div class="form-group">
@@ -769,8 +803,6 @@
                             <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
                             <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-
-                        <!-- RELATÓRIOS -->
                         <div id="tab-relatorios" class="tab-content">
                             <div class="form-row">
                                 <div class="form-group">
@@ -795,8 +827,6 @@
                                 <div id="solicitacoesRelatorios" class="registros-list"></div>
                             </div>
                         </div>
-
-                        <!-- OBSERVAÇÕES -->
                         <div id="tab-observacoes" class="tab-content">
                             <div class="form-row">
                                 <div class="form-group">
@@ -821,7 +851,6 @@
 
             <!-- ÁREA DO COORDENADOR -->
             <div id="coordenadorArea" class="hidden">
-                <!-- Visão Geral por Turma -->
                 <div class="section-container">
                     <h3>📊 Visão Geral por Turma</h3>
                     <div class="table-container">
@@ -836,14 +865,10 @@
                                     <th>Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="visaoGeralTurmas">
-                                <!-- Gerado dinamicamente -->
-                            </tbody>
+                            <tbody id="visaoGeralTurmas"></tbody>
                         </table>
                     </div>
                 </div>
-
-                <!-- Atribuição de Turmas -->
                 <div class="section-container">
                     <h3>📋 Atribuição de Turmas</h3>
                     <div class="form-row">
@@ -869,8 +894,6 @@
                         <div id="professoresAtribuidos" class="professores-list"></div>
                     </div>
                 </div>
-
-                <!-- Solicitar Relatório do Aluno -->
                 <div class="section-container">
                     <h3>📄 Solicitar Relatório do Aluno</h3>
                     <div class="form-row-3">
@@ -898,7 +921,6 @@
                         </div>
                     </div>
                     <button onclick="solicitarRelatorio()" class="btn btn-warning btn-small" style="margin-top: 15px;">📄 Solicitar Relatório</button>
-                    
                     <div style="margin-top: 20px;">
                         <h4>📋 Relatórios Solicitados</h4>
                         <div id="listaSolicitacoes" class="registros-list"></div>
@@ -908,15 +930,10 @@
 
             <!-- ÁREA DA DIRETORIA -->
             <div id="direcaoArea" class="hidden">
-                <!-- Painel Gerencial -->
                 <div class="section-container">
                     <h3>📊 Painel Gerencial</h3>
-                    <div class="stats-grid" id="statsGerenciais">
-                        <!-- Gerado dinamicamente -->
-                    </div>
+                    <div class="stats-grid" id="statsGerenciais"></div>
                 </div>
-
-                <!-- Relatórios Consolidados -->
                 <div class="section-container">
                     <h3>📋 Relatórios Consolidados</h3>
                     <div class="btn-group" style="margin-bottom: 20px;">
@@ -926,8 +943,6 @@
                     </div>
                     <div id="relatorioConsolidado" style="margin-top: 20px;"></div>
                 </div>
-
-                <!-- Relatório Individual do Aluno -->
                 <div class="section-container">
                     <h3>📄 Relatório Individual do Aluno</h3>
                     <div class="form-row">
@@ -962,9 +977,226 @@
 
     <script>
         // ============================================
-        // DADOS DA ESCOLA
+        // CONFIGURAÇÃO DA PLANILHA
         // ============================================
-        const escolaData = {
+        const SHEET_CONFIG = {
+            // ID da planilha extraído da URL
+            sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
+            // URL base da API
+            apiUrl: 'https://sheets.googleapis.com/v4/spreadsheets/',
+            // Abas e seus ranges
+            abas: {
+                alunos: 'TURMAS_ALUNOS',
+                professores: 'PROFESSORES',
+                relatoriosGerados: 'RELATORIOS_GERADOS',
+                relatoriosSolicitados: 'RELATORIOS_SOLICITADOS',
+                atribuicoes: 'ATRIBUICOES'
+            }
+        };
+
+        // ============================================
+        // DADOS CARREGADOS DA PLANILHA
+        // ============================================
+        let dadosPlanilha = {
+            alunos: [],
+            professores: [],
+            relatoriosGerados: [],
+            relatoriosSolicitados: [],
+            atribuicoes: []
+        };
+
+        // ============================================
+        // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
+        // ============================================
+        async function carregarDadosPlanilha() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            try {
+                // Usa a API pública do Google Sheets (sem autenticação)
+                // A planilha precisa estar pública ou com acesso de leitura
+                const url = `${SHEET_CONFIG.apiUrl}${SHEET_CONFIG.sheetId}/values:batchGet?ranges=${SHEET_CONFIG.abas.alunos}!A:I&ranges=${SHEET_CONFIG.abas.professores}!A:H&ranges=${SHEET_CONFIG.abas.relatoriosGerados}!A:L&ranges=${SHEET_CONFIG.abas.relatoriosSolicitados}!A:I&ranges=${SHEET_CONFIG.abas.atribuicoes}!A:F`;
+
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ao carregar dados: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Processa os dados de cada aba
+                const ranges = data.valueRanges || [];
+                
+                // 1. TURMAS_ALUNOS
+                if (ranges[0] && ranges[0].values) {
+                    const valores = ranges[0].values;
+                    const headers = valores[0];
+                    dadosPlanilha.alunos = valores.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header.trim()] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+
+                // 2. PROFESSORES
+                if (ranges[1] && ranges[1].values) {
+                    const valores = ranges[1].values;
+                    const headers = valores[0];
+                    dadosPlanilha.professores = valores.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header.trim()] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+
+                // 3. RELATORIOS_GERADOS
+                if (ranges[2] && ranges[2].values) {
+                    const valores = ranges[2].values;
+                    const headers = valores[0];
+                    dadosPlanilha.relatoriosGerados = valores.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header.trim()] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+
+                // 4. RELATORIOS_SOLICITADOS
+                if (ranges[3] && ranges[3].values) {
+                    const valores = ranges[3].values;
+                    const headers = valores[0];
+                    dadosPlanilha.relatoriosSolicitados = valores.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header.trim()] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+
+                // 5. ATRIBUICOES
+                if (ranges[4] && ranges[4].values) {
+                    const valores = ranges[4].values;
+                    const headers = valores[0];
+                    dadosPlanilha.atribuicoes = valores.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header.trim()] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+
+                // Atualiza o banco de dados local com os dados da planilha
+                atualizarBancoDados();
+
+                // Atualiza a interface
+                const status = document.getElementById('dataStatus');
+                status.innerHTML = `✅ Dados carregados: ${dadosPlanilha.alunos.length} alunos, ${dadosPlanilha.professores.length} professores, ${dadosPlanilha.atribuicoes.length} atribuições`;
+
+                document.getElementById('syncStatus').className = 'sync-status synced';
+                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+
+                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${dadosPlanilha.alunos.length} alunos\n👨‍🏫 ${dadosPlanilha.professores.length} professores\n📋 ${dadosPlanilha.atribuicoes.length} atribuições\n📄 ${dadosPlanilha.relatoriosGerados.length} relatórios gerados\n📝 ${dadosPlanilha.relatoriosSolicitados.length} solicitações`);
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                document.getElementById('syncStatus').className = 'sync-status error';
+                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
+                alert('❌ Erro ao carregar dados da planilha.\n\nVerifique se a planilha está pública e o ID está correto.\n\nDetalhes: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ============================================
+        // FUNÇÃO PARA ATUALIZAR BANCO DE DADOS LOCAL
+        // ============================================
+        function atualizarBancoDados() {
+            // Atualiza professores
+            escolaData.professores = dadosPlanilha.professores.map(p => ({
+                id: p.ID_Professor || p.id || '',
+                nome: p.Nome || p.nome || '',
+                tipo: p.Tipo || p.tipo || ''
+            })).filter(p => p.id && p.nome);
+
+            // Atualiza alunos
+            const novosAlunos = {};
+            dadosPlanilha.alunos.forEach(aluno => {
+                const turma = aluno.Turma || aluno.turma || '';
+                const nome = aluno.Nome_Aluno || aluno.nome || '';
+                if (turma && nome) {
+                    if (!novosAlunos[turma]) {
+                        novosAlunos[turma] = [];
+                    }
+                    novosAlunos[turma].push(nome);
+                }
+            });
+            escolaData.alunos = novosAlunos;
+
+            // Atualiza atribuições
+            db.atribuicoes = {};
+            dadosPlanilha.atribuicoes.forEach(attr => {
+                const profId = attr.ID_Professor || attr.id || '';
+                const turma = attr.Turma || attr.turma || '';
+                if (profId && turma && attr.Ativo !== 'NÃO') {
+                    if (!db.atribuicoes[profId]) {
+                        db.atribuicoes[profId] = [];
+                    }
+                    if (!db.atribuicoes[profId].includes(turma)) {
+                        db.atribuicoes[profId].push(turma);
+                    }
+                }
+            });
+
+            // Atualiza relatórios gerados (apenas para referência)
+            dadosPlanilha.relatoriosGerados.forEach(r => {
+                const turma = r.Turma || r.turma || '';
+                const aluno = r.Aluno || r.aluno || '';
+                if (turma && aluno) {
+                    if (!db.relatorios[turma]) {
+                        db.relatorios[turma] = {};
+                    }
+                    if (!db.relatorios[turma][aluno]) {
+                        db.relatorios[turma][aluno] = {};
+                    }
+                    // Armazena o relatório
+                    db.relatorios[turma][aluno][r.Bimestre || 'anual'] = {
+                        gerado: true,
+                        conteudo: r.Conteudo || '',
+                        data: r.Data_Geracao || ''
+                    };
+                }
+            });
+
+            // Atualiza solicitações de relatório
+            db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
+                turma: s.Turma || s.turma || '',
+                aluno: s.Aluno || s.aluno || '',
+                bimestre: s.Bimestre || s.bimestre || '1',
+                data: s.Data_Solicitacao || '',
+                status: s.Status || 'Pendente'
+            })).filter(s => s.turma && s.aluno);
+
+            // Atualiza turmas disponíveis
+            const turmasSet = new Set();
+            Object.keys(escolaData.alunos).forEach(t => turmasSet.add(t));
+            Object.values(db.atribuicoes).forEach(turmas => {
+                turmas.forEach(t => turmasSet.add(t));
+            });
+            escolaData.turmas = Array.from(turmasSet).sort();
+        }
+
+        // ============================================
+        // DADOS DA ESCOLA (Inicial com fallback)
+        // ============================================
+        let escolaData = {
             turmas: [
                 '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
                 '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
@@ -1013,7 +1245,7 @@
         };
 
         // ============================================
-        // BANCO DE DADOS
+        // BANCO DE DADOS LOCAL
         // ============================================
         let db = {
             atribuicoes: {
@@ -1027,24 +1259,27 @@
                 'p8': ['4º Ano D', '5º Ano E'],
                 'p9': ['1º Ano A', '2º Ano B', '3º Ano C', '4º Ano D', '5º Ano E']
             },
-            notas: {}, // {turma: {aluno: {bimestre: nota}}}
-            presencas: {}, // {turma: [{data, presentes: [], obs: ''}]}
-            observacoes: {}, // {turma: [{data, aluno, observacao}]}
-            relatorios: {}, // {turma: {aluno: {bimestre: {solicitado: bool, gerado: bool, conteudo: ''}}}}
-            solicitacoes: [] // [{turma, aluno, bimestre, data, status}]
+            notas: {},
+            presencas: {},
+            observacoes: {},
+            relatorios: {},
+            solicitacoes: []
         };
 
         // Inicializa notas
-        escolaData.turmas.forEach(turma => {
-            db.notas[turma] = {};
-            const alunos = escolaData.alunos[turma] || [];
-            alunos.forEach(aluno => {
-                db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        function inicializarNotas() {
+            escolaData.turmas.forEach(turma => {
+                db.notas[turma] = {};
+                const alunos = escolaData.alunos[turma] || [];
+                alunos.forEach(aluno => {
+                    db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+                });
+                if (!db.presencas[turma]) db.presencas[turma] = [];
+                if (!db.observacoes[turma]) db.observacoes[turma] = [];
+                if (!db.relatorios[turma]) db.relatorios[turma] = {};
             });
-            db.presencas[turma] = [];
-            db.observacoes[turma] = [];
-            db.relatorios[turma] = {};
-        });
+        }
+        inicializarNotas();
 
         // ============================================
         // ESTADO DO USUÁRIO
@@ -1087,21 +1322,6 @@
             const valores = Object.values(notas).filter(n => n > 0);
             if (valores.length === 0) return 0;
             return valores.reduce((a, b) => a + b, 0) / valores.length;
-        }
-
-        function getNomeCargo(cargo) {
-            const nomes = {
-                'direcao': 'Direção',
-                'vice-direcao': 'Vice-Direção',
-                'secretaria': 'Secretaria',
-                'coordenacao': 'Coordenação',
-                'professor-regente': 'Professor Regente',
-                'professor-artes': 'Professor de Artes',
-                'professor-musica': 'Professor de Música',
-                'professor-ingles': 'Professor de Inglês',
-                'professor-ef': 'Professor de Educação Física'
-            };
-            return nomes[cargo] || cargo;
         }
 
         // ============================================
@@ -1163,7 +1383,6 @@
 
             const cargo = document.getElementById('cargo').value;
             const nome = document.getElementById('nome').value.trim();
-            const sheetId = document.getElementById('sheetId').value.trim();
 
             if (!cargo || !nome) {
                 alert('Por favor, preencha todos os campos.');
@@ -1173,7 +1392,6 @@
             currentUser.cargo = cargo;
             currentUser.nome = nome;
 
-            // Carrega turmas do professor
             if (cargo.startsWith('professor')) {
                 const profId = getProfessorIdByNome(nome);
                 if (profId) {
@@ -1183,17 +1401,14 @@
                 }
             }
 
-            // Esconde login e mostra dashboard
             document.getElementById('loginContainer').style.display = 'none';
             const dashboard = document.getElementById('dashboard');
             dashboard.classList.add('active');
 
-            // Configura dashboard
             const config = cargoConfig[cargo];
             document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
             document.getElementById('userDisplay').textContent = `👤 ${nome} - ${config.titulo}`;
 
-            // Renderiza painel
             renderDashboard(cargo);
         });
 
@@ -1202,16 +1417,12 @@
         // ============================================
         function renderDashboard(cargo) {
             const config = cargoConfig[cargo];
-
-            // Cards
             renderCards(config);
 
-            // Esconde todas as áreas
             document.getElementById('professorArea').classList.add('hidden');
             document.getElementById('coordenadorArea').classList.add('hidden');
             document.getElementById('direcaoArea').classList.add('hidden');
 
-            // Mostra área conforme cargo
             if (cargo.startsWith('professor')) {
                 document.getElementById('professorArea').classList.remove('hidden');
                 document.getElementById('turmasSection').classList.remove('hidden');
@@ -1279,7 +1490,6 @@
                 </div>
             `).join('');
 
-            // Seleciona a primeira turma por padrão
             if (!turmaSelecionada && currentUser.turmas.length > 0) {
                 selecionarTurma(currentUser.turmas[0]);
             }
@@ -1289,8 +1499,6 @@
             turmaSelecionada = turma;
             document.getElementById('turmaSelecionadaNome').textContent = turma;
             renderMinhasTurmas();
-
-            // Carrega dados da turma
             carregarTabelaNotas();
             carregarPresenca();
             carregarObservacoes();
@@ -1328,25 +1536,21 @@
 
         function calcularMediaAluno(aluno) {
             if (!turmaSelecionada) return;
-            
             const notas = {};
             for (let bim = 1; bim <= 4; bim++) {
                 const input = document.getElementById(`nota_${aluno}_${bim}`);
                 notas[bim] = parseFloat(input.value) || 0;
             }
-            
             const media = calcularMedia(notas);
             alert(`📊 Média de ${aluno}: ${media.toFixed(1)}`);
         }
 
         function calcularMedias() {
             if (!turmaSelecionada) return;
-            
             const alunos = getAlunosByTurma(turmaSelecionada);
             let relatorio = '📊 Médias da Turma\n\n';
             relatorio += 'Aluno | 1ºB | 2ºB | 3ºB | 4ºB | Média\n';
             relatorio += '-'.repeat(50) + '\n';
-            
             alunos.forEach(aluno => {
                 const notas = {};
                 for (let bim = 1; bim <= 4; bim++) {
@@ -1356,7 +1560,6 @@
                 const media = calcularMedia(notas);
                 relatorio += `${aluno} | ${notas[1]} | ${notas[2]} | ${notas[3]} | ${notas[4]} | ${media.toFixed(1)}\n`;
             });
-            
             alert(relatorio);
         }
 
@@ -1376,7 +1579,6 @@
                 if (!db.notas[turmaSelecionada][aluno]) {
                     db.notas[turmaSelecionada][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
                 }
-                
                 for (let bim = 1; bim <= 4; bim++) {
                     const input = document.getElementById(`nota_${aluno}_${bim}`);
                     if (input) {
@@ -1406,7 +1608,6 @@
                 </div>
             `).join('');
 
-            // Carrega registros de presença
             renderRegistrosPresenca();
         }
 
@@ -1453,7 +1654,6 @@
             renderRegistrosPresenca();
             alert('✅ Presença salva com sucesso!');
 
-            // Marca todos como presentes novamente
             document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
             document.getElementById('obsPresenca').value = '';
         }
@@ -1539,7 +1739,6 @@
 
         function gerarRelatorioSolicitado(aluno, bimestre) {
             gerarRelatorio(aluno, bimestre);
-            // Atualiza status da solicitação
             const solicitacao = db.solicitacoes.find(s => 
                 s.turma === turmaSelecionada && s.aluno === aluno && s.bimestre === bimestre
             );
@@ -1569,7 +1768,6 @@
             const observacoes = db.observacoes[turmaSelecionada] || [];
             const obsAluno = observacoes.filter(o => o.aluno === aluno);
 
-            // Calcula presença do aluno
             let totalPresencas = 0;
             let totalDias = presencas.length;
             presencas.forEach(p => {
@@ -1606,8 +1804,6 @@
             `;
 
             document.getElementById('relatorioGerado').innerHTML = relatorioHtml;
-
-            // Abre modal para visualização
             document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorio').classList.add('active');
         }
@@ -1653,7 +1849,6 @@
                 
                 const mediaGeral = totalAlunos > 0 ? (somaMedias / totalAlunos) : 0;
                 
-                // Calcula presença média
                 const presencas = db.presencas[turma] || [];
                 presencas.forEach(p => {
                     totalDias++;
@@ -1661,10 +1856,8 @@
                 });
                 const mediaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * alunos.length) * 100) : 0;
                 
-                // Conta relatórios pendentes
                 const solicitacoes = db.solicitacoes.filter(s => s.turma === turma && s.status === 'Pendente');
                 
-                // Encontra professor regente
                 let professor = 'Não atribuído';
                 for (const [profId, turmas] of Object.entries(db.atribuicoes)) {
                     if (turmas.includes(turma)) {
@@ -1757,7 +1950,6 @@
             renderProfessoresAtribuidos();
             renderVisaoGeralTurmas();
 
-            // Atualiza se o professor logado for o mesmo
             const prof = getProfessorById(profId);
             if (prof && prof.nome === currentUser.nome) {
                 currentUser.turmas = getTurmasByProfessor(profId);
@@ -1789,7 +1981,6 @@
             renderProfessoresAtribuidos();
             renderVisaoGeralTurmas();
 
-            // Atualiza se o professor logado for o mesmo
             const prof = getProfessorById(profId);
             if (prof && prof.nome === currentUser.nome) {
                 currentUser.turmas = getTurmasByProfessor(profId);
@@ -1901,7 +2092,7 @@
 
             const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
             const taxaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * (totalAlunos / totalTurmas || 1)) * 100) : 0;
-            const taxaAprovacao = mediaGeral >= 7 ? 85 : 75; // Simulação
+            const taxaAprovacao = mediaGeral >= 7 ? 85 : 75;
 
             container.innerHTML = `
                 <div class="stat-card">
@@ -2186,8 +2377,6 @@
             `;
 
             document.getElementById('relatorioAlunoCompleto').innerHTML = relatorioHtml;
-            
-            // Abre modal
             document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorio').classList.add('active');
         }
@@ -2223,7 +2412,6 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        // Fechar modal clicando fora
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal-overlay')) {
                 e.target.classList.remove('active');
@@ -2231,18 +2419,10 @@
         });
 
         // ============================================
-        // GOOGLE SHEETS (Simulação)
+        // SYNC COM PLANILHA
         // ============================================
         function syncWithSheets() {
-            const statusElement = document.getElementById('syncStatus');
-            statusElement.className = 'sync-status syncing';
-            statusElement.textContent = '🔄 Sincronizando...';
-
-            setTimeout(() => {
-                statusElement.className = 'sync-status synced';
-                statusElement.textContent = '✅ Sincronizado';
-                alert('✅ Dados sincronizados com sucesso! (Modo Demo)');
-            }, 1500);
+            carregarDadosPlanilha();
         }
 
         // ============================================
@@ -2252,10 +2432,8 @@
             document.getElementById('dashboard').classList.remove('active');
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('loginForm').reset();
-
             document.getElementById('cardsContainer').innerHTML = '';
             document.getElementById('turmasContainer').innerHTML = '';
-
             turmaSelecionada = null;
             currentUser = { cargo: '', nome: '', turmas: [] };
         }
@@ -2268,10 +2446,14 @@
             document.getElementById('dataPresenca').value = hoje;
             document.getElementById('dataObservacao').value = hoje;
 
-            // Configura data mínima
             ['dataPresenca', 'dataObservacao'].forEach(id => {
                 document.getElementById(id).max = hoje;
             });
+
+            // Carrega dados automaticamente ao iniciar
+            setTimeout(() => {
+                carregarDadosPlanilha();
+            }, 500);
         });
     </script>
 </body>
