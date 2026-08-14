@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Escolar - Gestão Completa</title>
     <style>
-        /* ============================================
-           ESTILOS COMPLETOS
-           ============================================ */
         * {
             margin: 0;
             padding: 0;
@@ -612,7 +609,6 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Loading */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -625,9 +621,11 @@
             align-items: center;
             z-index: 9999;
         }
+
         .loading-overlay.active {
             display: flex;
         }
+
         .loading-content {
             background: white;
             padding: 40px;
@@ -635,6 +633,7 @@
             text-align: center;
             max-width: 400px;
         }
+
         .loading-spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
@@ -644,45 +643,10 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        .status-msg {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        .status-msg.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .status-msg.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .status-msg.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .api-config {
-            background: #f8f9fa;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .api-config .info {
-            font-size: 0.85em;
-            color: #718096;
-            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
@@ -726,10 +690,6 @@
         <!-- Tela de Login -->
         <div id="loginContainer" class="login-container" style="display: none;">
             <h2>🔐 Acesso ao Sistema</h2>
-            
-            <!-- Status da API (escondido) -->
-            <div id="apiStatus" style="display: none;"></div>
-            
             <form id="loginForm">
                 <div class="form-group">
                     <label for="cargo">Selecione seu Cargo</label>
@@ -754,7 +714,7 @@
             </form>
 
             <div style="margin-top: 15px; text-align: center; font-size: 0.9em; color: #718096;">
-                <span id="dataStatus">📊 Dados carregados com sucesso!</span>
+                <span id="dataStatus">📊 Aguardando dados...</span>
             </div>
         </div>
 
@@ -1007,7 +967,6 @@
         // CONFIGURAÇÃO DA API
         // ============================================
         const API_CONFIG = {
-            // URL da sua API GAS
             url: 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec'
         };
 
@@ -1027,7 +986,6 @@
         // ============================================
         async function consumirAPI(acao, params = {}) {
             try {
-                // Monta a URL com os parâmetros
                 let url = `${API_CONFIG.url}?acao=${acao}`;
                 
                 for (let chave in params) {
@@ -1050,14 +1008,10 @@
 
                 const data = await response.json();
                 console.log(`✅ Resposta da API (${acao}):`, data);
-
                 return data;
             } catch (error) {
                 console.error(`❌ Erro na API (${acao}):`, error);
-                return {
-                    success: false,
-                    error: error.message || 'Erro desconhecido'
-                };
+                return { success: false, error: error.message || 'Erro desconhecido' };
             }
         }
 
@@ -1070,54 +1024,95 @@
             document.getElementById('loadingMessage').textContent = '🔄 Carregando dados da API...';
 
             try {
-                // Carrega todas as abas de uma vez
                 const resultado = await consumirAPI('lerTodasAbas');
 
                 if (resultado.success) {
-                    // Processa os dados recebidos
                     const dados = resultado.dados || {};
                     
-                    // TURMAS_ALUNOS
+                    // ============================================
+                    // PROCESSAR ALUNOS
+                    // ============================================
                     if (dados.TURMAS_ALUNOS) {
-                        dadosAPI.alunos = dados.TURMAS_ALUNOS.dados || [];
+                        const dadosBrutos = dados.TURMAS_ALUNOS.dados || [];
+                        dadosAPI.alunos = dadosBrutos
+                            .filter(item => item.Turma && item.Nome_Aluno)
+                            .map(item => ({
+                                Turma: String(item.Turma || '').trim(),
+                                Nome_Aluno: String(item.Nome_Aluno || '').trim(),
+                                ID_Aluno: String(item.ID_Aluno || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
+                            }));
+                        
                         console.log(`📊 Alunos carregados: ${dadosAPI.alunos.length}`);
+                        console.log('📋 Primeiros alunos:', dadosAPI.alunos.slice(0, 3));
                     }
 
-                    // PROFESSORES
+                    // ============================================
+                    // PROCESSAR PROFESSORES
+                    // ============================================
                     if (dados.PROFESSORES) {
-                        dadosAPI.professores = dados.PROFESSORES.dados || [];
+                        const dadosBrutos = dados.PROFESSORES.dados || [];
+                        dadosAPI.professores = dadosBrutos
+                            .filter(item => item.ID_Professor && item.Nome)
+                            .map(item => ({
+                                ID_Professor: String(item.ID_Professor || '').trim(),
+                                Nome: String(item.Nome || '').trim(),
+                                Tipo: String(item.Tipo || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
+                            }));
+                        
                         console.log(`📊 Professores carregados: ${dadosAPI.professores.length}`);
+                        console.log('📋 Primeiros professores:', dadosAPI.professores.slice(0, 3));
                     }
 
-                    // RELATORIOS_GERADOS
-                    if (dados.RELATORIOS_GERADOS) {
-                        dadosAPI.relatoriosGerados = dados.RELATORIOS_GERADOS.dados || [];
-                        console.log(`📊 Relatórios gerados: ${dadosAPI.relatoriosGerados.length}`);
+                    // ============================================
+                    // PROCESSAR ATRIBUIÇÕES
+                    // ============================================
+                    if (dados.ATRIBUICOES) {
+                        const dadosBrutos = dados.ATRIBUICOES.dados || [];
+                        dadosAPI.atribuicoes = dadosBrutos
+                            .filter(item => item.ID_Professor && item.Turma)
+                            .map(item => ({
+                                ID_Professor: String(item.ID_Professor || '').trim(),
+                                Nome_Professor: String(item.Nome_Professor || '').trim(),
+                                Tipo: String(item.Tipo || '').trim(),
+                                Turma: String(item.Turma || '').trim(),
+                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
+                            }));
+                        
+                        console.log(`📊 Atribuições carregadas: ${dadosAPI.atribuicoes.length}`);
+                        console.log('📋 Primeiras atribuições:', dadosAPI.atribuicoes.slice(0, 3));
                     }
 
-                    // RELATORIOS_SOLICITADOS
+                    // ============================================
+                    // PROCESSAR RELATÓRIOS SOLICITADOS
+                    // ============================================
                     if (dados.RELATORIOS_SOLICITADOS) {
-                        dadosAPI.relatoriosSolicitados = dados.RELATORIOS_SOLICITADOS.dados || [];
+                        const dadosBrutos = dados.RELATORIOS_SOLICITADOS.dados || [];
+                        dadosAPI.relatoriosSolicitados = dadosBrutos
+                            .filter(item => item.Turma && item.Aluno)
+                            .map(item => ({
+                                Turma: String(item.Turma || '').trim(),
+                                Aluno: String(item.Aluno || '').trim(),
+                                Bimestre: String(item.Bimestre || '1').trim(),
+                                Data_Solicitacao: String(item.Data_Solicitacao || '').trim(),
+                                Status: String(item.Status || 'Pendente').trim()
+                            }));
+                        
                         console.log(`📊 Relatórios solicitados: ${dadosAPI.relatoriosSolicitados.length}`);
                     }
 
-                    // ATRIBUICOES
-                    if (dados.ATRIBUICOES) {
-                        dadosAPI.atribuicoes = dados.ATRIBUICOES.dados || [];
-                        console.log(`📊 Atribuições: ${dadosAPI.atribuicoes.length}`);
-                    }
-
-                    // Atualiza o banco de dados local
+                    // ============================================
+                    // ATUALIZAR BANCO DE DADOS LOCAL
+                    // ============================================
                     atualizarBancoDados();
 
-                    // Mostra status
                     document.getElementById('dataStatus').innerHTML = 
                         `✅ Dados carregados: ${dadosAPI.alunos.length} alunos, ${dadosAPI.professores.length} professores, ${dadosAPI.atribuicoes.length} atribuições`;
                     
                     document.getElementById('syncStatus').className = 'sync-status synced';
                     document.getElementById('syncStatus').textContent = '✅ Sincronizado';
 
-                    // Esconde loading e mostra login
                     loading.classList.remove('active');
                     document.getElementById('loginContainer').style.display = 'block';
 
@@ -1128,16 +1123,12 @@
 
             } catch (error) {
                 console.error('❌ Erro ao carregar dados:', error);
-                
-                // Mostra erro no loading
-                document.getElementById('loadingMessage').textContent = '❌ Erro ao carregar dados. Tente novamente.';
+                document.getElementById('loadingMessage').textContent = '❌ Erro ao carregar dados. Usando dados de exemplo.';
                 document.getElementById('loadingMessage').style.color = '#e53e3e';
-
-                // Tenta carregar dados de exemplo como fallback
+                
                 setTimeout(() => {
                     carregarDadosExemplo();
-                }, 2000);
-
+                }, 1500);
                 return false;
             }
         }
@@ -1148,33 +1139,26 @@
         function carregarDadosExemplo() {
             console.log('📊 Carregando dados de exemplo (fallback)...');
             
-            const turmas = ['1º Ano A', '1º Ano B', '1º Ano C', '2º Ano A', '2º Ano B', '3º Ano A'];
-            const nomes = ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima', 'Felipe Rocha'];
-            
-            dadosAPI.alunos = [];
-            turmas.forEach((turma, tIndex) => {
-                for (let i = 0; i < 4; i++) {
-                    const alunoIndex = (tIndex + i) % nomes.length;
-                    dadosAPI.alunos.push({
-                        'Turma': turma,
-                        'Nome_Aluno': nomes[alunoIndex],
-                        'ID_Aluno': `A${tIndex}${i+1}`,
-                        'Ativo': 'SIM'
-                    });
-                }
-            });
+            dadosAPI.alunos = [
+                { Turma: '1º Ano A', Nome_Aluno: 'Ana Silva', Ativo: 'SIM' },
+                { Turma: '1º Ano A', Nome_Aluno: 'Bruno Santos', Ativo: 'SIM' },
+                { Turma: '1º Ano A', Nome_Aluno: 'Carla Oliveira', Ativo: 'SIM' },
+                { Turma: '2º Ano B', Nome_Aluno: 'Daniel Costa', Ativo: 'SIM' },
+                { Turma: '2º Ano B', Nome_Aluno: 'Eduarda Lima', Ativo: 'SIM' },
+                { Turma: '3º Ano C', Nome_Aluno: 'Felipe Rocha', Ativo: 'SIM' }
+            ];
 
             dadosAPI.professores = [
-                { 'ID_Professor': 'p1', 'Nome': 'Prof. Carlos Silva', 'Tipo': 'Regente', 'Ativo': 'SIM' },
-                { 'ID_Professor': 'p2', 'Nome': 'Prof. Maria Santos', 'Tipo': 'Regente', 'Ativo': 'SIM' },
-                { 'ID_Professor': 'p6', 'Nome': 'Prof. Paula Mendes', 'Tipo': 'Artes', 'Ativo': 'SIM' },
-                { 'ID_Professor': 'p9', 'Nome': 'Prof. Marcos Rocha', 'Tipo': 'Educação Física', 'Ativo': 'SIM' }
+                { ID_Professor: 'p1', Nome: 'Prof. Carlos Silva', Tipo: 'Regente', Ativo: 'SIM' },
+                { ID_Professor: 'p2', Nome: 'Prof. Maria Santos', Tipo: 'Regente', Ativo: 'SIM' },
+                { ID_Professor: 'p6', Nome: 'Prof. Paula Mendes', Tipo: 'Artes', Ativo: 'SIM' },
+                { ID_Professor: 'p9', Nome: 'Prof. Marcos Rocha', Tipo: 'Educação Física', Ativo: 'SIM' }
             ];
 
             dadosAPI.atribuicoes = [
-                { 'ID_Professor': 'p1', 'Nome_Professor': 'Prof. Carlos Silva', 'Tipo': 'Regente', 'Turma': '1º Ano A', 'Ativo': 'SIM' },
-                { 'ID_Professor': 'p2', 'Nome_Professor': 'Prof. Maria Santos', 'Tipo': 'Regente', 'Turma': '2º Ano B', 'Ativo': 'SIM' },
-                { 'ID_Professor': 'p6', 'Nome_Professor': 'Prof. Paula Mendes', 'Tipo': 'Artes', 'Turma': '1º Ano A', 'Ativo': 'SIM' }
+                { ID_Professor: 'p1', Nome_Professor: 'Prof. Carlos Silva', Tipo: 'Regente', Turma: '1º Ano A', Ativo: 'SIM' },
+                { ID_Professor: 'p2', Nome_Professor: 'Prof. Maria Santos', Tipo: 'Regente', Turma: '2º Ano B', Ativo: 'SIM' },
+                { ID_Professor: 'p6', Nome_Professor: 'Prof. Paula Mendes', Tipo: 'Artes', Turma: '1º Ano A', Ativo: 'SIM' }
             ];
 
             dadosAPI.relatoriosSolicitados = [];
@@ -1196,7 +1180,28 @@
         // FUNÇÃO PARA ATUALIZAR BANCO DE DADOS LOCAL
         // ============================================
         function atualizarBancoDados() {
-            // Atualiza professores
+            // ============================================
+            // ATUALIZAR ALUNOS POR TURMA
+            // ============================================
+            const novosAlunos = {};
+            dadosAPI.alunos.forEach(aluno => {
+                const turma = aluno.Turma || '';
+                const nome = aluno.Nome_Aluno || '';
+                if (turma && nome && aluno.Ativo !== 'NÃO') {
+                    if (!novosAlunos[turma]) {
+                        novosAlunos[turma] = [];
+                    }
+                    if (!novosAlunos[turma].includes(nome)) {
+                        novosAlunos[turma].push(nome);
+                    }
+                }
+            });
+            escolaData.alunos = novosAlunos;
+            console.log('📊 Alunos por turma:', escolaData.alunos);
+
+            // ============================================
+            // ATUALIZAR PROFESSORES
+            // ============================================
             if (dadosAPI.professores.length > 0) {
                 escolaData.professores = dadosAPI.professores
                     .filter(p => p.Ativo !== 'NÃO')
@@ -1207,26 +1212,11 @@
                     }))
                     .filter(p => p.id && p.nome);
             }
+            console.log('📊 Professores:', escolaData.professores);
 
-            // Atualiza alunos
-            if (dadosAPI.alunos.length > 0) {
-                const novosAlunos = {};
-                dadosAPI.alunos.forEach(aluno => {
-                    const turma = aluno.Turma || '';
-                    const nome = aluno.Nome_Aluno || '';
-                    if (turma && nome && aluno.Ativo !== 'NÃO') {
-                        if (!novosAlunos[turma]) {
-                            novosAlunos[turma] = [];
-                        }
-                        if (!novosAlunos[turma].includes(nome)) {
-                            novosAlunos[turma].push(nome);
-                        }
-                    }
-                });
-                escolaData.alunos = novosAlunos;
-            }
-
-            // Atualiza atribuições
+            // ============================================
+            // ATUALIZAR ATRIBUIÇÕES
+            // ============================================
             if (dadosAPI.atribuicoes.length > 0) {
                 const novasAtribuicoes = {};
                 dadosAPI.atribuicoes.forEach(attr => {
@@ -1244,8 +1234,35 @@
                 });
                 db.atribuicoes = novasAtribuicoes;
             }
+            console.log('📊 Atribuições:', db.atribuicoes);
 
-            // Atualiza solicitações
+            // ============================================
+            // ATUALIZAR LISTA DE TURMAS
+            // ============================================
+            const turmasSet = new Set();
+            Object.keys(escolaData.alunos).forEach(t => turmasSet.add(t));
+            Object.values(db.atribuicoes).forEach(turmas => {
+                turmas.forEach(t => turmasSet.add(t));
+            });
+            
+            // Garantir que as turmas padrão existam
+            const turmasPadrao = [
+                '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
+                '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
+                '3º Ano A', '3º Ano B', '3º Ano C', '3º Ano D', '3º Ano E',
+                '4º Ano A', '4º Ano B', '4º Ano C', '4º Ano D', '4º Ano E',
+                '5º Ano A', '5º Ano B', '5º Ano C', '5º Ano D', '5º Ano E'
+            ];
+            turmasPadrao.forEach(t => turmasSet.add(t));
+            
+            if (turmasSet.size > 0) {
+                escolaData.turmas = Array.from(turmasSet).sort();
+            }
+            console.log('📊 Turmas:', escolaData.turmas);
+
+            // ============================================
+            // ATUALIZAR SOLICITAÇÕES
+            // ============================================
             if (dadosAPI.relatoriosSolicitados.length > 0) {
                 db.solicitacoes = dadosAPI.relatoriosSolicitados.map(s => ({
                     turma: s.Turma || '',
@@ -1256,17 +1273,9 @@
                 })).filter(s => s.turma && s.aluno);
             }
 
-            // Atualiza lista de turmas
-            const turmasSet = new Set();
-            Object.keys(escolaData.alunos).forEach(t => turmasSet.add(t));
-            Object.values(db.atribuicoes).forEach(turmas => {
-                turmas.forEach(t => turmasSet.add(t));
-            });
-            if (turmasSet.size > 0) {
-                escolaData.turmas = Array.from(turmasSet).sort();
-            }
-
-            // Re-inicializa notas
+            // ============================================
+            // RE-INICIALIZAR NOTAS
+            // ============================================
             inicializarNotas();
 
             console.log('✅ Banco de dados atualizado:', {
@@ -1946,7 +1955,12 @@
         // ============================================
         function carregarProfessoresAtribuicao() {
             const select = document.getElementById('professorSelect');
-            select.innerHTML = '<option value="">-- Selecione --</option>' +
+            if (escolaData.professores.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhum professor cadastrado --</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="">-- Selecione um professor --</option>' +
                 escolaData.professores.map(p =>
                     `<option value="${p.id}">${p.nome} (${p.tipo})</option>`
                 ).join('');
@@ -1956,7 +1970,12 @@
 
         function carregarTurmasSelect() {
             const select = document.getElementById('turmaSelect');
-            select.innerHTML = '<option value="">-- Selecione --</option>' +
+            if (escolaData.turmas.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -2052,7 +2071,12 @@
         // ============================================
         function carregarSolicitacaoTurmas() {
             const select = document.getElementById('solicitarTurma');
-            select.innerHTML = '<option value="">-- Selecione --</option>' +
+            if (escolaData.turmas.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -2062,10 +2086,14 @@
                 const alunoSelect = document.getElementById('solicitarAluno');
                 if (turma) {
                     const alunos = getAlunosByTurma(turma);
-                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
-                        alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    if (alunos.length === 0) {
+                        alunoSelect.innerHTML = '<option value="">-- Nenhum aluno nesta turma --</option>';
+                    } else {
+                        alunoSelect.innerHTML = '<option value="">-- Selecione um aluno --</option>' +
+                            alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    }
                 } else {
-                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>';
+                    alunoSelect.innerHTML = '<option value="">-- Selecione uma turma primeiro --</option>';
                 }
             });
         }
@@ -2377,7 +2405,12 @@
         // ============================================
         function carregarTurmasDirecao() {
             const select = document.getElementById('direcaoTurma');
-            select.innerHTML = '<option value="">-- Selecione --</option>' +
+            if (escolaData.turmas.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -2387,10 +2420,14 @@
                 const alunoSelect = document.getElementById('direcaoAluno');
                 if (turma) {
                     const alunos = getAlunosByTurma(turma);
-                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
-                        alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    if (alunos.length === 0) {
+                        alunoSelect.innerHTML = '<option value="">-- Nenhum aluno nesta turma --</option>';
+                    } else {
+                        alunoSelect.innerHTML = '<option value="">-- Selecione um aluno --</option>' +
+                            alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    }
                 } else {
-                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>';
+                    alunoSelect.innerHTML = '<option value="">-- Selecione uma turma primeiro --</option>';
                 }
             });
         }
@@ -2500,7 +2537,6 @@
 
             await carregarDadosAPI();
 
-            // Recarrega a interface se o usuário estiver logado
             if (currentUser.cargo) {
                 renderDashboard(currentUser.cargo);
             }
@@ -2531,7 +2567,6 @@
                 document.getElementById(id).max = hoje;
             });
 
-            // Inicia carregamento dos dados da API
             carregarDadosAPI();
         });
     </script>
