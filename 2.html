@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Escolar - Google Sheets API</title>
+    <title>Sistema Escolar - Gestão Completa</title>
     <style>
         /* ============================================
            ESTILOS COMPLETOS
@@ -61,7 +61,7 @@
             background: white;
             border-radius: 15px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 450px;
             margin: 0 auto 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
@@ -649,17 +649,39 @@
             100% { transform: rotate(360deg); }
         }
 
-        .config-box {
-            background: #f7fafc;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            border: 2px dashed #e2e8f0;
+        .status-msg {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .status-msg.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-msg.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-msg.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
 
-        .config-box .info {
+        .api-config {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .api-config .info {
+            font-size: 0.85em;
             color: #718096;
-            font-size: 0.9em;
             margin-top: 5px;
         }
 
@@ -686,11 +708,11 @@
 </head>
 <body>
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
+    <div id="loadingOverlay" class="loading-overlay active">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <h3>🔄 Carregando dados da planilha...</h3>
-            <p style="color: #718096;">Aguarde enquanto sincronizamos com o Google Sheets</p>
+            <h3>🔄 Carregando sistema...</h3>
+            <p id="loadingMessage" style="color: #718096;">Conectando à API do Google Sheets</p>
         </div>
     </div>
 
@@ -698,32 +720,17 @@
         <div class="header">
             <h1>🏫 Sistema de Gestão Escolar</h1>
             <p class="subtitle">Fundamental I - 1º ao 5º Ano (Turmas A a E)</p>
-            <div class="badge-google">📊 Integrado com Google Sheets API</div>
+            <div class="badge-google">📊 Conectado via Google Sheets API</div>
         </div>
 
         <!-- Tela de Login -->
-        <div id="loginContainer" class="login-container">
+        <div id="loginContainer" class="login-container" style="display: none;">
             <h2>🔐 Acesso ao Sistema</h2>
             
-            <!-- Configuração da API -->
-            <div class="config-box">
-                <div class="form-group">
-                    <label for="apiKeyInput">🔑 Sua API Key do Google Sheets</label>
-                    <input type="text" id="apiKeyInput" placeholder="Cole sua API Key aqui" value="AIzaSyDx6p3a1QePEZ4bNVl-Hj8fVJ7QtXIT9xY">
-                    <small style="color: #718096; display: block; margin-top: 5px;">
-                        Obtenha sua API Key no Google Cloud Console
-                    </small>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="configurarAPI()" class="btn btn-secondary btn-small" style="flex:1;">🔗 Configurar API</button>
-                    <button onclick="usarModoDemo()" class="btn btn-small" style="flex:1;">📊 Modo Demo</button>
-                </div>
-                <div id="statusAPI" style="margin-top: 10px; font-size: 0.9em; color: #718096;">
-                    ⚠️ Configure sua API Key para acessar os dados
-                </div>
-            </div>
-
-            <form id="loginForm" style="margin-top: 20px;">
+            <!-- Status da API (escondido) -->
+            <div id="apiStatus" style="display: none;"></div>
+            
+            <form id="loginForm">
                 <div class="form-group">
                     <label for="cargo">Selecione seu Cargo</label>
                     <select id="cargo" required>
@@ -747,7 +754,7 @@
             </form>
 
             <div style="margin-top: 15px; text-align: center; font-size: 0.9em; color: #718096;">
-                <span id="dataStatus">📊 Aguardando configuração...</span>
+                <span id="dataStatus">📊 Dados carregados com sucesso!</span>
             </div>
         </div>
 
@@ -760,7 +767,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                     <span id="syncStatus" class="sync-status synced">✅ Sincronizado</span>
-                    <button onclick="carregarDadosPlanilha()" class="btn btn-secondary btn-small">🔄 Recarregar</button>
+                    <button onclick="recarregarDados()" class="btn btn-secondary btn-small">🔄 Recarregar</button>
                     <button onclick="logout()" class="btn-logout">🚪 Sair</button>
                 </div>
             </div>
@@ -997,18 +1004,17 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DA PLANILHA
+        // CONFIGURAÇÃO DA API
         // ============================================
-        const SHEET_CONFIG = {
-            sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
-            apiKey: '',
-            useDemo: true
+        const API_CONFIG = {
+            // URL da sua API GAS
+            url: 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec'
         };
 
         // ============================================
-        // DADOS CARREGADOS DA PLANILHA
+        // DADOS CARREGADOS DA API
         // ============================================
-        let dadosPlanilha = {
+        let dadosAPI = {
             alunos: [],
             professores: [],
             relatoriosGerados: [],
@@ -1017,199 +1023,173 @@
         };
 
         // ============================================
-        // FUNÇÃO PARA CONFIGURAR API
+        // FUNÇÃO PARA CONSUMIR A API GAS
         // ============================================
-        function configurarAPI() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            
-            if (!apiKey) {
-                alert('⚠️ Por favor, insira sua API Key do Google Sheets.');
-                return;
-            }
-
-            SHEET_CONFIG.apiKey = apiKey;
-            SHEET_CONFIG.useDemo = false;
-            
-            document.getElementById('statusAPI').innerHTML = '✅ API Key configurada com sucesso!';
-            document.getElementById('statusAPI').style.color = '#48bb78';
-            
-            // Carrega os dados
-            carregarDadosPlanilha();
-        }
-
-        function usarModoDemo() {
-            SHEET_CONFIG.useDemo = true;
-            SHEET_CONFIG.apiKey = '';
-            document.getElementById('statusAPI').innerHTML = '📊 Modo Demo ativado - Usando dados de exemplo';
-            document.getElementById('statusAPI').style.color = '#ed8936';
-            
-            // Carrega dados de exemplo
-            carregarDadosDemo();
-        }
-
-        // ============================================
-        // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
-        // ============================================
-        async function carregarDadosPlanilha() {
-            if (SHEET_CONFIG.useDemo) {
-                carregarDadosDemo();
-                return;
-            }
-
-            if (!SHEET_CONFIG.apiKey) {
-                alert('⚠️ Configure sua API Key primeiro!');
-                return;
-            }
-
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('active');
-
+        async function consumirAPI(acao, params = {}) {
             try {
-                const apiKey = SHEET_CONFIG.apiKey;
-                const sheetId = SHEET_CONFIG.sheetId;
+                // Monta a URL com os parâmetros
+                let url = `${API_CONFIG.url}?acao=${acao}`;
                 
-                // Define as abas e ranges
-                const ranges = [
-                    'TURMAS_ALUNOS!A:I',
-                    'PROFESSORES!A:H',
-                    'RELATORIOS_GERADOS!A:L',
-                    'RELATORIOS_SOLICITADOS!A:I',
-                    'ATRIBUICOES!A:F'
-                ];
+                for (let chave in params) {
+                    if (params[chave] !== undefined && params[chave] !== null) {
+                        if (typeof params[chave] === 'object') {
+                            url += `&${chave}=${encodeURIComponent(JSON.stringify(params[chave]))}`;
+                        } else {
+                            url += `&${chave}=${encodeURIComponent(params[chave])}`;
+                        }
+                    }
+                }
 
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchGet?key=${apiKey}&ranges=${ranges.join('&ranges=')}`;
-
-                console.log('📡 Buscando dados da planilha...');
-                console.log('URL:', url);
+                console.log(`📡 Chamando API: ${acao}`, params);
 
                 const response = await fetch(url);
-
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Erro da API:', errorData);
-                    throw new Error(`Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                console.log('📊 Dados recebidos:', data);
+                console.log(`✅ Resposta da API (${acao}):`, data);
 
-                const rangesData = data.valueRanges || [];
-
-                // Processa cada aba
-                const processData = (rangeData, headers) => {
-                    if (!rangeData || !rangeData.values) return [];
-                    const values = rangeData.values;
-                    const headerRow = values[0] || [];
-                    return values.slice(1).map(row => {
-                        const obj = {};
-                        headerRow.forEach((header, index) => {
-                            const cleanHeader = header.trim().toUpperCase();
-                            obj[cleanHeader] = row[index] || '';
-                        });
-                        return obj;
-                    });
-                };
-
-                // 1. TURMAS_ALUNOS
-                if (rangesData[0]) {
-                    dadosPlanilha.alunos = processData(rangesData[0], ['Turma', 'Nome_Aluno', 'ID_Aluno', 'Data_Nascimento', 'Responsavel', 'Telefone', 'Email', 'Ano_Ingresso', 'Ativo']);
-                }
-
-                // 2. PROFESSORES
-                if (rangesData[1]) {
-                    dadosPlanilha.professores = processData(rangesData[1], ['ID_Professor', 'Nome', 'Tipo', 'Email', 'Telefone', 'Formacao', 'Data_Admissao', 'Ativo']);
-                }
-
-                // 3. RELATORIOS_GERADOS
-                if (rangesData[2]) {
-                    dadosPlanilha.relatoriosGerados = processData(rangesData[2], ['ID_Relatorio', 'Data_Geracao', 'Turma', 'Aluno', 'Bimestre', 'Professor', 'Notas', 'Media', 'Presenca', 'Observacoes', 'Recomendacao', 'Conteudo']);
-                }
-
-                // 4. RELATORIOS_SOLICITADOS
-                if (rangesData[3]) {
-                    dadosPlanilha.relatoriosSolicitados = processData(rangesData[3], ['ID_Solicitacao', 'Data_Solicitacao', 'Turma', 'Aluno', 'Bimestre', 'Professor', 'Status', 'Data_Conclusao', 'Observacoes']);
-                }
-
-                // 5. ATRIBUICOES
-                if (rangesData[4]) {
-                    dadosPlanilha.atribuicoes = processData(rangesData[4], ['ID_Professor', 'Nome_Professor', 'Tipo', 'Turma', 'Data_Atribuicao', 'Ativo']);
-                }
-
-                // Atualiza o banco de dados
-                atualizarBancoDados();
-
-                const status = document.getElementById('dataStatus');
-                status.innerHTML = `✅ Dados carregados: ${dadosPlanilha.alunos.length} alunos, ${dadosPlanilha.professores.length} professores, ${dadosPlanilha.atribuicoes.length} atribuições`;
-
-                document.getElementById('syncStatus').className = 'sync-status synced';
-                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-
-                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${dadosPlanilha.alunos.length} alunos\n👨‍🏫 ${dadosPlanilha.professores.length} professores\n📋 ${dadosPlanilha.atribuicoes.length} atribuições\n📄 ${dadosPlanilha.relatoriosGerados.length} relatórios gerados\n📝 ${dadosPlanilha.relatoriosSolicitados.length} solicitações`);
-
+                return data;
             } catch (error) {
-                console.error('❌ Erro ao carregar dados:', error);
-                document.getElementById('syncStatus').className = 'sync-status error';
-                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
-                
-                alert(`❌ Erro ao carregar dados da planilha.\n\n${error.message}\n\nVerifique:\n1. Sua API Key está correta\n2. A planilha está pública\n3. As abas existem com os nomes corretos`);
-            } finally {
-                loading.classList.remove('active');
+                console.error(`❌ Erro na API (${acao}):`, error);
+                return {
+                    success: false,
+                    error: error.message || 'Erro desconhecido'
+                };
             }
         }
 
         // ============================================
-        // DADOS DE DEMONSTRAÇÃO (FALLBACK)
+        // FUNÇÃO PARA CARREGAR TODOS OS DADOS
         // ============================================
-        function carregarDadosDemo() {
-            console.log('📊 Carregando dados de demonstração...');
+        async function carregarDadosAPI() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+            document.getElementById('loadingMessage').textContent = '🔄 Carregando dados da API...';
+
+            try {
+                // Carrega todas as abas de uma vez
+                const resultado = await consumirAPI('lerTodasAbas');
+
+                if (resultado.success) {
+                    // Processa os dados recebidos
+                    const dados = resultado.dados || {};
+                    
+                    // TURMAS_ALUNOS
+                    if (dados.TURMAS_ALUNOS) {
+                        dadosAPI.alunos = dados.TURMAS_ALUNOS.dados || [];
+                        console.log(`📊 Alunos carregados: ${dadosAPI.alunos.length}`);
+                    }
+
+                    // PROFESSORES
+                    if (dados.PROFESSORES) {
+                        dadosAPI.professores = dados.PROFESSORES.dados || [];
+                        console.log(`📊 Professores carregados: ${dadosAPI.professores.length}`);
+                    }
+
+                    // RELATORIOS_GERADOS
+                    if (dados.RELATORIOS_GERADOS) {
+                        dadosAPI.relatoriosGerados = dados.RELATORIOS_GERADOS.dados || [];
+                        console.log(`📊 Relatórios gerados: ${dadosAPI.relatoriosGerados.length}`);
+                    }
+
+                    // RELATORIOS_SOLICITADOS
+                    if (dados.RELATORIOS_SOLICITADOS) {
+                        dadosAPI.relatoriosSolicitados = dados.RELATORIOS_SOLICITADOS.dados || [];
+                        console.log(`📊 Relatórios solicitados: ${dadosAPI.relatoriosSolicitados.length}`);
+                    }
+
+                    // ATRIBUICOES
+                    if (dados.ATRIBUICOES) {
+                        dadosAPI.atribuicoes = dados.ATRIBUICOES.dados || [];
+                        console.log(`📊 Atribuições: ${dadosAPI.atribuicoes.length}`);
+                    }
+
+                    // Atualiza o banco de dados local
+                    atualizarBancoDados();
+
+                    // Mostra status
+                    document.getElementById('dataStatus').innerHTML = 
+                        `✅ Dados carregados: ${dadosAPI.alunos.length} alunos, ${dadosAPI.professores.length} professores, ${dadosAPI.atribuicoes.length} atribuições`;
+                    
+                    document.getElementById('syncStatus').className = 'sync-status synced';
+                    document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+
+                    // Esconde loading e mostra login
+                    loading.classList.remove('active');
+                    document.getElementById('loginContainer').style.display = 'block';
+
+                    return true;
+                } else {
+                    throw new Error(resultado.error || 'Erro ao carregar dados');
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                
+                // Mostra erro no loading
+                document.getElementById('loadingMessage').textContent = '❌ Erro ao carregar dados. Tente novamente.';
+                document.getElementById('loadingMessage').style.color = '#e53e3e';
+
+                // Tenta carregar dados de exemplo como fallback
+                setTimeout(() => {
+                    carregarDadosExemplo();
+                }, 2000);
+
+                return false;
+            }
+        }
+
+        // ============================================
+        // DADOS DE EXEMPLO (FALLBACK)
+        // ============================================
+        function carregarDadosExemplo() {
+            console.log('📊 Carregando dados de exemplo (fallback)...');
             
-            // Dados de exemplo para alunos
-            dadosPlanilha.alunos = [];
             const turmas = ['1º Ano A', '1º Ano B', '1º Ano C', '2º Ano A', '2º Ano B', '3º Ano A'];
-            const nomes = ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima', 'Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'];
+            const nomes = ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima', 'Felipe Rocha'];
             
+            dadosAPI.alunos = [];
             turmas.forEach((turma, tIndex) => {
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 4; i++) {
                     const alunoIndex = (tIndex + i) % nomes.length;
-                    dadosPlanilha.alunos.push({
-                        'TURMA': turma,
-                        'NOME_ALUNO': nomes[alunoIndex],
-                        'ID_ALUNO': `A${tIndex}${i+1}`,
-                        'DATA_NASCIMENTO': '2018-01-01',
-                        'RESPONSAVEL': 'Responsável ' + nomes[alunoIndex],
-                        'TELEFONE': '(11) 9999-9999',
-                        'EMAIL': 'aluno@email.com',
-                        'ANO_INGRESSO': '2025',
-                        'ATIVO': 'SIM'
+                    dadosAPI.alunos.push({
+                        'Turma': turma,
+                        'Nome_Aluno': nomes[alunoIndex],
+                        'ID_Aluno': `A${tIndex}${i+1}`,
+                        'Ativo': 'SIM'
                     });
                 }
             });
 
-            // Dados de exemplo para professores
-            dadosPlanilha.professores = [
-                { 'ID_PROFESSOR': 'p1', 'NOME': 'Prof. Carlos Silva', 'TIPO': 'Regente', 'EMAIL': 'carlos@escola.com', 'TELEFONE': '(11) 91234-5678', 'FORMACAO': 'Pedagogia', 'DATA_ADMISSAO': '2020-01-10', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p2', 'NOME': 'Prof. Maria Santos', 'TIPO': 'Regente', 'EMAIL': 'maria@escola.com', 'TELEFONE': '(11) 91234-5679', 'FORMACAO': 'Pedagogia', 'DATA_ADMISSAO': '2020-02-15', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p3', 'NOME': 'Prof. João Pereira', 'TIPO': 'Regente', 'EMAIL': 'joao@escola.com', 'TELEFONE': '(11) 91234-5680', 'FORMACAO': 'Pedagogia', 'DATA_ADMISSAO': '2021-01-10', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p6', 'NOME': 'Prof. Paula Mendes', 'TIPO': 'Artes', 'EMAIL': 'paula@escola.com', 'TELEFONE': '(11) 91234-5683', 'FORMACAO': 'Artes Visuais', 'DATA_ADMISSAO': '2021-02-15', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p9', 'NOME': 'Prof. Marcos Rocha', 'TIPO': 'Educação Física', 'EMAIL': 'marcos@escola.com', 'TELEFONE': '(11) 91234-5686', 'FORMACAO': 'Educação Física', 'DATA_ADMISSAO': '2019-03-20', 'ATIVO': 'SIM' }
+            dadosAPI.professores = [
+                { 'ID_Professor': 'p1', 'Nome': 'Prof. Carlos Silva', 'Tipo': 'Regente', 'Ativo': 'SIM' },
+                { 'ID_Professor': 'p2', 'Nome': 'Prof. Maria Santos', 'Tipo': 'Regente', 'Ativo': 'SIM' },
+                { 'ID_Professor': 'p6', 'Nome': 'Prof. Paula Mendes', 'Tipo': 'Artes', 'Ativo': 'SIM' },
+                { 'ID_Professor': 'p9', 'Nome': 'Prof. Marcos Rocha', 'Tipo': 'Educação Física', 'Ativo': 'SIM' }
             ];
 
-            // Dados de exemplo para atribuições
-            dadosPlanilha.atribuicoes = [
-                { 'ID_PROFESSOR': 'p1', 'NOME_PROFESSOR': 'Prof. Carlos Silva', 'TIPO': 'Regente', 'TURMA': '1º Ano A', 'DATA_ATRIBUICAO': '2026-01-15', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p2', 'NOME_PROFESSOR': 'Prof. Maria Santos', 'TIPO': 'Regente', 'TURMA': '2º Ano B', 'DATA_ATRIBUICAO': '2026-01-15', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p6', 'NOME_PROFESSOR': 'Prof. Paula Mendes', 'TIPO': 'Artes', 'TURMA': '1º Ano A', 'DATA_ATRIBUICAO': '2026-01-15', 'ATIVO': 'SIM' },
-                { 'ID_PROFESSOR': 'p9', 'NOME_PROFESSOR': 'Prof. Marcos Rocha', 'TIPO': 'Educação Física', 'TURMA': '1º Ano A', 'DATA_ATRIBUICAO': '2026-01-15', 'ATIVO': 'SIM' }
+            dadosAPI.atribuicoes = [
+                { 'ID_Professor': 'p1', 'Nome_Professor': 'Prof. Carlos Silva', 'Tipo': 'Regente', 'Turma': '1º Ano A', 'Ativo': 'SIM' },
+                { 'ID_Professor': 'p2', 'Nome_Professor': 'Prof. Maria Santos', 'Tipo': 'Regente', 'Turma': '2º Ano B', 'Ativo': 'SIM' },
+                { 'ID_Professor': 'p6', 'Nome_Professor': 'Prof. Paula Mendes', 'Tipo': 'Artes', 'Turma': '1º Ano A', 'Ativo': 'SIM' }
             ];
 
-            // Atualiza o banco de dados
+            dadosAPI.relatoriosSolicitados = [];
+
             atualizarBancoDados();
 
-            document.getElementById('dataStatus').innerHTML = `📊 Modo Demo: ${dadosPlanilha.alunos.length} alunos, ${dadosPlanilha.professores.length} professores`;
+            document.getElementById('dataStatus').innerHTML = 
+                `📊 Modo Demo: ${dadosAPI.alunos.length} alunos, ${dadosAPI.professores.length} professores`;
             document.getElementById('syncStatus').className = 'sync-status synced';
             document.getElementById('syncStatus').textContent = '📊 Demo';
-            
-            console.log('✅ Dados de demonstração carregados:', dadosPlanilha);
+
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loadingMessage').textContent = '✅ Dados de exemplo carregados!';
+            document.getElementById('loadingMessage').style.color = '#48bb78';
         }
 
         // ============================================
@@ -1217,21 +1197,24 @@
         // ============================================
         function atualizarBancoDados() {
             // Atualiza professores
-            if (dadosPlanilha.professores.length > 0) {
-                escolaData.professores = dadosPlanilha.professores.map(p => ({
-                    id: p.ID_PROFESSOR || p.id || '',
-                    nome: p.NOME || p.nome || '',
-                    tipo: p.TIPO || p.tipo || ''
-                })).filter(p => p.id && p.nome);
+            if (dadosAPI.professores.length > 0) {
+                escolaData.professores = dadosAPI.professores
+                    .filter(p => p.Ativo !== 'NÃO')
+                    .map(p => ({
+                        id: p.ID_Professor || '',
+                        nome: p.Nome || '',
+                        tipo: p.Tipo || ''
+                    }))
+                    .filter(p => p.id && p.nome);
             }
 
             // Atualiza alunos
-            if (dadosPlanilha.alunos.length > 0) {
+            if (dadosAPI.alunos.length > 0) {
                 const novosAlunos = {};
-                dadosPlanilha.alunos.forEach(aluno => {
-                    const turma = aluno.TURMA || aluno.turma || '';
-                    const nome = aluno.NOME_ALUNO || aluno.nome || '';
-                    if (turma && nome) {
+                dadosAPI.alunos.forEach(aluno => {
+                    const turma = aluno.Turma || '';
+                    const nome = aluno.Nome_Aluno || '';
+                    if (turma && nome && aluno.Ativo !== 'NÃO') {
                         if (!novosAlunos[turma]) {
                             novosAlunos[turma] = [];
                         }
@@ -1244,12 +1227,12 @@
             }
 
             // Atualiza atribuições
-            if (dadosPlanilha.atribuicoes.length > 0) {
+            if (dadosAPI.atribuicoes.length > 0) {
                 const novasAtribuicoes = {};
-                dadosPlanilha.atribuicoes.forEach(attr => {
-                    const profId = attr.ID_PROFESSOR || attr.id || '';
-                    const turma = attr.TURMA || attr.turma || '';
-                    const ativo = attr.ATIVO || attr.ativo || 'SIM';
+                dadosAPI.atribuicoes.forEach(attr => {
+                    const profId = attr.ID_Professor || '';
+                    const turma = attr.Turma || '';
+                    const ativo = attr.Ativo || 'SIM';
                     if (profId && turma && ativo.toUpperCase() !== 'NÃO') {
                         if (!novasAtribuicoes[profId]) {
                             novasAtribuicoes[profId] = [];
@@ -1262,14 +1245,14 @@
                 db.atribuicoes = novasAtribuicoes;
             }
 
-            // Atualiza relatórios solicitados
-            if (dadosPlanilha.relatoriosSolicitados.length > 0) {
-                db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
-                    turma: s.TURMA || s.turma || '',
-                    aluno: s.ALUNO || s.aluno || '',
-                    bimestre: s.BIMESTRE || s.bimestre || '1',
-                    data: s.DATA_SOLICITACAO || '',
-                    status: s.STATUS || 'Pendente'
+            // Atualiza solicitações
+            if (dadosAPI.relatoriosSolicitados.length > 0) {
+                db.solicitacoes = dadosAPI.relatoriosSolicitados.map(s => ({
+                    turma: s.Turma || '',
+                    aluno: s.Aluno || '',
+                    bimestre: s.Bimestre || '1',
+                    data: s.Data_Solicitacao || '',
+                    status: s.Status || 'Pendente'
                 })).filter(s => s.turma && s.aluno);
             }
 
@@ -1283,10 +1266,10 @@
                 escolaData.turmas = Array.from(turmasSet).sort();
             }
 
-            // Re-inicializa notas para as turmas existentes
+            // Re-inicializa notas
             inicializarNotas();
 
-            console.log('✅ Banco de dados atualizado:', { 
+            console.log('✅ Banco de dados atualizado:', {
                 turmas: escolaData.turmas.length,
                 alunos: Object.keys(escolaData.alunos).length,
                 professores: escolaData.professores.length,
@@ -2508,6 +2491,22 @@
         });
 
         // ============================================
+        // RECARREGAR DADOS
+        // ============================================
+        async function recarregarDados() {
+            const status = document.getElementById('syncStatus');
+            status.className = 'sync-status syncing';
+            status.textContent = '🔄 Recarregando...';
+
+            await carregarDadosAPI();
+
+            // Recarrega a interface se o usuário estiver logado
+            if (currentUser.cargo) {
+                renderDashboard(currentUser.cargo);
+            }
+        }
+
+        // ============================================
         // LOGOUT
         // ============================================
         function logout() {
@@ -2532,10 +2531,8 @@
                 document.getElementById(id).max = hoje;
             });
 
-            // Inicializa com dados de demonstração
-            setTimeout(() => {
-                carregarDadosDemo();
-            }, 300);
+            // Inicia carregamento dos dados da API
+            carregarDadosAPI();
         });
     </script>
 </body>
