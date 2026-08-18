@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Escolar - Gestão Completa</title>
     <style>
+        /* ... (mesmo CSS anterior, mantido por brevidade) ... */
         * {
             margin: 0;
             padding: 0;
@@ -705,7 +706,6 @@
             cursor: pointer;
         }
 
-        /* Estilos para o campo de senha com ícone de mostrar */
         .password-wrapper {
             position: relative;
         }
@@ -755,8 +755,10 @@
             <div id="loginError" class="login-error">❌ Usuário ou senha inválidos. Tente novamente.</div>
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginUsuario">Usuário (ID_Login)</label>
-                    <input type="text" id="loginUsuario" placeholder="Digite seu ID de login" required autocomplete="username">
+                    <label for="loginUsuario">Selecione seu Nome</label>
+                    <select id="loginUsuario" required>
+                        <option value="">-- Selecione --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="loginSenha">Senha</label>
@@ -1171,6 +1173,32 @@
         let usuarioLogado = null;
 
         // ============================================
+        // FUNÇÃO PARA CARREGAR O DROPDOWN DE USUÁRIOS
+        // ============================================
+        function carregarUsuariosDropdown() {
+            const select = document.getElementById('loginUsuario');
+            select.innerHTML = '<option value="">-- Selecione --</option>';
+            
+            if (!dadosPlanilha.login || dadosPlanilha.login.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhum usuário cadastrado --</option>';
+                return;
+            }
+            
+            dadosPlanilha.login.forEach(user => {
+                const nome = texto(user.Nome || user.nome || user['Nome']);
+                const id = texto(user.iD_Login || user.ID_Login || user.id_Login || user.IDLogin || user['iD_Login'] || user['ID_Login']);
+                if (nome) {
+                    const option = document.createElement('option');
+                    option.value = id || nome;
+                    option.textContent = nome;
+                    select.appendChild(option);
+                }
+            });
+            
+            console.log('📋 Usuários carregados no dropdown:', select.options.length - 1);
+        }
+
+        // ============================================
         // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
         // ============================================
         async function carregarDadosPlanilha() {
@@ -1185,6 +1213,9 @@
                 }
 
                 atualizarBancoDados();
+                
+                // Carrega o dropdown de usuários
+                carregarUsuariosDropdown();
 
                 // RECARREGA OS DROPDOWNS
                 if (usuarioLogado && usuarioLogado.perfil === 'coordenacao') {
@@ -1271,6 +1302,7 @@
                     
                     if (dadosPlanilha[chave].length > 0) {
                         console.log(`📋 Primeiros registros de ${chave}:`, dadosPlanilha[chave].slice(0, 3));
+                        console.log(`📋 Colunas de ${chave}:`, Object.keys(dadosPlanilha[chave][0]));
                     }
                 } else {
                     console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
@@ -1474,42 +1506,42 @@
             console.log('✅ Banco de dados atualizado com sucesso!');
         }
 
-// ============================================
-// FUNÇÕES DE AUTENTICAÇÃO (CORRIGIDAS)
-// ============================================
-function autenticarUsuario(usuario, senha) {
-    console.log('🔍 Tentando autenticar:', usuario);
-    console.log('📋 Dados de login disponíveis:', dadosPlanilha.login);
-    console.log('📋 Colunas disponíveis:', dadosPlanilha.login.length > 0 ? Object.keys(dadosPlanilha.login[0]) : 'nenhuma');
-    
-    // Normaliza os nomes das colunas para comparação
-    const user = dadosPlanilha.login.find(u => {
-        // Tenta encontrar os campos independente da capitalização
-        const idLogin = texto(u.iD_Login || u.ID_Login || u.id_Login || u.IDLogin || u['iD_Login'] || u['ID_Login'] || u['Id_Login']);
-        const senhaLogin = texto(u.Senha || u.senha || u['Senha']);
-        
-        console.log(`   Comparando: ID="${idLogin}" com "${usuario}", Senha="${senhaLogin}" com "${senha}"`);
-        return idLogin === usuario && senhaLogin === senha;
-    });
-    
-    if (user) {
-        console.log('✅ Usuário autenticado:', user);
-        // Tenta encontrar os campos independente da capitalização
-        const id = texto(user.iD_Login || user.ID_Login || user.id_Login || user.IDLogin || user['iD_Login'] || user['ID_Login']);
-        const perfil = texto(user.PERFIL || user.perfil || user.Perfil || user['PERFIL']);
-        const nome = texto(user.Nome || user.nome || user['Nome']);
-        const senha = texto(user.Senha || user.senha || user['Senha']);
-        
-        return {
-            id: id,
-            perfil: perfil,
-            nome: nome,
-            senha: senha
-        };
-    }
-    console.log('❌ Usuário não encontrado ou senha inválida');
-    return null;
-}
+        // ============================================
+        // FUNÇÕES DE AUTENTICAÇÃO - AGORA POR NOME
+        // ============================================
+        function autenticarUsuario(nome, senha) {
+            console.log('🔍 Tentando autenticar:', nome);
+            console.log('📋 Dados de login disponíveis:', dadosPlanilha.login);
+            console.log('📋 Colunas disponíveis:', dadosPlanilha.login.length > 0 ? Object.keys(dadosPlanilha.login[0]) : 'nenhuma');
+            
+            // Normaliza os nomes das colunas para comparação
+            const user = dadosPlanilha.login.find(u => {
+                // Busca pelo Nome (coluna C) e Senha (coluna D)
+                const nomeUsuario = texto(u.Nome || u.nome || u['Nome']);
+                const senhaUsuario = texto(u.Senha || u.senha || u['Senha']);
+                
+                console.log(`   Comparando: Nome="${nomeUsuario}" com "${nome}", Senha="${senhaUsuario}" com "${senha}"`);
+                return nomeUsuario === nome && senhaUsuario === senha;
+            });
+            
+            if (user) {
+                console.log('✅ Usuário autenticado:', user);
+                // Tenta encontrar os campos independente da capitalização
+                const id = texto(user.iD_Login || user.ID_Login || user.id_Login || user.IDLogin || user['iD_Login'] || user['ID_Login']);
+                const perfil = texto(user.PERFIL || user.perfil || user.Perfil || user['PERFIL']);
+                const nome = texto(user.Nome || user.nome || user['Nome']);
+                const senha = texto(user.Senha || user.senha || user['Senha']);
+                
+                return {
+                    id: id,
+                    perfil: perfil,
+                    nome: nome,
+                    senha: senha
+                };
+            }
+            console.log('❌ Usuário não encontrado ou senha inválida');
+            return null;
+        }
 
         // ============================================
         // FUNÇÕES DE UTILIDADE
@@ -1658,16 +1690,16 @@ function autenticarUsuario(usuario, senha) {
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const usuario = document.getElementById('loginUsuario').value.trim();
+            const nome = document.getElementById('loginUsuario').value;
             const senha = document.getElementById('loginSenha').value.trim();
 
-            if (!usuario || !senha) {
+            if (!nome || !senha) {
                 mostrarErroLogin('Por favor, preencha todos os campos.');
                 return;
             }
 
-            // Tenta autenticar
-            const user = autenticarUsuario(usuario, senha);
+            // Tenta autenticar pelo NOME
+            const user = autenticarUsuario(nome, senha);
             
             if (!user) {
                 mostrarErroLogin('❌ Usuário ou senha inválidos. Tente novamente.');
@@ -1686,7 +1718,7 @@ function autenticarUsuario(usuario, senha) {
             currentUser.cargo = cargo;
             currentUser.nome = user.nome;
 
-            console.log('✅ Login bem-sucedido:', { usuario: user.id, perfil: user.perfil, cargo: cargo });
+            console.log('✅ Login bem-sucedido:', { usuario: user.id, nome: user.nome, perfil: user.perfil, cargo: cargo });
 
             // Se for professor, busca as turmas atribuídas
             if (cargo.startsWith('professor')) {
