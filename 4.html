@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Escolar - Gestão Completa</title>
     <style>
-        /* ... (mesmo CSS anterior) ... */
+        /* ... (mesmo CSS anterior - mantido por brevidade) ... */
         * {
             margin: 0;
             padding: 0;
@@ -1083,8 +1083,11 @@
 
                 atualizarBancoDados();
 
-                // ATUALIZA OS DROPDOWNS APÓS CARREGAR OS DADOS
+                // ============================================
+                // IMPORTANTE: RECARREGA TODOS OS DROPDOWNS
+                // ============================================
                 if (currentUser.cargo === 'coordenacao') {
+                    console.log('🔄 Recarregando dropdowns para Coordenação...');
                     carregarProfessoresAtribuicao();
                     carregarTurmasSelect();
                     carregarSolicitacaoTurmas();
@@ -1186,11 +1189,18 @@
 
             // 1. Atualiza professores a partir da aba PROFESSORES
             const professoresMap = new Map();
-            dadosPlanilha.professores.forEach(prof => {
+            
+            console.log('📋 Dados brutos da aba PROFESSORES:', dadosPlanilha.professores);
+            
+            dadosPlanilha.professores.forEach((prof, index) => {
+                console.log(`📋 Processando professor ${index + 1}:`, prof);
+                
                 const id = prof.ID_Professor || prof.id || '';
                 const nome = prof.Nome || prof.nome || '';
                 const tipo = prof.Tipo || prof.tipo || 'Regente';
                 const ativo = prof.Ativo || prof.ativo || '';
+                
+                console.log(`   ID: "${id}", Nome: "${nome}", Tipo: "${tipo}", Ativo: "${ativo}"`);
                 
                 // SÓ ADICIONA SE TIVER ID, NOME E ESTIVER ATIVO
                 if (id && nome && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
@@ -1203,11 +1213,15 @@
                         formacao: prof.Formacao || prof.formacao || '',
                         dataAdmissao: prof.Data_Admissao || prof.dataAdmissao || ''
                     });
+                    console.log(`   ✅ Professor adicionado: ${nome} (${id})`);
+                } else {
+                    console.log(`   ⚠️ Professor ignorado: ${nome || 'sem nome'} - Motivo: ${!id ? 'sem ID' : !nome ? 'sem Nome' : 'inativo'}`);
                 }
             });
+            
             escolaData.professores = Array.from(professoresMap.values());
             console.log('👨‍🏫 Professores carregados da aba PROFESSORES:', escolaData.professores.length);
-            console.log('📋 Lista de professores:', escolaData.professores.map(p => p.nome).join(', '));
+            console.log('📋 Lista de professores carregados:', escolaData.professores.map(p => `${p.nome} (${p.id})`).join(', '));
 
             // 2. Atualiza alunos por turma
             const novosAlunos = {};
@@ -2074,8 +2088,11 @@
             // LIMPA O SELECT
             select.innerHTML = '<option value="">-- Selecione --</option>';
             
+            console.log('📋 Carregando professores no dropdown...');
+            console.log('📋 escolaData.professores:', escolaData.professores);
+            
             // VERIFICA SE TEM PROFESSORES
-            if (escolaData.professores.length === 0) {
+            if (!escolaData.professores || escolaData.professores.length === 0) {
                 console.warn('⚠️ Nenhum professor encontrado para carregar no dropdown');
                 select.innerHTML = '<option value="">-- Nenhum professor cadastrado --</option>';
                 return;
@@ -2087,9 +2104,10 @@
                 option.value = p.id;
                 option.textContent = `${p.nome} (${p.tipo})`;
                 select.appendChild(option);
+                console.log(`✅ Professor adicionado ao dropdown: ${p.nome} (${p.id})`);
             });
             
-            console.log('📋 Professores carregados no dropdown:', escolaData.professores.length);
+            console.log(`📋 Total de ${escolaData.professores.length} professores carregados no dropdown`);
             
             // ATUALIZA A LISTA DE PROFESSORES E TURMAS
             renderProfessoresAtribuidos();
