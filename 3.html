@@ -974,7 +974,6 @@
                 atribuicoes: 'ATRIBUICOES',
                 notas: 'NOTAS_BIMESTRAIS',
                 presencas: 'PRESENCAS',
-                conteudos: 'CONTEUDOS',
                 observacoes: 'OBSERVACOES',
                 relatoriosSolicitados: 'RELATORIOS_SOLICITADOS',
                 relatoriosGerados: 'RELATORIOS_GERADOS'
@@ -989,7 +988,6 @@
             atribuicoes: [],
             notas: [],
             presencas: [],
-            conteudos: [],
             observacoes: [],
             relatoriosSolicitados: [],
             relatoriosGerados: []
@@ -1083,6 +1081,7 @@
 
             try {
                 console.log('📡 Iniciando carregamento da planilha...');
+                console.log('🔍 ID da planilha:', SHEET_CONFIG.sheetId);
                 
                 // Carrega cada aba individualmente
                 await carregarAbaEspecifica(SHEET_CONFIG.abas.alunos, 'alunos');
@@ -1093,20 +1092,26 @@
                 await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosSolicitados, 'relatoriosSolicitados');
                 await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosGerados, 'relatoriosGerados');
 
+                // Log detalhado dos dados carregados
+                console.log('📊 DADOS BRUTOS CARREGADOS:');
+                console.log('👥 Alunos:', dadosPlanilha.alunos.length, 'registros');
+                console.log('📋 Atribuições:', dadosPlanilha.atribuicoes.length, 'registros');
+                console.log('📊 Notas:', dadosPlanilha.notas.length, 'registros');
+                console.log('✅ Presenças:', dadosPlanilha.presencas.length, 'registros');
+                console.log('✏️ Observações:', dadosPlanilha.observacoes.length, 'registros');
+                
+                if (dadosPlanilha.alunos.length > 0) {
+                    console.log('📄 Exemplo de aluno:', JSON.stringify(dadosPlanilha.alunos[0], null, 2));
+                }
+                if (dadosPlanilha.atribuicoes.length > 0) {
+                    console.log('📄 Exemplo de atribuição:', JSON.stringify(dadosPlanilha.atribuicoes[0], null, 2));
+                }
+
                 // Processa os dados carregados
                 processarDadosPlanilha();
 
                 // Atualiza a interface
                 atualizarInterfaceAposCarregamento();
-
-                console.log('📊 Dados carregados com sucesso:', {
-                    professores: db.professores.length,
-                    turmas: db.turmas.length,
-                    alunos: Object.values(db.alunos).reduce((acc, arr) => acc + arr.length, 0),
-                    notas: dadosPlanilha.notas.length,
-                    presencas: dadosPlanilha.presencas.length,
-                    observacoes: dadosPlanilha.observacoes.length
-                });
 
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
@@ -1115,6 +1120,12 @@
                 
                 alert('❌ Erro ao carregar dados da planilha.\n\n' +
                       '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
+                      'Para tornar pública:\n' +
+                      '1. Abra sua planilha no Google Sheets\n' +
+                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
+                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
+                      '4. Mude para "Qualquer pessoa com o link"\n' +
+                      '5. Defina como "Leitor" (somente leitura)\n\n' +
                       'Detalhes do erro: ' + error.message);
             } finally {
                 loading.classList.remove('active');
@@ -1125,12 +1136,14 @@
         async function carregarAbaEspecifica(nomeAba, chave) {
             try {
                 const url = `https://docs.google.com/spreadsheets/d/${SHEET_CONFIG.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(nomeAba)}`;
-                console.log(`🔗 Carregando aba ${nomeAba}...`);
+                console.log(`🔗 Carregando aba "${nomeAba}"...`);
                 
                 const response = await fetch(url);
                 
                 if (!response.ok) {
-                    throw new Error(`Erro HTTP ${response.status} ao carregar aba ${nomeAba}`);
+                    console.warn(`⚠️ Aba "${nomeAba}" retornou status ${response.status}`);
+                    dadosPlanilha[chave] = [];
+                    return;
                 }
 
                 const text = await response.text();
@@ -1139,11 +1152,21 @@
 
                 if (data.table && data.table.rows && data.table.rows.length > 0) {
                     const cols = data.table.cols.map(col => col.label || col.id || '');
+                    console.log(`📋 Cabeçalhos da aba "${nomeAba}":`, cols);
+                    
                     const rows = data.table.rows.map(row => {
                         const obj = {};
                         row.c.forEach((cell, index) => {
                             const key = cols[index] || `coluna_${index}`;
-                            obj[key] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : cell.f || '') : '';
+                            let valor = '';
+                            if (cell) {
+                                if (cell.v !== null && cell.v !== undefined) {
+                                    valor = cell.v;
+                                } else if (cell.f) {
+                                    valor = cell.f;
+                                }
+                            }
+                            obj[key] = valor;
                         });
                         return obj;
                     });
@@ -1163,15 +1186,15 @@
         // Processa os dados da planilha
         function processarDadosPlanilha() {
             console.log('🔄 Processando dados da planilha...');
-
-            // Processa professores (da aba ATRIBUICOES)
+            
+            // ============ PROCESSANDO PROFESSORES ============
             db.professores = [];
             const professoresUnicos = new Map();
             
             dadosPlanilha.atribuicoes.forEach(attr => {
-                const profId = attr.ID_Professor || '';
-                const nome = attr.Nome_Professor || '';
-                const tipo = attr.Tipo || 'Regente';
+                const profId = String(attr.ID_Professor || attr.id || '').trim();
+                const nome = String(attr.Nome_Professor || attr.nome || '').trim();
+                const tipo = String(attr.Tipo || attr.tipo || 'Regente').trim();
                 
                 if (profId && nome && !professoresUnicos.has(profId)) {
                     professoresUnicos.set(profId, {
@@ -1181,42 +1204,46 @@
                     });
                 }
             });
-
+            
             db.professores = Array.from(professoresUnicos.values());
             console.log('👨‍🏫 Professores processados:', db.professores.length);
 
-            // Processa alunos
+            // ============ PROCESSANDO ALUNOS ============
             const alunosPorTurma = {};
             const turmasSet = new Set();
-
+            
             dadosPlanilha.alunos.forEach(aluno => {
-                const turma = formatarTurma(aluno.Turma || '');
-                const nome = aluno.Nome_Aluno || '';
-                const ativo = aluno.Ativo || 'SIM';
+                const turmaRaw = String(aluno.Turma || aluno.turma || aluno.Sala || aluno.sala || '').trim();
+                const nome = String(aluno.Nome_Aluno || aluno.nome || aluno.Aluno || aluno.aluno || '').trim();
+                const ativo = String(aluno.Ativo || aluno.ativo || 'SIM').trim();
                 
-                if (turma && nome && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
-                    if (!alunosPorTurma[turma]) {
-                        alunosPorTurma[turma] = [];
+                if (turmaRaw && nome) {
+                    const turma = formatarTurma(turmaRaw);
+                    
+                    if (ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
+                        if (!alunosPorTurma[turma]) {
+                            alunosPorTurma[turma] = [];
+                        }
+                        if (!alunosPorTurma[turma].includes(nome)) {
+                            alunosPorTurma[turma].push(nome);
+                        }
+                        turmasSet.add(turma);
                     }
-                    if (!alunosPorTurma[turma].includes(nome)) {
-                        alunosPorTurma[turma].push(nome);
-                    }
-                    turmasSet.add(turma);
                 }
             });
-
+            
             db.alunos = alunosPorTurma;
             db.turmas = Array.from(turmasSet).sort();
             
             console.log('👥 Alunos processados por turma:', Object.keys(db.alunos).length);
             console.log('🏫 Turmas:', db.turmas);
 
-            // Processa atribuições
+            // ============ PROCESSANDO ATRIBUIÇÕES ============
             db.atribuicoes = {};
             dadosPlanilha.atribuicoes.forEach(attr => {
-                const profId = attr.ID_Professor || '';
-                const turmaRaw = attr.Turma || '';
-                const ativo = attr.Ativo || 'SIM';
+                const profId = String(attr.ID_Professor || attr.id || '').trim();
+                const turmaRaw = String(attr.Turma || attr.turma || '').trim();
+                const ativo = String(attr.Ativo || attr.ativo || 'SIM').trim();
                 
                 if (profId && turmaRaw && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
                     const turmaFormatada = formatarTurma(turmaRaw);
@@ -1229,18 +1256,20 @@
                     }
                 }
             });
-
+            
             console.log('📋 Atribuições processadas:', Object.keys(db.atribuicoes).length);
 
-            // Processa notas
+            // ============ PROCESSANDO NOTAS ============
             db.notas = {};
             dadosPlanilha.notas.forEach(nota => {
-                const turma = formatarTurma(nota.Turma || '');
-                const aluno = nota.Aluno || '';
-                const bimestre = parseInt(nota.Bimestre) || 1;
-                const valor = parseFloat(nota.Nota) || 0;
+                const turmaRaw = String(nota.Turma || nota.turma || '').trim();
+                const aluno = String(nota.Aluno || nota.aluno || '').trim();
+                const bimestre = parseInt(nota.Bimestre || nota.bimestre || '1');
+                const valor = parseFloat(nota.Nota || nota.nota || '0');
                 
-                if (turma && aluno) {
+                if (turmaRaw && aluno) {
+                    const turma = formatarTurma(turmaRaw);
+                    
                     if (!db.notas[turma]) db.notas[turma] = {};
                     if (!db.notas[turma][aluno]) {
                         db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -1249,15 +1278,20 @@
                 }
             });
 
-            // Processa presenças
+            // ============ PROCESSANDO PRESENÇAS ============
             db.presencas = {};
             dadosPlanilha.presencas.forEach(presenca => {
-                const turma = formatarTurma(presenca.Turma || '');
-                const data = presenca.Data || '';
-                const alunosPresentes = (presenca.Alunos_Presentes || '').split(';').filter(a => a.trim());
-                const observacao = presenca.Observacao_Aula || '';
+                const turmaRaw = String(presenca.Turma || presenca.turma || '').trim();
+                const data = String(presenca.Data || presenca.data || '').trim();
+                const alunosPresentes = String(presenca.Alunos_Presentes || presenca.alunos_presentes || '')
+                    .split(';')
+                    .map(a => a.trim())
+                    .filter(a => a);
+                const observacao = String(presenca.Observacao_Aula || presenca.observacao_aula || '').trim();
                 
-                if (turma && data) {
+                if (turmaRaw && data) {
+                    const turma = formatarTurma(turmaRaw);
+                    
                     if (!db.presencas[turma]) db.presencas[turma] = [];
                     db.presencas[turma].push({
                         data: data,
@@ -1267,16 +1301,18 @@
                 }
             });
 
-            // Processa observações
+            // ============ PROCESSANDO OBSERVAÇÕES ============
             db.observacoes = {};
             dadosPlanilha.observacoes.forEach(obs => {
-                const turma = formatarTurma(obs.Turma || '');
-                const aluno = obs.Aluno || '';
-                const data = obs.Data || '';
-                const observacao = obs.Observacao || '';
-                const tipo = obs.Tipo || '';
+                const turmaRaw = String(obs.Turma || obs.turma || '').trim();
+                const aluno = String(obs.Aluno || obs.aluno || '').trim();
+                const data = String(obs.Data || obs.data || '').trim();
+                const observacao = String(obs.Observacao || obs.observacao || '').trim();
+                const tipo = String(obs.Tipo || obs.tipo || '').trim();
                 
-                if (turma && aluno) {
+                if (turmaRaw && aluno) {
+                    const turma = formatarTurma(turmaRaw);
+                    
                     if (!db.observacoes[turma]) db.observacoes[turma] = [];
                     db.observacoes[turma].push({
                         data: data,
@@ -1287,18 +1323,29 @@
                 }
             });
 
-            // Processa solicitações de relatórios
+            // ============ PROCESSANDO SOLICITAÇÕES ============
             db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
-                turma: formatarTurma(s.Turma || ''),
-                aluno: s.Aluno || '',
-                bimestre: s.Bimestre || '1',
-                data: s.Data_Solicitacao || '',
-                status: s.Status || 'Pendente',
-                professor: s.Professor || ''
+                turma: formatarTurma(String(s.Turma || s.turma || '').trim()),
+                aluno: String(s.Aluno || s.aluno || '').trim(),
+                bimestre: String(s.Bimestre || s.bimestre || '1').trim(),
+                data: String(s.Data_Solicitacao || s.data_solicitacao || '').trim(),
+                status: String(s.Status || s.status || 'Pendente').trim(),
+                professor: String(s.Professor || s.professor || '').trim()
             })).filter(s => s.turma && s.aluno);
 
             // Inicializa notas para alunos sem notas
             inicializarNotasFaltantes();
+            
+            console.log('✅ Processamento concluído!');
+            console.log('📊 RESUMO FINAL:', {
+                professores: db.professores.length,
+                turmas: db.turmas.length,
+                alunos: Object.values(db.alunos).reduce((acc, arr) => acc + arr.length, 0),
+                notas: Object.keys(db.notas).length,
+                presencas: Object.keys(db.presencas).length,
+                observacoes: Object.keys(db.observacoes).length,
+                solicitacoes: db.solicitacoes.length
+            });
         }
 
         // Formata turma de "1A" para "1º Ano A"
@@ -1307,20 +1354,17 @@
             
             const turmaStr = String(turma).trim();
             
-            // Se já está no formato "1º Ano A", retorna como está
-            if (turmaStr.includes('º Ano') || turmaStr.includes('Ano')) {
+            if (turmaStr.includes('º') || turmaStr.includes('Ano')) {
                 return turmaStr;
             }
             
-            // Extrai o número e a letra
-            const match = turmaStr.match(/(\d+)\s*([A-Ea-e])/);
+            const match = turmaStr.match(/(\d+)\s*[º°]?\s*([A-Ea-e])/);
             if (match) {
                 const numero = match[1];
                 const letra = match[2].toUpperCase();
                 return `${numero}º Ano ${letra}`;
             }
             
-            // Se não encontrar padrão, retorna como está
             return turmaStr;
         }
 
@@ -1421,7 +1465,6 @@
             currentUser.cargo = cargo;
             currentUser.nome = nome;
 
-            // Se for professor, busca o ID e turmas
             if (cargo.startsWith('professor')) {
                 const professor = getProfessorByNome(nome);
                 if (professor) {
