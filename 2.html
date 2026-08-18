@@ -146,6 +146,17 @@
             box-shadow: 0 5px 15px rgba(237, 137, 54, 0.4);
         }
 
+        .btn-google {
+            background: #4285f4;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-google:hover {
+            background: #357abd;
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
+        }
+
         .btn-small {
             padding: 8px 15px;
             font-size: 14px;
@@ -609,6 +620,30 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-row,
+            .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group .btn {
+                flex: 1 1 100%;
+            }
+        }
+        
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -621,11 +656,9 @@
             align-items: center;
             z-index: 9999;
         }
-
         .loading-overlay.active {
             display: flex;
         }
-
         .loading-content {
             background: white;
             padding: 40px;
@@ -633,7 +666,6 @@
             text-align: center;
             max-width: 400px;
         }
-
         .loading-spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
@@ -643,40 +675,19 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            .cards-grid {
-                grid-template-columns: 1fr;
-            }
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .form-row,
-            .form-row-3 {
-                grid-template-columns: 1fr;
-            }
-            .btn-group .btn {
-                flex: 1 1 100%;
-            }
         }
     </style>
 </head>
 <body>
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay active">
+    <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <h3>🔄 Carregando sistema...</h3>
-            <p id="loadingMessage" style="color: #718096;">Conectando à API do Google Sheets</p>
+            <h3>🔄 Carregando dados da planilha...</h3>
+            <p style="color: #718096;">Aguarde enquanto sincronizamos com o Google Sheets</p>
         </div>
     </div>
 
@@ -684,11 +695,11 @@
         <div class="header">
             <h1>🏫 Sistema de Gestão Escolar</h1>
             <p class="subtitle">Fundamental I - 1º ao 5º Ano (Turmas A a E)</p>
-            <div class="badge-google">📊 Conectado via Google Sheets API</div>
+            <div class="badge-google">📊 Integrado com Google Sheets</div>
         </div>
 
         <!-- Tela de Login -->
-        <div id="loginContainer" class="login-container" style="display: none;">
+        <div id="loginContainer" class="login-container">
             <h2>🔐 Acesso ao Sistema</h2>
             <form id="loginForm">
                 <div class="form-group">
@@ -712,9 +723,8 @@
                 </div>
                 <button type="submit" class="btn">Entrar no Sistema</button>
             </form>
-
             <div style="margin-top: 15px; text-align: center; font-size: 0.9em; color: #718096;">
-                <span id="dataStatus">📊 Aguardando dados...</span>
+                <span id="dataStatus">📊 Conectado à planilha: Escola Fundamental I</span>
             </div>
         </div>
 
@@ -727,7 +737,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                     <span id="syncStatus" class="sync-status synced">✅ Sincronizado</span>
-                    <button onclick="recarregarDados()" class="btn btn-secondary btn-small">🔄 Recarregar</button>
+                    <button onclick="carregarDadosPlanilha()" class="btn btn-secondary btn-small">🔄 Recarregar</button>
                     <button onclick="logout()" class="btn-logout">🚪 Sair</button>
                 </div>
             </div>
@@ -964,16 +974,25 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DA API
+        // CONFIGURAÇÃO DA PLANILHA
         // ============================================
-        const API_CONFIG = {
-            url: 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec'
+        const SHEET_CONFIG = {
+            // ID da planilha extraído da URL
+            sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
+            // Abas e seus nomes
+            abas: {
+                alunos: 'TURMAS_ALUNOS',
+                professores: 'PROFESSORES',
+                relatoriosGerados: 'RELATORIOS_GERADOS',
+                relatoriosSolicitados: 'RELATORIOS_SOLICITADOS',
+                atribuicoes: 'ATRIBUICOES'
+            }
         };
 
         // ============================================
-        // DADOS CARREGADOS DA API
+        // DADOS CARREGADOS DA PLANILHA
         // ============================================
-        let dadosAPI = {
+        let dadosPlanilha = {
             alunos: [],
             professores: [],
             relatoriosGerados: [],
@@ -982,212 +1001,124 @@
         };
 
         // ============================================
-        // FUNÇÃO PARA CONSUMIR A API GAS
+        // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
         // ============================================
-        async function consumirAPI(acao, params = {}) {
+        async function carregarDadosPlanilha() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
             try {
-                let url = `${API_CONFIG.url}?acao=${acao}`;
+                console.log('📡 Iniciando carregamento da planilha...');
                 
-                for (let chave in params) {
-                    if (params[chave] !== undefined && params[chave] !== null) {
-                        if (typeof params[chave] === 'object') {
-                            url += `&${chave}=${encodeURIComponent(JSON.stringify(params[chave]))}`;
-                        } else {
-                            url += `&${chave}=${encodeURIComponent(params[chave])}`;
-                        }
-                    }
-                }
+                // Carrega cada aba individualmente usando a API pública
+                await carregarAbaEspecifica(SHEET_CONFIG.abas.alunos, 'alunos');
+                await carregarAbaEspecifica(SHEET_CONFIG.abas.professores, 'professores');
+                await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosGerados, 'relatoriosGerados');
+                await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosSolicitados, 'relatoriosSolicitados');
+                await carregarAbaEspecifica(SHEET_CONFIG.abas.atribuicoes, 'atribuicoes');
 
-                console.log(`📡 Chamando API: ${acao}`, params);
+                // Atualiza o banco de dados local
+                atualizarBancoDados();
 
+                // Atualiza a interface
+                const status = document.getElementById('dataStatus');
+                status.innerHTML = `✅ Dados carregados: ${dadosPlanilha.alunos.length} alunos, ${dadosPlanilha.professores.length} professores`;
+                
+                document.getElementById('syncStatus').className = 'sync-status synced';
+                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+
+                console.log('📊 Resumo dos dados:', {
+                    alunos: dadosPlanilha.alunos.length,
+                    professores: dadosPlanilha.professores.length,
+                    relatorios: dadosPlanilha.relatoriosGerados.length,
+                    solicitacoes: dadosPlanilha.relatoriosSolicitados.length,
+                    atribuicoes: dadosPlanilha.atribuicoes.length
+                });
+
+                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${dadosPlanilha.alunos.length} alunos\n👨‍🏫 ${dadosPlanilha.professores.length} professores\n📋 ${dadosPlanilha.atribuicoes.length} atribuições\n📄 ${dadosPlanilha.relatoriosGerados.length} relatórios gerados\n📝 ${dadosPlanilha.relatoriosSolicitados.length} solicitações`);
+
+            } catch (error) {
+                console.error('❌ Erro detalhado:', error);
+                document.getElementById('syncStatus').className = 'sync-status error';
+                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
+                
+                alert('❌ Erro ao carregar dados da planilha.\n\n' +
+                      '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
+                      'Para tornar pública:\n' +
+                      '1. Abra sua planilha no Google Sheets\n' +
+                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
+                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
+                      '4. Mude para "Qualquer pessoa com o link"\n\n' +
+                      'Detalhes do erro: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Função para carregar aba específica
+        async function carregarAbaEspecifica(nomeAba, chave) {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_CONFIG.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(nomeAba)}`;
+                console.log(`🔗 Carregando aba ${nomeAba}...`);
+                
                 const response = await fetch(url);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`Erro HTTP ${response.status} ao carregar aba ${nomeAba}`);
                 }
 
-                const data = await response.json();
-                console.log(`✅ Resposta da API (${acao}):`, data);
-                return data;
-            } catch (error) {
-                console.error(`❌ Erro na API (${acao}):`, error);
-                return { success: false, error: error.message || 'Erro desconhecido' };
-            }
-        }
+                const text = await response.text();
+                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(jsonStr);
 
-        // ============================================
-        // FUNÇÃO PARA CARREGAR TODOS OS DADOS
-        // ============================================
-        async function carregarDadosAPI() {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('active');
-            document.getElementById('loadingMessage').textContent = '🔄 Carregando dados da API...';
+                if (data.table && data.table.rows) {
+                    const cols = data.table.cols.map(col => col.label || col.id || '');
+                    const rows = data.table.rows.map(row => {
+                        const obj = {};
+                        row.c.forEach((cell, index) => {
+                            const key = cols[index] || `coluna_${index}`;
+                            obj[key] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : cell.f || '') : '';
+                        });
+                        return obj;
+                    });
 
-            try {
-                const resultado = await consumirAPI('lerTodasAbas');
-
-                if (resultado.success) {
-                    const dados = resultado.dados || {};
-                    
-                    // ============================================
-                    // PROCESSAR ALUNOS
-                    // ============================================
-                    if (dados.TURMAS_ALUNOS) {
-                        const dadosBrutos = dados.TURMAS_ALUNOS.dados || [];
-                        dadosAPI.alunos = dadosBrutos
-                            .filter(item => item.Turma && item.Nome_Aluno)
-                            .map(item => ({
-                                Turma: String(item.Turma || '').trim(),
-                                Nome_Aluno: String(item.Nome_Aluno || '').trim(),
-                                ID_Aluno: String(item.ID_Aluno || '').trim(),
-                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
-                            }));
-                        
-                        console.log(`📊 Alunos carregados: ${dadosAPI.alunos.length}`);
-                        console.log('📋 Primeiros alunos:', dadosAPI.alunos.slice(0, 3));
-                    }
-
-                    // ============================================
-                    // PROCESSAR PROFESSORES
-                    // ============================================
-                    if (dados.PROFESSORES) {
-                        const dadosBrutos = dados.PROFESSORES.dados || [];
-                        dadosAPI.professores = dadosBrutos
-                            .filter(item => item.ID_Professor && item.Nome)
-                            .map(item => ({
-                                ID_Professor: String(item.ID_Professor || '').trim(),
-                                Nome: String(item.Nome || '').trim(),
-                                Tipo: String(item.Tipo || '').trim(),
-                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
-                            }));
-                        
-                        console.log(`📊 Professores carregados: ${dadosAPI.professores.length}`);
-                        console.log('📋 Primeiros professores:', dadosAPI.professores.slice(0, 3));
-                    }
-
-                    // ============================================
-                    // PROCESSAR ATRIBUIÇÕES
-                    // ============================================
-                    if (dados.ATRIBUICOES) {
-                        const dadosBrutos = dados.ATRIBUICOES.dados || [];
-                        dadosAPI.atribuicoes = dadosBrutos
-                            .filter(item => item.ID_Professor && item.Turma)
-                            .map(item => ({
-                                ID_Professor: String(item.ID_Professor || '').trim(),
-                                Nome_Professor: String(item.Nome_Professor || '').trim(),
-                                Tipo: String(item.Tipo || '').trim(),
-                                Turma: String(item.Turma || '').trim(),
-                                Ativo: String(item.Ativo || 'SIM').toUpperCase().trim()
-                            }));
-                        
-                        console.log(`📊 Atribuições carregadas: ${dadosAPI.atribuicoes.length}`);
-                        console.log('📋 Primeiras atribuições:', dadosAPI.atribuicoes.slice(0, 3));
-                    }
-
-                    // ============================================
-                    // PROCESSAR RELATÓRIOS SOLICITADOS
-                    // ============================================
-                    if (dados.RELATORIOS_SOLICITADOS) {
-                        const dadosBrutos = dados.RELATORIOS_SOLICITADOS.dados || [];
-                        dadosAPI.relatoriosSolicitados = dadosBrutos
-                            .filter(item => item.Turma && item.Aluno)
-                            .map(item => ({
-                                Turma: String(item.Turma || '').trim(),
-                                Aluno: String(item.Aluno || '').trim(),
-                                Bimestre: String(item.Bimestre || '1').trim(),
-                                Data_Solicitacao: String(item.Data_Solicitacao || '').trim(),
-                                Status: String(item.Status || 'Pendente').trim()
-                            }));
-                        
-                        console.log(`📊 Relatórios solicitados: ${dadosAPI.relatoriosSolicitados.length}`);
-                    }
-
-                    // ============================================
-                    // ATUALIZAR BANCO DE DADOS LOCAL
-                    // ============================================
-                    atualizarBancoDados();
-
-                    document.getElementById('dataStatus').innerHTML = 
-                        `✅ Dados carregados: ${dadosAPI.alunos.length} alunos, ${dadosAPI.professores.length} professores, ${dadosAPI.atribuicoes.length} atribuições`;
-                    
-                    document.getElementById('syncStatus').className = 'sync-status synced';
-                    document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-
-                    loading.classList.remove('active');
-                    document.getElementById('loginContainer').style.display = 'block';
-
-                    return true;
+                    dadosPlanilha[chave] = rows;
+                    console.log(`✅ ${chave} carregados:`, rows.length);
                 } else {
-                    throw new Error(resultado.error || 'Erro ao carregar dados');
+                    console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
+                    dadosPlanilha[chave] = [];
                 }
-
             } catch (error) {
-                console.error('❌ Erro ao carregar dados:', error);
-                document.getElementById('loadingMessage').textContent = '❌ Erro ao carregar dados. Usando dados de exemplo.';
-                document.getElementById('loadingMessage').style.color = '#e53e3e';
-                
-                setTimeout(() => {
-                    carregarDadosExemplo();
-                }, 1500);
-                return false;
+                console.error(`❌ Erro ao carregar aba ${nomeAba}:`, error);
+                dadosPlanilha[chave] = [];
+                // Não lança o erro para não interromper o carregamento das outras abas
             }
-        }
-
-        // ============================================
-        // DADOS DE EXEMPLO (FALLBACK)
-        // ============================================
-        function carregarDadosExemplo() {
-            console.log('📊 Carregando dados de exemplo (fallback)...');
-            
-            dadosAPI.alunos = [
-                { Turma: '1º Ano A', Nome_Aluno: 'Ana Silva', Ativo: 'SIM' },
-                { Turma: '1º Ano A', Nome_Aluno: 'Bruno Santos', Ativo: 'SIM' },
-                { Turma: '1º Ano A', Nome_Aluno: 'Carla Oliveira', Ativo: 'SIM' },
-                { Turma: '2º Ano B', Nome_Aluno: 'Daniel Costa', Ativo: 'SIM' },
-                { Turma: '2º Ano B', Nome_Aluno: 'Eduarda Lima', Ativo: 'SIM' },
-                { Turma: '3º Ano C', Nome_Aluno: 'Felipe Rocha', Ativo: 'SIM' }
-            ];
-
-            dadosAPI.professores = [
-                { ID_Professor: 'p1', Nome: 'Prof. Carlos Silva', Tipo: 'Regente', Ativo: 'SIM' },
-                { ID_Professor: 'p2', Nome: 'Prof. Maria Santos', Tipo: 'Regente', Ativo: 'SIM' },
-                { ID_Professor: 'p6', Nome: 'Prof. Paula Mendes', Tipo: 'Artes', Ativo: 'SIM' },
-                { ID_Professor: 'p9', Nome: 'Prof. Marcos Rocha', Tipo: 'Educação Física', Ativo: 'SIM' }
-            ];
-
-            dadosAPI.atribuicoes = [
-                { ID_Professor: 'p1', Nome_Professor: 'Prof. Carlos Silva', Tipo: 'Regente', Turma: '1º Ano A', Ativo: 'SIM' },
-                { ID_Professor: 'p2', Nome_Professor: 'Prof. Maria Santos', Tipo: 'Regente', Turma: '2º Ano B', Ativo: 'SIM' },
-                { ID_Professor: 'p6', Nome_Professor: 'Prof. Paula Mendes', Tipo: 'Artes', Turma: '1º Ano A', Ativo: 'SIM' }
-            ];
-
-            dadosAPI.relatoriosSolicitados = [];
-
-            atualizarBancoDados();
-
-            document.getElementById('dataStatus').innerHTML = 
-                `📊 Modo Demo: ${dadosAPI.alunos.length} alunos, ${dadosAPI.professores.length} professores`;
-            document.getElementById('syncStatus').className = 'sync-status synced';
-            document.getElementById('syncStatus').textContent = '📊 Demo';
-
-            document.getElementById('loadingOverlay').classList.remove('active');
-            document.getElementById('loginContainer').style.display = 'block';
-            document.getElementById('loadingMessage').textContent = '✅ Dados de exemplo carregados!';
-            document.getElementById('loadingMessage').style.color = '#48bb78';
         }
 
         // ============================================
         // FUNÇÃO PARA ATUALIZAR BANCO DE DADOS LOCAL
         // ============================================
         function atualizarBancoDados() {
-            // ============================================
-            // ATUALIZAR ALUNOS POR TURMA
-            // ============================================
+            console.log('🔄 Atualizando banco de dados local...');
+
+            // Atualiza professores
+            if (dadosPlanilha.professores && dadosPlanilha.professores.length > 0) {
+                escolaData.professores = dadosPlanilha.professores.map(p => ({
+                    id: p.ID_Professor || p.id || `p${Date.now()}_${Math.random()}`,
+                    nome: p.Nome || p.nome || '',
+                    tipo: p.Tipo || p.tipo || 'Regente'
+                })).filter(p => p.nome);
+                
+                console.log('👨‍🏫 Professores atualizados:', escolaData.professores.length);
+            }
+
+            // Atualiza alunos
             const novosAlunos = {};
-            dadosAPI.alunos.forEach(aluno => {
-                const turma = aluno.Turma || '';
-                const nome = aluno.Nome_Aluno || '';
-                if (turma && nome && aluno.Ativo !== 'NÃO') {
+            dadosPlanilha.alunos.forEach(aluno => {
+                const turma = aluno.Turma || aluno.turma || '';
+                const nome = aluno.Nome_Aluno || aluno.nome || aluno.Nome || '';
+                
+                if (turma && nome) {
                     if (!novosAlunos[turma]) {
                         novosAlunos[turma] = [];
                     }
@@ -1196,110 +1127,110 @@
                     }
                 }
             });
-            escolaData.alunos = novosAlunos;
-            console.log('📊 Alunos por turma:', escolaData.alunos);
-
-            // ============================================
-            // ATUALIZAR PROFESSORES
-            // ============================================
-            if (dadosAPI.professores.length > 0) {
-                escolaData.professores = dadosAPI.professores
-                    .filter(p => p.Ativo !== 'NÃO')
-                    .map(p => ({
-                        id: p.ID_Professor || '',
-                        nome: p.Nome || '',
-                        tipo: p.Tipo || ''
-                    }))
-                    .filter(p => p.id && p.nome);
+            
+            if (Object.keys(novosAlunos).length > 0) {
+                escolaData.alunos = novosAlunos;
+                console.log('👥 Alunos atualizados por turma:', Object.keys(novosAlunos).length);
             }
-            console.log('📊 Professores:', escolaData.professores);
 
-            // ============================================
-            // ATUALIZAR ATRIBUIÇÕES
-            // ============================================
-            if (dadosAPI.atribuicoes.length > 0) {
-                const novasAtribuicoes = {};
-                dadosAPI.atribuicoes.forEach(attr => {
-                    const profId = attr.ID_Professor || '';
-                    const turma = attr.Turma || '';
-                    const ativo = attr.Ativo || 'SIM';
-                    if (profId && turma && ativo.toUpperCase() !== 'NÃO') {
-                        if (!novasAtribuicoes[profId]) {
-                            novasAtribuicoes[profId] = [];
-                        }
-                        if (!novasAtribuicoes[profId].includes(turma)) {
-                            novasAtribuicoes[profId].push(turma);
-                        }
+            // Atualiza atribuições
+            dadosPlanilha.atribuicoes.forEach(attr => {
+                const profId = attr.ID_Professor || attr.id || '';
+                const turma = attr.Turma || attr.turma || '';
+                const ativo = attr.Ativo || attr.ativo || 'SIM';
+                
+                if (profId && turma && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
+                    if (!db.atribuicoes[profId]) {
+                        db.atribuicoes[profId] = [];
                     }
-                });
-                db.atribuicoes = novasAtribuicoes;
-            }
-            console.log('📊 Atribuições:', db.atribuicoes);
+                    if (!db.atribuicoes[profId].includes(turma)) {
+                        db.atribuicoes[profId].push(turma);
+                    }
+                }
+            });
 
-            // ============================================
-            // ATUALIZAR LISTA DE TURMAS
-            // ============================================
-            const turmasSet = new Set();
+            // Atualiza turmas disponíveis
+            const turmasSet = new Set(escolaData.turmas);
             Object.keys(escolaData.alunos).forEach(t => turmasSet.add(t));
             Object.values(db.atribuicoes).forEach(turmas => {
                 turmas.forEach(t => turmasSet.add(t));
             });
+            escolaData.turmas = Array.from(turmasSet).sort();
             
-            // Garantir que as turmas padrão existam
-            const turmasPadrao = [
+            console.log('🏫 Turmas disponíveis:', escolaData.turmas.length);
+
+            // Re-inicializa notas para novas turmas/alunos
+            inicializarNotas();
+            
+            console.log('✅ Banco de dados atualizado com sucesso!');
+        }
+
+        // ============================================
+        // DADOS DA ESCOLA (Inicial com fallback)
+        // ============================================
+        let escolaData = {
+            turmas: [
                 '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
                 '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
                 '3º Ano A', '3º Ano B', '3º Ano C', '3º Ano D', '3º Ano E',
                 '4º Ano A', '4º Ano B', '4º Ano C', '4º Ano D', '4º Ano E',
                 '5º Ano A', '5º Ano B', '5º Ano C', '5º Ano D', '5º Ano E'
-            ];
-            turmasPadrao.forEach(t => turmasSet.add(t));
-            
-            if (turmasSet.size > 0) {
-                escolaData.turmas = Array.from(turmasSet).sort();
-            }
-            console.log('📊 Turmas:', escolaData.turmas);
-
-            // ============================================
-            // ATUALIZAR SOLICITAÇÕES
-            // ============================================
-            if (dadosAPI.relatoriosSolicitados.length > 0) {
-                db.solicitacoes = dadosAPI.relatoriosSolicitados.map(s => ({
-                    turma: s.Turma || '',
-                    aluno: s.Aluno || '',
-                    bimestre: s.Bimestre || '1',
-                    data: s.Data_Solicitacao || '',
-                    status: s.Status || 'Pendente'
-                })).filter(s => s.turma && s.aluno);
-            }
-
-            // ============================================
-            // RE-INICIALIZAR NOTAS
-            // ============================================
-            inicializarNotas();
-
-            console.log('✅ Banco de dados atualizado:', {
-                turmas: escolaData.turmas.length,
-                alunos: Object.keys(escolaData.alunos).length,
-                professores: escolaData.professores.length,
-                atribuicoes: Object.keys(db.atribuicoes).length
-            });
-        }
-
-        // ============================================
-        // DADOS DA ESCOLA
-        // ============================================
-        let escolaData = {
-            turmas: [],
-            alunos: {},
-            professores: []
+            ],
+            alunos: {
+                '1º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '1º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '1º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '1º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '1º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '2º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '2º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '2º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '2º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '2º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '3º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '3º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '3º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '3º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '3º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '4º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '4º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '4º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '4º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '4º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '5º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '5º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '5º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '5º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '5º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira']
+            },
+            professores: [
+                { id: 'p1', nome: 'Prof. Carlos Silva', tipo: 'Regente' },
+                { id: 'p2', nome: 'Prof. Maria Santos', tipo: 'Regente' },
+                { id: 'p3', nome: 'Prof. João Pereira', tipo: 'Regente' },
+                { id: 'p4', nome: 'Prof. Ana Oliveira', tipo: 'Regente' },
+                { id: 'p5', nome: 'Prof. Roberto Lima', tipo: 'Regente' },
+                { id: 'p6', nome: 'Prof. Paula Mendes', tipo: 'Artes' },
+                { id: 'p7', nome: 'Prof. Ricardo Faria', tipo: 'Música' },
+                { id: 'p8', nome: 'Prof. Sandra Costa', tipo: 'Inglês' },
+                { id: 'p9', nome: 'Prof. Marcos Rocha', tipo: 'Educação Física' }
+            ]
         };
 
         // ============================================
         // BANCO DE DADOS LOCAL
         // ============================================
         let db = {
-            atribuicoes: {},
+            atribuicoes: {
+                'p1': ['1º Ano A'],
+                'p2': ['2º Ano B'],
+                'p3': ['3º Ano C'],
+                'p4': ['4º Ano D'],
+                'p5': ['5º Ano E'],
+                'p6': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p7': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p8': ['4º Ano D', '5º Ano E'],
+                'p9': ['1º Ano A', '2º Ano B', '3º Ano C', '4º Ano D', '5º Ano E']
+            },
             notas: {},
             presencas: {},
             observacoes: {},
@@ -1307,14 +1238,10 @@
             solicitacoes: []
         };
 
-        // ============================================
-        // FUNÇÃO PARA INICIALIZAR NOTAS
-        // ============================================
+        // Inicializa notas
         function inicializarNotas() {
             escolaData.turmas.forEach(turma => {
-                if (!db.notas[turma]) {
-                    db.notas[turma] = {};
-                }
+                if (!db.notas[turma]) db.notas[turma] = {};
                 const alunos = escolaData.alunos[turma] || [];
                 alunos.forEach(aluno => {
                     if (!db.notas[turma][aluno]) {
@@ -1326,6 +1253,7 @@
                 if (!db.relatorios[turma]) db.relatorios[turma] = {};
             });
         }
+        inicializarNotas();
 
         // ============================================
         // ESTADO DO USUÁRIO
@@ -1561,11 +1489,6 @@
             const alunos = getAlunosByTurma(turmaSelecionada);
             const tbody = document.getElementById('tabelaNotasBody');
             
-            if (alunos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #718096;">Nenhum aluno cadastrado nesta turma</td></tr>`;
-                return;
-            }
-
             tbody.innerHTML = alunos.map(aluno => {
                 const notas = getNotasAluno(turmaSelecionada, aluno);
                 const media = calcularMedia(notas);
@@ -1651,11 +1574,6 @@
 
             const alunos = getAlunosByTurma(turmaSelecionada);
             const container = document.getElementById('alunosPresenca');
-
-            if (alunos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum aluno cadastrado nesta turma</p>';
-                return;
-            }
 
             container.innerHTML = alunos.map(aluno => `
                 <div style="display: flex; align-items: center; gap: 10px; margin: 5px 0;">
@@ -1887,11 +1805,6 @@
         function renderVisaoGeralTurmas() {
             const tbody = document.getElementById('visaoGeralTurmas');
             
-            if (escolaData.turmas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #718096;">Nenhuma turma cadastrada</td></tr>`;
-                return;
-            }
-
             tbody.innerHTML = escolaData.turmas.map(turma => {
                 const alunos = getAlunosByTurma(turma);
                 let somaMedias = 0;
@@ -1955,12 +1868,7 @@
         // ============================================
         function carregarProfessoresAtribuicao() {
             const select = document.getElementById('professorSelect');
-            if (escolaData.professores.length === 0) {
-                select.innerHTML = '<option value="">-- Nenhum professor cadastrado --</option>';
-                return;
-            }
-            
-            select.innerHTML = '<option value="">-- Selecione um professor --</option>' +
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
                 escolaData.professores.map(p =>
                     `<option value="${p.id}">${p.nome} (${p.tipo})</option>`
                 ).join('');
@@ -1970,12 +1878,7 @@
 
         function carregarTurmasSelect() {
             const select = document.getElementById('turmaSelect');
-            if (escolaData.turmas.length === 0) {
-                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
-                return;
-            }
-            
-            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -1983,11 +1886,6 @@
 
         function renderProfessoresAtribuidos() {
             const container = document.getElementById('professoresAtribuidos');
-            if (escolaData.professores.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado.</p>';
-                return;
-            }
-
             container.innerHTML = escolaData.professores.map(prof => {
                 const turmas = getTurmasByProfessor(prof.id);
                 return `
@@ -2071,12 +1969,7 @@
         // ============================================
         function carregarSolicitacaoTurmas() {
             const select = document.getElementById('solicitarTurma');
-            if (escolaData.turmas.length === 0) {
-                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
-                return;
-            }
-            
-            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -2086,14 +1979,10 @@
                 const alunoSelect = document.getElementById('solicitarAluno');
                 if (turma) {
                     const alunos = getAlunosByTurma(turma);
-                    if (alunos.length === 0) {
-                        alunoSelect.innerHTML = '<option value="">-- Nenhum aluno nesta turma --</option>';
-                    } else {
-                        alunoSelect.innerHTML = '<option value="">-- Selecione um aluno --</option>' +
-                            alunos.map(a => `<option value="${a}">${a}</option>`).join('');
-                    }
+                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
+                        alunos.map(a => `<option value="${a}">${a}</option>`).join('');
                 } else {
-                    alunoSelect.innerHTML = '<option value="">-- Selecione uma turma primeiro --</option>';
+                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>';
                 }
             });
         }
@@ -2176,7 +2065,7 @@
             });
 
             const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
-            const taxaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * (totalAlunos / (totalTurmas || 1) || 1)) * 100) : 0;
+            const taxaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * (totalAlunos / totalTurmas || 1)) * 100) : 0;
             const taxaAprovacao = mediaGeral >= 7 ? 85 : 75;
 
             container.innerHTML = `
@@ -2219,11 +2108,6 @@
         function gerarRelatorioGeral() {
             const container = document.getElementById('relatorioConsolidado');
             
-            if (escolaData.turmas.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhuma turma cadastrada.</p>';
-                return;
-            }
-
             let html = `
                 <div class="relatorio-content">
                     <h4>📊 Relatório Geral da Escola</h4>
@@ -2282,11 +2166,6 @@
         function gerarRelatorioPorTurma() {
             const container = document.getElementById('relatorioConsolidado');
             
-            if (escolaData.turmas.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhuma turma cadastrada.</p>';
-                return;
-            }
-
             let html = `
                 <div class="relatorio-content">
                     <h4>📊 Relatório por Turma</h4>
@@ -2337,11 +2216,6 @@
         function gerarRelatorioPorProfessor() {
             const container = document.getElementById('relatorioConsolidado');
             
-            if (escolaData.professores.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado.</p>';
-                return;
-            }
-
             let html = `
                 <div class="relatorio-content">
                     <h4>📊 Relatório por Professor</h4>
@@ -2405,12 +2279,7 @@
         // ============================================
         function carregarTurmasDirecao() {
             const select = document.getElementById('direcaoTurma');
-            if (escolaData.turmas.length === 0) {
-                select.innerHTML = '<option value="">-- Nenhuma turma cadastrada --</option>';
-                return;
-            }
-            
-            select.innerHTML = '<option value="">-- Selecione uma turma --</option>' +
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
                 escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
@@ -2420,14 +2289,10 @@
                 const alunoSelect = document.getElementById('direcaoAluno');
                 if (turma) {
                     const alunos = getAlunosByTurma(turma);
-                    if (alunos.length === 0) {
-                        alunoSelect.innerHTML = '<option value="">-- Nenhum aluno nesta turma --</option>';
-                    } else {
-                        alunoSelect.innerHTML = '<option value="">-- Selecione um aluno --</option>' +
-                            alunos.map(a => `<option value="${a}">${a}</option>`).join('');
-                    }
+                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
+                        alunos.map(a => `<option value="${a}">${a}</option>`).join('');
                 } else {
-                    alunoSelect.innerHTML = '<option value="">-- Selecione uma turma primeiro --</option>';
+                    alunoSelect.innerHTML = '<option value="">-- Selecione --</option>';
                 }
             });
         }
@@ -2528,21 +2393,6 @@
         });
 
         // ============================================
-        // RECARREGAR DADOS
-        // ============================================
-        async function recarregarDados() {
-            const status = document.getElementById('syncStatus');
-            status.className = 'sync-status syncing';
-            status.textContent = '🔄 Recarregando...';
-
-            await carregarDadosAPI();
-
-            if (currentUser.cargo) {
-                renderDashboard(currentUser.cargo);
-            }
-        }
-
-        // ============================================
         // LOGOUT
         // ============================================
         function logout() {
@@ -2567,7 +2417,13 @@
                 document.getElementById(id).max = hoje;
             });
 
-            carregarDadosAPI();
+            console.log('🚀 Sistema iniciado!');
+            console.log('📊 Configuração:', SHEET_CONFIG);
+
+            // Carrega dados automaticamente ao iniciar
+            setTimeout(() => {
+                carregarDadosPlanilha();
+            }, 500);
         });
     </script>
 </body>
