@@ -1474,32 +1474,42 @@
             console.log('✅ Banco de dados atualizado com sucesso!');
         }
 
-        // ============================================
-        // FUNÇÕES DE AUTENTICAÇÃO
-        // ============================================
-        function autenticarUsuario(usuario, senha) {
-            console.log('🔍 Tentando autenticar:', usuario);
-            console.log('📋 Dados de login disponíveis:', dadosPlanilha.login);
-            
-            const user = dadosPlanilha.login.find(u => {
-                const idLogin = texto(u.ID_Login || u.id_Login || u.IDLogin);
-                const senhaLogin = texto(u.Senha || u.senha);
-                console.log(`   Comparando: ID="${idLogin}" com "${usuario}", Senha="${senhaLogin}" com "${senha}"`);
-                return idLogin === usuario && senhaLogin === senha;
-            });
-            
-            if (user) {
-                console.log('✅ Usuário autenticado:', user);
-                return {
-                    id: texto(user.ID_Login || u.id_Login || u.IDLogin),
-                    perfil: texto(user.PERFIL || user.perfil || user.Perfil),
-                    nome: texto(user.Nome || user.nome),
-                    senha: texto(user.Senha || user.senha)
-                };
-            }
-            console.log('❌ Usuário não encontrado ou senha inválida');
-            return null;
-        }
+// ============================================
+// FUNÇÕES DE AUTENTICAÇÃO (CORRIGIDAS)
+// ============================================
+function autenticarUsuario(usuario, senha) {
+    console.log('🔍 Tentando autenticar:', usuario);
+    console.log('📋 Dados de login disponíveis:', dadosPlanilha.login);
+    console.log('📋 Colunas disponíveis:', dadosPlanilha.login.length > 0 ? Object.keys(dadosPlanilha.login[0]) : 'nenhuma');
+    
+    // Normaliza os nomes das colunas para comparação
+    const user = dadosPlanilha.login.find(u => {
+        // Tenta encontrar os campos independente da capitalização
+        const idLogin = texto(u.iD_Login || u.ID_Login || u.id_Login || u.IDLogin || u['iD_Login'] || u['ID_Login'] || u['Id_Login']);
+        const senhaLogin = texto(u.Senha || u.senha || u['Senha']);
+        
+        console.log(`   Comparando: ID="${idLogin}" com "${usuario}", Senha="${senhaLogin}" com "${senha}"`);
+        return idLogin === usuario && senhaLogin === senha;
+    });
+    
+    if (user) {
+        console.log('✅ Usuário autenticado:', user);
+        // Tenta encontrar os campos independente da capitalização
+        const id = texto(user.iD_Login || user.ID_Login || user.id_Login || user.IDLogin || user['iD_Login'] || user['ID_Login']);
+        const perfil = texto(user.PERFIL || user.perfil || user.Perfil || user['PERFIL']);
+        const nome = texto(user.Nome || user.nome || user['Nome']);
+        const senha = texto(user.Senha || user.senha || user['Senha']);
+        
+        return {
+            id: id,
+            perfil: perfil,
+            nome: nome,
+            senha: senha
+        };
+    }
+    console.log('❌ Usuário não encontrado ou senha inválida');
+    return null;
+}
 
         // ============================================
         // FUNÇÕES DE UTILIDADE
