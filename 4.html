@@ -1021,6 +1021,7 @@
             sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
             abas: {
                 alunos: 'TURMAS_ALUNOS',
+                professores: 'PROFESSORES',
                 atribuicoes: 'ATRIBUICOES',
                 notas: 'NOTAS_BIMESTRAIS',
                 presencas: 'PRESENCAS',
@@ -1036,6 +1037,7 @@
         // ============================================
         let dadosPlanilha = {
             alunos: [],
+            professores: [],
             atribuicoes: [],
             notas: [],
             presencas: [],
@@ -1081,6 +1083,7 @@
                 atualizarBancoDados();
 
                 const totalAlunos = dadosPlanilha.alunos.length;
+                const totalProfessores = dadosPlanilha.professores.length;
                 const totalAtribuicoes = dadosPlanilha.atribuicoes.length;
                 const totalNotas = dadosPlanilha.notas.length;
                 const totalPresencas = dadosPlanilha.presencas.length;
@@ -1090,13 +1093,14 @@
                 const totalRelatorios = dadosPlanilha.relatoriosGerados.length;
 
                 const status = document.getElementById('dataStatus');
-                status.innerHTML = `✅ Dados carregados: ${totalAlunos} alunos, ${totalAtribuicoes} atribuições, ${totalNotas} notas, ${totalPresencas} presenças, ${totalConteudos} conteúdos, ${totalObservacoes} observações, ${totalSolicitacoes} solicitações, ${totalRelatorios} relatórios`;
+                status.innerHTML = `✅ Dados carregados: ${totalAlunos} alunos, ${totalProfessores} professores, ${totalAtribuicoes} atribuições, ${totalNotas} notas, ${totalPresencas} presenças, ${totalConteudos} conteúdos, ${totalObservacoes} observações, ${totalSolicitacoes} solicitações, ${totalRelatorios} relatórios`;
                 
                 document.getElementById('syncStatus').className = 'sync-status synced';
                 document.getElementById('syncStatus').textContent = '✅ Sincronizado';
 
                 console.log('📊 Resumo dos dados carregados da planilha:', {
                     alunos: totalAlunos,
+                    professores: totalProfessores,
                     atribuicoes: totalAtribuicoes,
                     notas: totalNotas,
                     presencas: totalPresencas,
@@ -1106,7 +1110,7 @@
                     relatoriosGerados: totalRelatorios
                 });
 
-                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${totalAlunos} alunos\n👨‍🏫 ${totalAtribuicoes} atribuições\n📝 ${totalNotas} notas\n✅ ${totalPresencas} presenças\n📚 ${totalConteudos} conteúdos\n✏️ ${totalObservacoes} observações\n📄 ${totalSolicitacoes} solicitações\n📋 ${totalRelatorios} relatórios gerados`);
+                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${totalAlunos} alunos\n👨‍🏫 ${totalProfessores} professores\n👨‍🏫 ${totalAtribuicoes} atribuições\n📝 ${totalNotas} notas\n✅ ${totalPresencas} presenças\n📚 ${totalConteudos} conteúdos\n✏️ ${totalObservacoes} observações\n📄 ${totalSolicitacoes} solicitações\n📋 ${totalRelatorios} relatórios gerados`);
 
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
@@ -1170,7 +1174,30 @@
         function atualizarBancoDados() {
             console.log('🔄 Atualizando banco de dados local a partir da planilha...');
 
-            // 1. Atualiza alunos por turma
+            // 1. Atualiza professores a partir da aba PROFESSORES
+            const professoresMap = new Map();
+            dadosPlanilha.professores.forEach(prof => {
+                const id = prof.ID_Professor || prof.id || '';
+                const nome = prof.Nome || prof.nome || '';
+                const tipo = prof.Tipo || prof.tipo || 'Regente';
+                const ativo = prof.Ativo || prof.ativo || '';
+                
+                if (id && nome && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
+                    professoresMap.set(id, { 
+                        id, 
+                        nome, 
+                        tipo,
+                        email: prof.Email || prof.email || '',
+                        telefone: prof.Telefone || prof.telefone || '',
+                        formacao: prof.Formacao || prof.formacao || '',
+                        dataAdmissao: prof.Data_Admissao || prof.dataAdmissao || ''
+                    });
+                }
+            });
+            escolaData.professores = Array.from(professoresMap.values());
+            console.log('👨‍🏫 Professores carregados da aba PROFESSORES:', escolaData.professores.length);
+
+            // 2. Atualiza alunos por turma
             const novosAlunos = {};
             const turmasSet = new Set();
             
@@ -1194,23 +1221,6 @@
             escolaData.turmas = Array.from(turmasSet).sort();
             console.log('👥 Alunos atualizados por turma:', Object.keys(novosAlunos).length);
             console.log('🏫 Turmas encontradas:', escolaData.turmas.length);
-
-            // 2. Atualiza professores
-            const professoresMap = new Map();
-            dadosPlanilha.atribuicoes.forEach(attr => {
-                const id = attr.ID_Professor || '';
-                const nome = attr.Nome_Professor || '';
-                const tipo = attr.Tipo || 'Regente';
-                const ativo = attr.Ativo || '';
-                
-                if (id && nome && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
-                    if (!professoresMap.has(id)) {
-                        professoresMap.set(id, { id, nome, tipo });
-                    }
-                }
-            });
-            escolaData.professores = Array.from(professoresMap.values());
-            console.log('👨‍🏫 Professores encontrados:', escolaData.professores.length);
 
             // 3. Atualiza atribuições
             const novasAtribuicoes = {};
@@ -1447,7 +1457,7 @@
                 if (profId) {
                     currentUser.turmas = getTurmasByProfessor(profId);
                 } else {
-                    alert('⚠️ Professor não encontrado na planilha. Verifique se seu nome está cadastrado na aba ATRIBUICOES.');
+                    alert('⚠️ Professor não encontrado na planilha. Verifique se seu nome está cadastrado na aba PROFESSORES.');
                     return;
                 }
             }
@@ -2067,7 +2077,7 @@
             const container = document.getElementById('professoresAtribuidos');
             
             if (escolaData.professores.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado.</p>';
+                container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado na aba PROFESSORES.</p>';
                 return;
             }
 
@@ -2077,6 +2087,8 @@
                     <div class="professor-item">
                         <strong>${prof.nome}</strong>
                         <div class="especialidade">${prof.tipo}</div>
+                        ${prof.email ? `<div style="font-size: 0.85em; color: #718096;">📧 ${prof.email}</div>` : ''}
+                        ${prof.telefone ? `<div style="font-size: 0.85em; color: #718096;">📞 ${prof.telefone}</div>` : ''}
                         <div class="turmas-atribuidas">
                             ${turmas.length > 0 ? turmas.map(t => 
                                 `<span class="turma-tag">${t}</span>`
@@ -2451,6 +2463,7 @@
                             return `
                                 <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
                                     <h5>${prof.nome} (${prof.tipo})</h5>
+                                    ${prof.email ? `<p style="color: #718096; font-size: 0.9em;">📧 ${prof.email}</p>` : ''}
                                     <p style="color: #718096;">Turmas: ${turmas.length > 0 ? turmas.join(', ') : 'Nenhuma'}</p>
                                     ${turmas.length > 0 ? `
                                         <table>
@@ -2664,7 +2677,6 @@
             console.log('📊 Configuração:', SHEET_CONFIG);
             console.log('📋 Abas configuradas:', Object.keys(SHEET_CONFIG.abas));
 
-            // Carrega dados automaticamente ao iniciar
             setTimeout(() => {
                 carregarDadosPlanilha();
             }, 500);
