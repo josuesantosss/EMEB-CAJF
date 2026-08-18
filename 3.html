@@ -1,4 +1,4 @@
-#<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -144,6 +144,17 @@
 
         .btn-warning:hover {
             box-shadow: 0 5px 15px rgba(237, 137, 54, 0.4);
+        }
+
+        .btn-google {
+            background: #4285f4;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-google:hover {
+            background: #357abd;
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
         }
 
         .btn-small {
@@ -668,6 +679,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .checkbox-grid input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -682,7 +713,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>1 🏫 Sistema de Gestão Escolar</h1>
+            <h1>🏫 Sistema de Gestão Escolar</h1>
             <p class="subtitle">Fundamental I - 1º ao 5º Ano (Turmas A a E)</p>
             <div class="badge-google">📊 Integrado com Google Sheets</div>
         </div>
@@ -708,9 +739,7 @@
                 </div>
                 <div class="form-group">
                     <label for="nome">Seu Nome</label>
-                    <select id="nome" required>
-                        <option value="">-- Selecione seu nome --</option>
-                    </select>
+                    <input type="text" id="nome" placeholder="Digite seu nome" required>
                 </div>
                 <button type="submit" class="btn">Entrar no Sistema</button>
             </form>
@@ -748,8 +777,9 @@
                         <div class="tabs">
                             <button class="tab active" onclick="switchTab('notas')">📊 Notas Bimestrais</button>
                             <button class="tab" onclick="switchTab('presencas')">✅ Presenças</button>
-                            <button class="tab" onclick="switchTab('relatorios')">📄 Relatórios</button>
+                            <button class="tab" onclick="switchTab('conteudos')">📚 Conteúdos</button>
                             <button class="tab" onclick="switchTab('observacoes')">✏️ Observações</button>
+                            <button class="tab" onclick="switchTab('relatorios')">📄 Relatórios</button>
                         </div>
                         <div id="tab-notas" class="tab-content active">
                             <div class="table-container">
@@ -786,10 +816,58 @@
                             </div>
                             <div class="form-group">
                                 <label>Alunos Presentes</label>
-                                <div id="alunosPresenca"></div>
+                                <div id="alunosPresenca" class="checkbox-grid"></div>
                             </div>
                             <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
                             <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
+                        </div>
+                        <div id="tab-conteudos" class="tab-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="dataConteudo">
+                                </div>
+                                <div class="form-group">
+                                    <label>Disciplina</label>
+                                    <input type="text" id="disciplinaConteudo" placeholder="Ex: Matemática">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Conteúdo</label>
+                                <textarea id="conteudoText" placeholder="Descreva o conteúdo trabalhado..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Objetivos</label>
+                                <textarea id="objetivosConteudo" placeholder="Descreva os objetivos da aula..."></textarea>
+                            </div>
+                            <button onclick="salvarConteudo()" class="btn btn-secondary btn-small">💾 Salvar Conteúdo</button>
+                            <div id="registrosConteudos" class="registros-list" style="margin-top: 20px;"></div>
+                        </div>
+                        <div id="tab-observacoes" class="tab-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Aluno</label>
+                                    <select id="alunoObservacao"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="dataObservacao">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="tipoObservacao">
+                                    <option value="Positiva">✅ Positiva</option>
+                                    <option value="Negativa">⚠️ Negativa</option>
+                                    <option value="Neutra">ℹ️ Neutra</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Observação</label>
+                                <textarea id="observacaoText" placeholder="Registre observações sobre o aluno..."></textarea>
+                            </div>
+                            <button onclick="salvarObservacao()" class="btn btn-secondary btn-small">💾 Salvar Observação</button>
+                            <div id="registrosObservacoes" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
                         <div id="tab-relatorios" class="tab-content">
                             <div class="form-row">
@@ -814,24 +892,6 @@
                                 <h4>📋 Relatórios Solicitados pela Coordenação</h4>
                                 <div id="solicitacoesRelatorios" class="registros-list"></div>
                             </div>
-                        </div>
-                        <div id="tab-observacoes" class="tab-content">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Aluno</label>
-                                    <select id="alunoObservacao"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Data</label>
-                                    <input type="date" id="dataObservacao">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Observação</label>
-                                <textarea id="observacaoText" placeholder="Registre observações sobre o aluno..."></textarea>
-                            </div>
-                            <button onclick="salvarObservacao()" class="btn btn-secondary btn-small">💾 Salvar Observação</button>
-                            <div id="registrosObservacoes" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
                     </div>
                 </div>
@@ -974,6 +1034,7 @@
                 atribuicoes: 'ATRIBUICOES',
                 notas: 'NOTAS_BIMESTRAIS',
                 presencas: 'PRESENCAS',
+                conteudos: 'CONTEUDOS',
                 observacoes: 'OBSERVACOES',
                 relatoriosSolicitados: 'RELATORIOS_SOLICITADOS',
                 relatoriosGerados: 'RELATORIOS_GERADOS'
@@ -988,26 +1049,333 @@
             atribuicoes: [],
             notas: [],
             presencas: [],
+            conteudos: [],
             observacoes: [],
             relatoriosSolicitados: [],
             relatoriosGerados: []
         };
 
         // ============================================
+        // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
+        // ============================================
+        async function carregarDadosPlanilha() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            try {
+                console.log('📡 Iniciando carregamento da planilha...');
+                
+                for (const [key, aba] of Object.entries(SHEET_CONFIG.abas)) {
+                    await carregarAbaEspecifica(aba, key);
+                }
+
+                atualizarBancoDados();
+
+                const status = document.getElementById('dataStatus');
+                status.innerHTML = `✅ Dados carregados: ${dadosPlanilha.alunos.length} alunos, ${dadosPlanilha.atribuicoes.length} atribuições, ${dadosPlanilha.notas.length} notas, ${dadosPlanilha.presencas.length} presenças, ${dadosPlanilha.conteudos.length} conteúdos, ${dadosPlanilha.observacoes.length} observações, ${dadosPlanilha.relatoriosSolicitados.length} solicitações, ${dadosPlanilha.relatoriosGerados.length} relatórios`;
+                
+                document.getElementById('syncStatus').className = 'sync-status synced';
+                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+
+                console.log('📊 Resumo dos dados:', {
+                    alunos: dadosPlanilha.alunos.length,
+                    atribuicoes: dadosPlanilha.atribuicoes.length,
+                    notas: dadosPlanilha.notas.length,
+                    presencas: dadosPlanilha.presencas.length,
+                    conteudos: dadosPlanilha.conteudos.length,
+                    observacoes: dadosPlanilha.observacoes.length,
+                    relatoriosSolicitados: dadosPlanilha.relatoriosSolicitados.length,
+                    relatoriosGerados: dadosPlanilha.relatoriosGerados.length
+                });
+
+                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${dadosPlanilha.alunos.length} alunos\n👨‍🏫 ${dadosPlanilha.atribuicoes.length} atribuições\n📝 ${dadosPlanilha.notas.length} notas\n✅ ${dadosPlanilha.presencas.length} presenças\n📚 ${dadosPlanilha.conteudos.length} conteúdos\n✏️ ${dadosPlanilha.observacoes.length} observações\n📄 ${dadosPlanilha.relatoriosSolicitados.length} solicitações\n📋 ${dadosPlanilha.relatoriosGerados.length} relatórios gerados`);
+
+            } catch (error) {
+                console.error('❌ Erro detalhado:', error);
+                document.getElementById('syncStatus').className = 'sync-status error';
+                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
+                
+                alert('❌ Erro ao carregar dados da planilha.\n\n' +
+                      '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
+                      'Para tornar pública:\n' +
+                      '1. Abra sua planilha no Google Sheets\n' +
+                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
+                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
+                      '4. Mude para "Qualquer pessoa com o link"\n\n' +
+                      'Detalhes do erro: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        async function carregarAbaEspecifica(nomeAba, chave) {
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_CONFIG.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(nomeAba)}`;
+                console.log(`🔗 Carregando aba ${nomeAba}...`);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status} ao carregar aba ${nomeAba}`);
+                }
+
+                const text = await response.text();
+                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(jsonStr);
+
+                if (data.table && data.table.rows) {
+                    const cols = data.table.cols.map(col => col.label || col.id || '');
+                    const rows = data.table.rows.map(row => {
+                        const obj = {};
+                        row.c.forEach((cell, index) => {
+                            const key = cols[index] || `coluna_${index}`;
+                            obj[key] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : cell.f || '') : '';
+                        });
+                        return obj;
+                    });
+
+                    dadosPlanilha[chave] = rows;
+                    console.log(`✅ ${chave} carregados:`, rows.length);
+                } else {
+                    console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
+                    dadosPlanilha[chave] = [];
+                }
+            } catch (error) {
+                console.error(`❌ Erro ao carregar aba ${nomeAba}:`, error);
+                dadosPlanilha[chave] = [];
+            }
+        }
+
+        // ============================================
+        // ATUALIZAR BANCO DE DADOS LOCAL
+        // ============================================
+        function atualizarBancoDados() {
+            console.log('🔄 Atualizando banco de dados local...');
+
+            // Atualiza alunos por turma
+            const novosAlunos = {};
+            dadosPlanilha.alunos.forEach(aluno => {
+                const turma = aluno.Turma || '';
+                const nome = aluno.Nome_Aluno || aluno.Nome || '';
+                const ativo = aluno.Ativo || '';
+                
+                if (turma && nome && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
+                    if (!novosAlunos[turma]) {
+                        novosAlunos[turma] = [];
+                    }
+                    if (!novosAlunos[turma].includes(nome)) {
+                        novosAlunos[turma].push(nome);
+                    }
+                }
+            });
+            
+            if (Object.keys(novosAlunos).length > 0) {
+                escolaData.alunos = novosAlunos;
+                console.log('👥 Alunos atualizados por turma:', Object.keys(novosAlunos).length);
+            }
+
+            // Atualiza atribuições
+            const novasAtribuicoes = {};
+            dadosPlanilha.atribuicoes.forEach(attr => {
+                const profId = attr.ID_Professor || '';
+                const turma = attr.Turma || '';
+                const ativo = attr.Ativo || '';
+                
+                if (profId && turma && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
+                    if (!novasAtribuicoes[profId]) {
+                        novasAtribuicoes[profId] = [];
+                    }
+                    if (!novasAtribuicoes[profId].includes(turma)) {
+                        novasAtribuicoes[profId].push(turma);
+                    }
+                }
+            });
+            db.atribuicoes = novasAtribuicoes;
+
+            // Atualiza notas
+            db.notas = {};
+            dadosPlanilha.notas.forEach(nota => {
+                const turma = nota.Turma || '';
+                const aluno = nota.Aluno || '';
+                const bimestre = parseInt(nota.Bimestre) || 1;
+                const valor = parseFloat(nota.Nota) || 0;
+                
+                if (turma && aluno) {
+                    if (!db.notas[turma]) db.notas[turma] = {};
+                    if (!db.notas[turma][aluno]) db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+                    if (bimestre >= 1 && bimestre <= 4) {
+                        db.notas[turma][aluno][bimestre] = valor;
+                    }
+                }
+            });
+
+            // Atualiza presenças
+            db.presencas = {};
+            dadosPlanilha.presencas.forEach(p => {
+                const turma = p.Turma || '';
+                if (turma) {
+                    if (!db.presencas[turma]) db.presencas[turma] = [];
+                    const presentes = (p.Alunos_Presentes || '').split(';').filter(a => a.trim());
+                    db.presencas[turma].push({
+                        data: p.Data || '',
+                        presentes: presentes,
+                        obs: p.Observacao_Aula || ''
+                    });
+                }
+            });
+
+            // Atualiza observações
+            db.observacoes = {};
+            dadosPlanilha.observacoes.forEach(o => {
+                const turma = o.Turma || '';
+                if (turma) {
+                    if (!db.observacoes[turma]) db.observacoes[turma] = [];
+                    db.observacoes[turma].push({
+                        data: o.Data || '',
+                        aluno: o.Aluno || '',
+                        observacao: o.Observacao || '',
+                        tipo: o.Tipo || 'Neutra'
+                    });
+                }
+            });
+
+            // Atualiza conteúdos
+            db.conteudos = {};
+            dadosPlanilha.conteudos.forEach(c => {
+                const turma = c.Turma || '';
+                if (turma) {
+                    if (!db.conteudos[turma]) db.conteudos[turma] = [];
+                    db.conteudos[turma].push({
+                        data: c.Data || '',
+                        disciplina: c.Disciplina || '',
+                        conteudo: c.Conteudo || '',
+                        objetivos: c.Objetivos || ''
+                    });
+                }
+            });
+
+            // Atualiza solicitações de relatório
+            db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
+                turma: s.Turma || '',
+                aluno: s.Aluno || '',
+                bimestre: s.Bimestre || '1',
+                data: s.Data_Solicitacao || '',
+                status: s.Status || 'Pendente',
+                dataConclusao: s.Data_Conclusao || '',
+                observacoes: s.Observacoes || ''
+            }));
+
+            // Atualiza relatórios gerados
+            db.relatoriosGerados = dadosPlanilha.relatoriosGerados.map(r => ({
+                turma: r.Turma || '',
+                aluno: r.Aluno || '',
+                bimestre: r.Bimestre || '1',
+                data: r.Data_Geracao || '',
+                professor: r.Professor || '',
+                notas: r.Notas || '',
+                media: parseFloat(r.Media) || 0,
+                presenca: parseFloat(r.Presenca) || 0,
+                observacoes: r.Observacoes || '',
+                recomendacao: r.Recomendacao || ''
+            }));
+
+            // Atualiza turmas disponíveis
+            const turmasSet = new Set(escolaData.turmas);
+            Object.keys(escolaData.alunos).forEach(t => turmasSet.add(t));
+            Object.values(db.atribuicoes).forEach(turmas => {
+                turmas.forEach(t => turmasSet.add(t));
+            });
+            escolaData.turmas = Array.from(turmasSet).sort();
+            
+            console.log('🏫 Turmas disponíveis:', escolaData.turmas.length);
+            console.log('✅ Banco de dados atualizado com sucesso!');
+        }
+
+        // ============================================
+        // DADOS DA ESCOLA (Estrutura base)
+        // ============================================
+        let escolaData = {
+            turmas: [
+                '1º Ano A', '1º Ano B', '1º Ano C', '1º Ano D', '1º Ano E',
+                '2º Ano A', '2º Ano B', '2º Ano C', '2º Ano D', '2º Ano E',
+                '3º Ano A', '3º Ano B', '3º Ano C', '3º Ano D', '3º Ano E',
+                '4º Ano A', '4º Ano B', '4º Ano C', '4º Ano D', '4º Ano E',
+                '5º Ano A', '5º Ano B', '5º Ano C', '5º Ano D', '5º Ano E'
+            ],
+            alunos: {},
+            professores: [
+                { id: 'p1', nome: 'Prof. Carlos Silva', tipo: 'Regente' },
+                { id: 'p2', nome: 'Prof. Maria Santos', tipo: 'Regente' },
+                { id: 'p3', nome: 'Prof. João Pereira', tipo: 'Regente' },
+                { id: 'p4', nome: 'Prof. Ana Oliveira', tipo: 'Regente' },
+                { id: 'p5', nome: 'Prof. Roberto Lima', tipo: 'Regente' },
+                { id: 'p6', nome: 'Prof. Paula Mendes', tipo: 'Artes' },
+                { id: 'p7', nome: 'Prof. Ricardo Faria', tipo: 'Música' },
+                { id: 'p8', nome: 'Prof. Sandra Costa', tipo: 'Inglês' },
+                { id: 'p9', nome: 'Prof. Marcos Rocha', tipo: 'Educação Física' }
+            ]
+        };
+
+        // ============================================
         // BANCO DE DADOS LOCAL
         // ============================================
         let db = {
-            professores: [],
-            turmas: [],
-            alunos: {},
             atribuicoes: {},
             notas: {},
             presencas: {},
             observacoes: {},
-            relatorios: {},
-            solicitacoes: [],
-            conteudos: []
+            conteudos: {},
+            relatoriosGerados: [],
+            solicitacoes: []
         };
+
+        // Inicializa com dados de exemplo
+        function inicializarDadosExemplo() {
+            // Atribuições de exemplo
+            db.atribuicoes = {
+                'p1': ['1º Ano A'],
+                'p2': ['2º Ano B'],
+                'p3': ['3º Ano C'],
+                'p4': ['4º Ano D'],
+                'p5': ['5º Ano E'],
+                'p6': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p7': ['1º Ano A', '2º Ano B', '3º Ano C'],
+                'p8': ['4º Ano D', '5º Ano E'],
+                'p9': ['1º Ano A', '2º Ano B', '3º Ano C', '4º Ano D', '5º Ano E']
+            };
+
+            // Dados de alunos de exemplo
+            escolaData.alunos = {
+                '1º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '1º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '1º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '1º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '1º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '2º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '2º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '2º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '2º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '2º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '3º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '3º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '3º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '3º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '3º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '4º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '4º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '4º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '4º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '4º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira'],
+                '5º Ano A': ['Ana Silva', 'Bruno Santos', 'Carla Oliveira', 'Daniel Costa', 'Eduarda Lima'],
+                '5º Ano B': ['Felipe Rocha', 'Gabriela Souza', 'Henrique Ferreira', 'Isabela Almeida', 'João Pereira'],
+                '5º Ano C': ['Karina Mendes', 'Leonardo Carvalho', 'Mariana Soares', 'Nicolas Barbosa', 'Olivia Fernandes'],
+                '5º Ano D': ['Paulo Gomes', 'Quitéria Nunes', 'Rafaela Martins', 'Samuel Duarte', 'Tatiane Castro'],
+                '5º Ano E': ['Ulysses Borges', 'Valentina Lopes', 'Wagner Silva', 'Ximena Ramos', 'Yuri Moreira']
+            };
+        }
+
+        // Inicializa
+        inicializarDadosExemplo();
 
         // ============================================
         // ESTADO DO USUÁRIO
@@ -1015,11 +1383,46 @@
         let currentUser = {
             cargo: '',
             nome: '',
-            professorId: '',
             turmas: []
         };
 
         let turmaSelecionada = null;
+
+        // ============================================
+        // FUNÇÕES DE UTILIDADE
+        // ============================================
+        function getAlunosByTurma(turma) {
+            return escolaData.alunos[turma] || [];
+        }
+
+        function getTurmasByProfessor(profId) {
+            return db.atribuicoes[profId] || [];
+        }
+
+        function getProfessorById(id) {
+            return escolaData.professores.find(p => p.id === id);
+        }
+
+        function getProfessorIdByNome(nome) {
+            const prof = escolaData.professores.find(p => p.nome === nome);
+            return prof ? prof.id : null;
+        }
+
+        function getNotasAluno(turma, aluno) {
+            if (!db.notas[turma]) return { 1: 0, 2: 0, 3: 0, 4: 0 };
+            if (!db.notas[turma][aluno]) return { 1: 0, 2: 0, 3: 0, 4: 0 };
+            return db.notas[turma][aluno];
+        }
+
+        function calcularMedia(notas) {
+            const valores = Object.values(notas).filter(n => n > 0);
+            if (valores.length === 0) return 0;
+            return valores.reduce((a, b) => a + b, 0) / valores.length;
+        }
+
+        function getUltimosRegistros(registros, limite = 10) {
+            return registros.slice(-limite).reverse();
+        }
 
         // ============================================
         // CONFIGURAÇÃO DE CARGOS
@@ -1048,405 +1451,29 @@
             'professor-regente': {
                 titulo: '👨‍🏫 Professor Regente',
                 cores: 'professor',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Relatórios', 'Observações']
+                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-artes': {
                 titulo: '🎨 Professor de Artes',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Relatórios', 'Observações']
+                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-musica': {
                 titulo: '🎵 Professor de Música',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Relatórios', 'Observações']
+                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-ingles': {
                 titulo: '🌎 Professor de Inglês',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Relatórios', 'Observações']
+                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-ef': {
                 titulo: '🏃 Professor de Educação Física',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Relatórios', 'Observações']
+                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
             }
         };
-
-        // ============================================
-        // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
-        // ============================================
-        async function carregarDadosPlanilha() {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('active');
-
-            try {
-                console.log('📡 Iniciando carregamento da planilha...');
-                console.log('🔍 ID da planilha:', SHEET_CONFIG.sheetId);
-                
-                // Carrega cada aba individualmente
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.alunos, 'alunos');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.atribuicoes, 'atribuicoes');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.notas, 'notas');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.presencas, 'presencas');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.observacoes, 'observacoes');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosSolicitados, 'relatoriosSolicitados');
-                await carregarAbaEspecifica(SHEET_CONFIG.abas.relatoriosGerados, 'relatoriosGerados');
-
-                // Log detalhado dos dados carregados
-                console.log('📊 DADOS BRUTOS CARREGADOS:');
-                console.log('👥 Alunos:', dadosPlanilha.alunos.length, 'registros');
-                console.log('📋 Atribuições:', dadosPlanilha.atribuicoes.length, 'registros');
-                console.log('📊 Notas:', dadosPlanilha.notas.length, 'registros');
-                console.log('✅ Presenças:', dadosPlanilha.presencas.length, 'registros');
-                console.log('✏️ Observações:', dadosPlanilha.observacoes.length, 'registros');
-                
-                if (dadosPlanilha.alunos.length > 0) {
-                    console.log('📄 Exemplo de aluno:', JSON.stringify(dadosPlanilha.alunos[0], null, 2));
-                }
-                if (dadosPlanilha.atribuicoes.length > 0) {
-                    console.log('📄 Exemplo de atribuição:', JSON.stringify(dadosPlanilha.atribuicoes[0], null, 2));
-                }
-
-                // Processa os dados carregados
-                processarDadosPlanilha();
-
-                // Atualiza a interface
-                atualizarInterfaceAposCarregamento();
-
-            } catch (error) {
-                console.error('❌ Erro detalhado:', error);
-                document.getElementById('syncStatus').className = 'sync-status error';
-                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
-                
-                alert('❌ Erro ao carregar dados da planilha.\n\n' +
-                      '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
-                      'Para tornar pública:\n' +
-                      '1. Abra sua planilha no Google Sheets\n' +
-                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
-                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
-                      '4. Mude para "Qualquer pessoa com o link"\n' +
-                      '5. Defina como "Leitor" (somente leitura)\n\n' +
-                      'Detalhes do erro: ' + error.message);
-            } finally {
-                loading.classList.remove('active');
-            }
-        }
-
-        // Função para carregar aba específica
-        async function carregarAbaEspecifica(nomeAba, chave) {
-            try {
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_CONFIG.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(nomeAba)}`;
-                console.log(`🔗 Carregando aba "${nomeAba}"...`);
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    console.warn(`⚠️ Aba "${nomeAba}" retornou status ${response.status}`);
-                    dadosPlanilha[chave] = [];
-                    return;
-                }
-
-                const text = await response.text();
-                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                const data = JSON.parse(jsonStr);
-
-                if (data.table && data.table.rows && data.table.rows.length > 0) {
-                    const cols = data.table.cols.map(col => col.label || col.id || '');
-                    console.log(`📋 Cabeçalhos da aba "${nomeAba}":`, cols);
-                    
-                    const rows = data.table.rows.map(row => {
-                        const obj = {};
-                        row.c.forEach((cell, index) => {
-                            const key = cols[index] || `coluna_${index}`;
-                            let valor = '';
-                            if (cell) {
-                                if (cell.v !== null && cell.v !== undefined) {
-                                    valor = cell.v;
-                                } else if (cell.f) {
-                                    valor = cell.f;
-                                }
-                            }
-                            obj[key] = valor;
-                        });
-                        return obj;
-                    });
-
-                    dadosPlanilha[chave] = rows;
-                    console.log(`✅ ${chave} carregados:`, rows.length);
-                } else {
-                    console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
-                    dadosPlanilha[chave] = [];
-                }
-            } catch (error) {
-                console.error(`❌ Erro ao carregar aba ${nomeAba}:`, error);
-                dadosPlanilha[chave] = [];
-            }
-        }
-
-        // Processa os dados da planilha
-        function processarDadosPlanilha() {
-            console.log('🔄 Processando dados da planilha...');
-            
-            // ============ PROCESSANDO PROFESSORES ============
-            db.professores = [];
-            const professoresUnicos = new Map();
-            
-            dadosPlanilha.atribuicoes.forEach(attr => {
-                const profId = String(attr.ID_Professor || attr.id || '').trim();
-                const nome = String(attr.Nome_Professor || attr.nome || '').trim();
-                const tipo = String(attr.Tipo || attr.tipo || 'Regente').trim();
-                
-                if (profId && nome && !professoresUnicos.has(profId)) {
-                    professoresUnicos.set(profId, {
-                        id: profId,
-                        nome: nome,
-                        tipo: tipo
-                    });
-                }
-            });
-            
-            db.professores = Array.from(professoresUnicos.values());
-            console.log('👨‍🏫 Professores processados:', db.professores.length);
-
-            // ============ PROCESSANDO ALUNOS ============
-            const alunosPorTurma = {};
-            const turmasSet = new Set();
-            
-            dadosPlanilha.alunos.forEach(aluno => {
-                const turmaRaw = String(aluno.Turma || aluno.turma || aluno.Sala || aluno.sala || '').trim();
-                const nome = String(aluno.Nome_Aluno || aluno.nome || aluno.Aluno || aluno.aluno || '').trim();
-                const ativo = String(aluno.Ativo || aluno.ativo || 'SIM').trim();
-                
-                if (turmaRaw && nome) {
-                    const turma = formatarTurma(turmaRaw);
-                    
-                    if (ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
-                        if (!alunosPorTurma[turma]) {
-                            alunosPorTurma[turma] = [];
-                        }
-                        if (!alunosPorTurma[turma].includes(nome)) {
-                            alunosPorTurma[turma].push(nome);
-                        }
-                        turmasSet.add(turma);
-                    }
-                }
-            });
-            
-            db.alunos = alunosPorTurma;
-            db.turmas = Array.from(turmasSet).sort();
-            
-            console.log('👥 Alunos processados por turma:', Object.keys(db.alunos).length);
-            console.log('🏫 Turmas:', db.turmas);
-
-            // ============ PROCESSANDO ATRIBUIÇÕES ============
-            db.atribuicoes = {};
-            dadosPlanilha.atribuicoes.forEach(attr => {
-                const profId = String(attr.ID_Professor || attr.id || '').trim();
-                const turmaRaw = String(attr.Turma || attr.turma || '').trim();
-                const ativo = String(attr.Ativo || attr.ativo || 'SIM').trim();
-                
-                if (profId && turmaRaw && ativo.toUpperCase() !== 'NÃO' && ativo.toUpperCase() !== 'NAO') {
-                    const turmaFormatada = formatarTurma(turmaRaw);
-                    
-                    if (!db.atribuicoes[profId]) {
-                        db.atribuicoes[profId] = [];
-                    }
-                    if (!db.atribuicoes[profId].includes(turmaFormatada)) {
-                        db.atribuicoes[profId].push(turmaFormatada);
-                    }
-                }
-            });
-            
-            console.log('📋 Atribuições processadas:', Object.keys(db.atribuicoes).length);
-
-            // ============ PROCESSANDO NOTAS ============
-            db.notas = {};
-            dadosPlanilha.notas.forEach(nota => {
-                const turmaRaw = String(nota.Turma || nota.turma || '').trim();
-                const aluno = String(nota.Aluno || nota.aluno || '').trim();
-                const bimestre = parseInt(nota.Bimestre || nota.bimestre || '1');
-                const valor = parseFloat(nota.Nota || nota.nota || '0');
-                
-                if (turmaRaw && aluno) {
-                    const turma = formatarTurma(turmaRaw);
-                    
-                    if (!db.notas[turma]) db.notas[turma] = {};
-                    if (!db.notas[turma][aluno]) {
-                        db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                    }
-                    db.notas[turma][aluno][bimestre] = valor;
-                }
-            });
-
-            // ============ PROCESSANDO PRESENÇAS ============
-            db.presencas = {};
-            dadosPlanilha.presencas.forEach(presenca => {
-                const turmaRaw = String(presenca.Turma || presenca.turma || '').trim();
-                const data = String(presenca.Data || presenca.data || '').trim();
-                const alunosPresentes = String(presenca.Alunos_Presentes || presenca.alunos_presentes || '')
-                    .split(';')
-                    .map(a => a.trim())
-                    .filter(a => a);
-                const observacao = String(presenca.Observacao_Aula || presenca.observacao_aula || '').trim();
-                
-                if (turmaRaw && data) {
-                    const turma = formatarTurma(turmaRaw);
-                    
-                    if (!db.presencas[turma]) db.presencas[turma] = [];
-                    db.presencas[turma].push({
-                        data: data,
-                        presentes: alunosPresentes,
-                        obs: observacao
-                    });
-                }
-            });
-
-            // ============ PROCESSANDO OBSERVAÇÕES ============
-            db.observacoes = {};
-            dadosPlanilha.observacoes.forEach(obs => {
-                const turmaRaw = String(obs.Turma || obs.turma || '').trim();
-                const aluno = String(obs.Aluno || obs.aluno || '').trim();
-                const data = String(obs.Data || obs.data || '').trim();
-                const observacao = String(obs.Observacao || obs.observacao || '').trim();
-                const tipo = String(obs.Tipo || obs.tipo || '').trim();
-                
-                if (turmaRaw && aluno) {
-                    const turma = formatarTurma(turmaRaw);
-                    
-                    if (!db.observacoes[turma]) db.observacoes[turma] = [];
-                    db.observacoes[turma].push({
-                        data: data,
-                        aluno: aluno,
-                        observacao: observacao,
-                        tipo: tipo
-                    });
-                }
-            });
-
-            // ============ PROCESSANDO SOLICITAÇÕES ============
-            db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
-                turma: formatarTurma(String(s.Turma || s.turma || '').trim()),
-                aluno: String(s.Aluno || s.aluno || '').trim(),
-                bimestre: String(s.Bimestre || s.bimestre || '1').trim(),
-                data: String(s.Data_Solicitacao || s.data_solicitacao || '').trim(),
-                status: String(s.Status || s.status || 'Pendente').trim(),
-                professor: String(s.Professor || s.professor || '').trim()
-            })).filter(s => s.turma && s.aluno);
-
-            // Inicializa notas para alunos sem notas
-            inicializarNotasFaltantes();
-            
-            console.log('✅ Processamento concluído!');
-            console.log('📊 RESUMO FINAL:', {
-                professores: db.professores.length,
-                turmas: db.turmas.length,
-                alunos: Object.values(db.alunos).reduce((acc, arr) => acc + arr.length, 0),
-                notas: Object.keys(db.notas).length,
-                presencas: Object.keys(db.presencas).length,
-                observacoes: Object.keys(db.observacoes).length,
-                solicitacoes: db.solicitacoes.length
-            });
-        }
-
-        // Formata turma de "1A" para "1º Ano A"
-        function formatarTurma(turma) {
-            if (!turma) return '';
-            
-            const turmaStr = String(turma).trim();
-            
-            if (turmaStr.includes('º') || turmaStr.includes('Ano')) {
-                return turmaStr;
-            }
-            
-            const match = turmaStr.match(/(\d+)\s*[º°]?\s*([A-Ea-e])/);
-            if (match) {
-                const numero = match[1];
-                const letra = match[2].toUpperCase();
-                return `${numero}º Ano ${letra}`;
-            }
-            
-            return turmaStr;
-        }
-
-        // Inicializa notas para alunos sem notas
-        function inicializarNotasFaltantes() {
-            db.turmas.forEach(turma => {
-                if (!db.notas[turma]) db.notas[turma] = {};
-                
-                const alunos = db.alunos[turma] || [];
-                alunos.forEach(aluno => {
-                    if (!db.notas[turma][aluno]) {
-                        db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                    }
-                });
-            });
-        }
-
-        // Atualiza interface após carregamento
-        function atualizarInterfaceAposCarregamento() {
-            const status = document.getElementById('dataStatus');
-            const totalAlunos = Object.values(db.alunos).reduce((acc, arr) => acc + arr.length, 0);
-            status.innerHTML = `✅ ${db.professores.length} professores, ${totalAlunos} alunos, ${db.turmas.length} turmas`;
-            
-            document.getElementById('syncStatus').className = 'sync-status synced';
-            document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-
-            // Atualiza select de professores no login
-            atualizarSelectProfessores();
-
-            // Se já estiver logado, atualiza a interface
-            if (currentUser.cargo) {
-                renderDashboard(currentUser.cargo);
-            }
-
-            alert(`✅ Dados carregados com sucesso!\n\n` +
-                  `👨‍🏫 ${db.professores.length} professores\n` +
-                  `👥 ${totalAlunos} alunos\n` +
-                  `🏫 ${db.turmas.length} turmas\n` +
-                  `📊 ${dadosPlanilha.notas.length} notas\n` +
-                  `✅ ${dadosPlanilha.presencas.length} presenças\n` +
-                  `✏️ ${dadosPlanilha.observacoes.length} observações`);
-        }
-
-        // Atualiza select de professores no login
-        function atualizarSelectProfessores() {
-            const selectNome = document.getElementById('nome');
-            selectNome.innerHTML = '<option value="">-- Selecione seu nome --</option>' +
-                db.professores.map(p => 
-                    `<option value="${p.nome}">${p.nome} (${p.tipo})</option>`
-                ).join('');
-        }
-
-        // ============================================
-        // FUNÇÕES DE UTILIDADE
-        // ============================================
-        function getAlunosByTurma(turma) {
-            return db.alunos[turma] || [];
-        }
-
-        function getTurmasByProfessor(profId) {
-            return db.atribuicoes[profId] || [];
-        }
-
-        function getProfessorById(id) {
-            return db.professores.find(p => p.id === id);
-        }
-
-        function getProfessorByNome(nome) {
-            return db.professores.find(p => p.nome === nome);
-        }
-
-        function getNotasAluno(turma, aluno) {
-            if (!db.notas[turma]) return { 1: 0, 2: 0, 3: 0, 4: 0 };
-            if (!db.notas[turma][aluno]) return { 1: 0, 2: 0, 3: 0, 4: 0 };
-            return db.notas[turma][aluno];
-        }
-
-        function calcularMedia(notas) {
-            const valores = Object.values(notas).filter(n => n > 0);
-            if (valores.length === 0) return 0;
-            return valores.reduce((a, b) => a + b, 0) / valores.length;
-        }
 
         // ============================================
         // LOGIN
@@ -1455,7 +1482,7 @@
             e.preventDefault();
 
             const cargo = document.getElementById('cargo').value;
-            const nome = document.getElementById('nome').value;
+            const nome = document.getElementById('nome').value.trim();
 
             if (!cargo || !nome) {
                 alert('Por favor, preencha todos os campos.');
@@ -1466,12 +1493,10 @@
             currentUser.nome = nome;
 
             if (cargo.startsWith('professor')) {
-                const professor = getProfessorByNome(nome);
-                if (professor) {
-                    currentUser.professorId = professor.id;
-                    currentUser.turmas = getTurmasByProfessor(professor.id);
+                const profId = getProfessorIdByNome(nome);
+                if (profId) {
+                    currentUser.turmas = getTurmasByProfessor(profId);
                 } else {
-                    currentUser.professorId = '';
                     currentUser.turmas = [];
                 }
             }
@@ -1505,6 +1530,7 @@
                 renderMinhasTurmas();
                 carregarAlunosSelects();
                 carregarPresenca();
+                carregarConteudos();
             }
 
             if (cargo === 'coordenacao') {
@@ -1576,6 +1602,7 @@
             renderMinhasTurmas();
             carregarTabelaNotas();
             carregarPresenca();
+            carregarConteudos();
             carregarObservacoes();
             carregarRelatorios();
             carregarAlunosSelects();
@@ -1590,6 +1617,11 @@
             const alunos = getAlunosByTurma(turmaSelecionada);
             const tbody = document.getElementById('tabelaNotasBody');
             
+            if (alunos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #718096;">Nenhum aluno nesta turma</td></tr>';
+                return;
+            }
+
             tbody.innerHTML = alunos.map(aluno => {
                 const notas = getNotasAluno(turmaSelecionada, aluno);
                 const media = calcularMedia(notas);
@@ -1602,7 +1634,7 @@
                         <td><input type="number" class="nota-input" id="nota_${aluno.replace(/\s/g, '_')}_4" value="${notas[4] || 0}" min="0" max="10" step="0.5"></td>
                         <td><strong>${media.toFixed(1)}</strong></td>
                         <td>
-                            <button onclick="calcularMediaAluno('${aluno}')" class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">📊</button>
+                            <button onclick="calcularMediaAluno('${aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">📊</button>
                         </td>
                     </tr>
                 `;
@@ -1676,11 +1708,16 @@
             const alunos = getAlunosByTurma(turmaSelecionada);
             const container = document.getElementById('alunosPresenca');
 
+            if (alunos.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma</p>';
+                return;
+            }
+
             container.innerHTML = alunos.map(aluno => `
-                <div style="display: flex; align-items: center; gap: 10px; margin: 5px 0;">
+                <label>
                     <input type="checkbox" id="pres_${aluno.replace(/\s/g, '_')}" value="${aluno}" checked>
-                    <label for="pres_${aluno.replace(/\s/g, '_')}">${aluno}</label>
-                </div>
+                    ${aluno}
+                </label>
             `).join('');
 
             renderRegistrosPresenca();
@@ -1695,7 +1732,7 @@
                 return;
             }
 
-            container.innerHTML = registros.slice().reverse().map(r => `
+            container.innerHTML = getUltimosRegistros(registros).map(r => `
                 <div class="registro-item">
                     <div class="data">📅 ${r.data} ${r.obs ? '- ' + r.obs : ''}</div>
                     <div class="conteudo">✅ ${r.presentes.length} alunos presentes</div>
@@ -1734,6 +1771,59 @@
         }
 
         // ============================================
+        // PROFESSOR - CONTEÚDOS
+        // ============================================
+        function carregarConteudos() {
+            renderConteudos();
+        }
+
+        function renderConteudos() {
+            const container = document.getElementById('registrosConteudos');
+            const registros = db.conteudos[turmaSelecionada] || [];
+
+            if (registros.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum conteúdo registrado.</p>';
+                return;
+            }
+
+            container.innerHTML = getUltimosRegistros(registros).map(c => `
+                <div class="registro-item">
+                    <div class="data">📚 ${c.data} - ${c.disciplina}</div>
+                    <div class="conteudo"><strong>Conteúdo:</strong> ${c.conteudo}</div>
+                    <div style="font-size: 0.9em; color: #718096;"><strong>Objetivos:</strong> ${c.objetivos || 'Não especificado'}</div>
+                </div>
+            `).join('');
+        }
+
+        function salvarConteudo() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+
+            const data = document.getElementById('dataConteudo').value;
+            const disciplina = document.getElementById('disciplinaConteudo').value.trim();
+            const conteudo = document.getElementById('conteudoText').value.trim();
+            const objetivos = document.getElementById('objetivosConteudo').value.trim();
+
+            if (!conteudo) {
+                alert('Digite o conteúdo trabalhado.');
+                return;
+            }
+
+            if (!db.conteudos[turmaSelecionada]) {
+                db.conteudos[turmaSelecionada] = [];
+            }
+
+            db.conteudos[turmaSelecionada].push({ data, disciplina, conteudo, objetivos });
+            
+            renderConteudos();
+            document.getElementById('conteudoText').value = '';
+            document.getElementById('objetivosConteudo').value = '';
+            alert('✅ Conteúdo salvo com sucesso!');
+        }
+
+        // ============================================
         // PROFESSOR - OBSERVAÇÕES
         // ============================================
         function carregarObservacoes() {
@@ -1749,10 +1839,11 @@
                 return;
             }
 
-            container.innerHTML = registros.slice().reverse().map(o => `
+            container.innerHTML = getUltimosRegistros(registros).map(o => `
                 <div class="registro-item">
-                    <div class="data">✏️ ${o.data} - ${o.aluno} ${o.tipo ? '- ' + o.tipo : ''}</div>
+                    <div class="data">✏️ ${o.data} - ${o.aluno}</div>
                     <div class="conteudo">${o.observacao}</div>
+                    <div style="font-size: 0.9em; color: #718096;">Tipo: ${o.tipo}</div>
                 </div>
             `).join('');
         }
@@ -1766,6 +1857,7 @@
             const data = document.getElementById('dataObservacao').value;
             const aluno = document.getElementById('alunoObservacao').value;
             const observacao = document.getElementById('observacaoText').value.trim();
+            const tipo = document.getElementById('tipoObservacao').value;
 
             if (!observacao) {
                 alert('Digite a observação.');
@@ -1776,7 +1868,7 @@
                 db.observacoes[turmaSelecionada] = [];
             }
 
-            db.observacoes[turmaSelecionada].push({ data, aluno, observacao, tipo: '' });
+            db.observacoes[turmaSelecionada].push({ data, aluno, observacao, tipo });
             
             renderObservacoes();
             document.getElementById('observacaoText').value = '';
@@ -1806,7 +1898,7 @@
                     <div class="conteudo">
                         Solicitado em: ${s.data}
                         <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
-                        ${s.status === 'Pendente' ? `<button onclick="gerarRelatorioSolicitado('${s.aluno}', '${s.bimestre}')" class="btn btn-small btn-secondary" style="margin-left: 10px; padding: 4px 12px;">Gerar</button>` : ''}
+                        ${s.status === 'Pendente' ? `<button onclick="gerarRelatorioSolicitado('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-secondary" style="margin-left: 10px; padding: 4px 12px;">Gerar</button>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -1819,6 +1911,7 @@
             );
             if (solicitacao) {
                 solicitacao.status = 'Concluído';
+                solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
             }
             renderSolicitacoesRelatorios();
         }
@@ -1850,6 +1943,8 @@
             });
             const taxaPresenca = totalDias > 0 ? (totalPresencas / totalDias * 100) : 0;
 
+            const notasStr = `${notas[1] || 0};${notas[2] || 0};${notas[3] || 0};${notas[4] || 0}`;
+
             let relatorioHtml = `
                 <div class="relatorio-content">
                     <h4>📄 Relatório do Aluno</h4>
@@ -1867,7 +1962,7 @@
                     </div>
                     <div style="margin-top: 10px;">
                         <strong>Observações:</strong>
-                        ${obsAluno.length > 0 ? obsAluno.map(o => `<br>• ${o.data}: ${o.observacao}`).join('') : '<br>Nenhuma observação registrada.'}
+                        ${obsAluno.length > 0 ? obsAluno.map(o => `<br>• ${o.data}: ${o.observacao} (${o.tipo})`).join('') : '<br>Nenhuma observação registrada.'}
                     </div>
                     ${bimestre !== 'anual' ? `
                         <div style="margin-top: 10px;">
@@ -1875,12 +1970,32 @@
                             ${notas[bimestre] >= 7 ? '✅ Bom desempenho' : notas[bimestre] >= 5 ? '⚠️ Em recuperação' : '❌ Necessita reforço'}
                         </div>
                     ` : ''}
+                    <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
+                        <strong>💡 Recomendação:</strong>
+                        ${media >= 7 ? 'Aluno com bom desempenho. Continuar estimulando o aprendizado.' :
+                          media >= 5 ? 'Aluno em processo de recuperação. Reforçar conteúdos com atividades complementares.' :
+                          'Aluno necessita de atenção especial. Recomenda-se plano de recuperação intensivo.'}
+                    </div>
                 </div>
             `;
 
             document.getElementById('relatorioGerado').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorio').classList.add('active');
+
+            // Salva o relatório gerado
+            db.relatoriosGerados.push({
+                turma: turmaSelecionada,
+                aluno: aluno,
+                bimestre: bimestre,
+                data: new Date().toISOString().split('T')[0],
+                professor: currentUser.nome,
+                notas: notasStr,
+                media: media,
+                presenca: taxaPresenca,
+                observacoes: obsAluno.map(o => o.observacao).join('; '),
+                recomendacao: media >= 7 ? 'Bom desempenho' : media >= 5 ? 'Em recuperação' : 'Necessita reforço'
+            });
         }
 
         // ============================================
@@ -1906,7 +2021,7 @@
         function renderVisaoGeralTurmas() {
             const tbody = document.getElementById('visaoGeralTurmas');
             
-            tbody.innerHTML = db.turmas.map(turma => {
+            tbody.innerHTML = escolaData.turmas.map(turma => {
                 const alunos = getAlunosByTurma(turma);
                 let somaMedias = 0;
                 let totalAlunos = 0;
@@ -1970,7 +2085,7 @@
         function carregarProfessoresAtribuicao() {
             const select = document.getElementById('professorSelect');
             select.innerHTML = '<option value="">-- Selecione --</option>' +
-                db.professores.map(p =>
+                escolaData.professores.map(p =>
                     `<option value="${p.id}">${p.nome} (${p.tipo})</option>`
                 ).join('');
 
@@ -1980,14 +2095,14 @@
         function carregarTurmasSelect() {
             const select = document.getElementById('turmaSelect');
             select.innerHTML = '<option value="">-- Selecione --</option>' +
-                db.turmas.map(t =>
+                escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
         }
 
         function renderProfessoresAtribuidos() {
             const container = document.getElementById('professoresAtribuidos');
-            container.innerHTML = db.professores.map(prof => {
+            container.innerHTML = escolaData.professores.map(prof => {
                 const turmas = getTurmasByProfessor(prof.id);
                 return `
                     <div class="professor-item">
@@ -2071,7 +2186,7 @@
         function carregarSolicitacaoTurmas() {
             const select = document.getElementById('solicitarTurma');
             select.innerHTML = '<option value="">-- Selecione --</option>' +
-                db.turmas.map(t =>
+                escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
             
@@ -2106,7 +2221,8 @@
                 bimestre,
                 data,
                 status: 'Pendente',
-                professor: ''
+                dataConclusao: '',
+                observacoes: ''
             });
 
             renderSolicitacoes();
@@ -2127,6 +2243,7 @@
                     <div class="conteudo">
                         ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'} - Solicitado em: ${s.data}
                         <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
+                        ${s.status === 'Concluído' ? `<span style="font-size: 0.8em; color: #718096;">Concluído em: ${s.dataConclusao || ''}</span>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -2139,14 +2256,17 @@
             const container = document.getElementById('statsGerenciais');
             
             let totalAlunos = 0;
-            let totalTurmas = db.turmas.length;
+            let totalTurmas = escolaData.turmas.length;
             let somaMedias = 0;
             let totalComMedia = 0;
             let totalPresencas = 0;
             let totalDias = 0;
             let totalSolicitacoes = db.solicitacoes.length;
+            let totalRelatorios = db.relatoriosGerados.length;
+            let totalConteudos = 0;
+            let totalObservacoes = 0;
 
-            db.turmas.forEach(turma => {
+            escolaData.turmas.forEach(turma => {
                 const alunos = getAlunosByTurma(turma);
                 totalAlunos += alunos.length;
                 
@@ -2164,6 +2284,9 @@
                     totalDias++;
                     totalPresencas += p.presentes.length;
                 });
+
+                totalConteudos += (db.conteudos[turma] || []).length;
+                totalObservacoes += (db.observacoes[turma] || []).length;
             });
 
             const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
@@ -2201,6 +2324,21 @@
                     <div class="stat-number">${totalSolicitacoes}</div>
                     <div class="stat-label">Relatórios Solicitados</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-number">${totalRelatorios}</div>
+                    <div class="stat-label">Relatórios Gerados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-number">${totalConteudos}</div>
+                    <div class="stat-label">Conteúdos Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✏️</div>
+                    <div class="stat-number">${totalObservacoes}</div>
+                    <div class="stat-label">Observações</div>
+                </div>
             `;
         }
 
@@ -2214,8 +2352,9 @@
                 <div class="relatorio-content">
                     <h4>📊 Relatório Geral da Escola</h4>
                     <div class="info-line"><strong>Data:</strong> ${new Date().toLocaleDateString()}</div>
-                    <div class="info-line"><strong>Total de Turmas:</strong> ${db.turmas.length}</div>
-                    <div class="info-line"><strong>Total de Professores:</strong> ${db.professores.length}</div>
+                    <div class="info-line"><strong>Total de Turmas:</strong> ${escolaData.turmas.length}</div>
+                    <div class="info-line"><strong>Total de Professores:</strong> ${escolaData.professores.length}</div>
+                    <div class="info-line"><strong>Total de Alunos:</strong> ${Object.values(escolaData.alunos).reduce((a, b) => a + b.length, 0)}</div>
                     <div style="margin-top: 15px;">
                         <table>
                             <thead>
@@ -2224,11 +2363,13 @@
                                     <th>Alunos</th>
                                     <th>Média</th>
                                     <th>Presença</th>
+                                    <th>Conteúdos</th>
+                                    <th>Observações</th>
                                     <th>Relatórios</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${db.turmas.map(turma => {
+                                ${escolaData.turmas.map(turma => {
                                     const alunos = getAlunosByTurma(turma);
                                     let somaMedias = 0;
                                     let count = 0;
@@ -2245,6 +2386,8 @@
                                     const taxaPres = totalDias > 0 ? (totalPres / (totalDias * alunos.length) * 100) : 0;
                                     
                                     const solicitacoes = db.solicitacoes.filter(s => s.turma === turma);
+                                    const conteudos = db.conteudos[turma] || [];
+                                    const observacoes = db.observacoes[turma] || [];
                                     
                                     return `
                                         <tr>
@@ -2252,6 +2395,8 @@
                                             <td>${alunos.length}</td>
                                             <td>${media.toFixed(1)}</td>
                                             <td>${taxaPres.toFixed(1)}%</td>
+                                            <td>${conteudos.length}</td>
+                                            <td>${observacoes.length}</td>
                                             <td>${solicitacoes.length}</td>
                                         </tr>
                                     `;
@@ -2272,7 +2417,7 @@
                 <div class="relatorio-content">
                     <h4>📊 Relatório por Turma</h4>
                     <div style="margin-top: 15px;">
-                        ${db.turmas.map(turma => {
+                        ${escolaData.turmas.map(turma => {
                             const alunos = getAlunosByTurma(turma);
                             return `
                                 <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
@@ -2286,12 +2431,21 @@
                                                 <th>3ºB</th>
                                                 <th>4ºB</th>
                                                 <th>Média</th>
+                                                <th>Presença</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             ${alunos.map(aluno => {
                                                 const notas = getNotasAluno(turma, aluno);
                                                 const media = calcularMedia(notas);
+                                                
+                                                const presencas = db.presencas[turma] || [];
+                                                let totalPres = 0, totalDias = presencas.length;
+                                                presencas.forEach(p => {
+                                                    if (p.presentes.includes(aluno)) totalPres++;
+                                                });
+                                                const taxaPres = totalDias > 0 ? (totalPres / totalDias * 100) : 0;
+                                                
                                                 return `
                                                     <tr>
                                                         <td>${aluno}</td>
@@ -2300,6 +2454,7 @@
                                                         <td>${notas[3] || 0}</td>
                                                         <td>${notas[4] || 0}</td>
                                                         <td><strong>${media.toFixed(1)}</strong></td>
+                                                        <td>${taxaPres.toFixed(1)}%</td>
                                                     </tr>
                                                 `;
                                             }).join('')}
@@ -2322,7 +2477,7 @@
                 <div class="relatorio-content">
                     <h4>📊 Relatório por Professor</h4>
                     <div style="margin-top: 15px;">
-                        ${db.professores.map(prof => {
+                        ${escolaData.professores.map(prof => {
                             const turmas = getTurmasByProfessor(prof.id);
                             return `
                                 <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
@@ -2336,6 +2491,7 @@
                                                     <th>Alunos</th>
                                                     <th>Média</th>
                                                     <th>Presença</th>
+                                                    <th>Conteúdos</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2354,12 +2510,15 @@
                                                     presencas.forEach(p => { totalDias++; totalPres += p.presentes.length; });
                                                     const taxaPres = totalDias > 0 ? (totalPres / (totalDias * alunos.length) * 100) : 0;
                                                     
+                                                    const conteudos = db.conteudos[turma] || [];
+                                                    
                                                     return `
                                                         <tr>
                                                             <td>${turma}</td>
                                                             <td>${alunos.length}</td>
                                                             <td>${media.toFixed(1)}</td>
                                                             <td>${taxaPres.toFixed(1)}%</td>
+                                                            <td>${conteudos.length}</td>
                                                         </tr>
                                                     `;
                                                 }).join('')}
@@ -2382,7 +2541,7 @@
         function carregarTurmasDirecao() {
             const select = document.getElementById('direcaoTurma');
             select.innerHTML = '<option value="">-- Selecione --</option>' +
-                db.turmas.map(t =>
+                escolaData.turmas.map(t =>
                     `<option value="${t}">${t}</option>`
                 ).join('');
             
@@ -2413,6 +2572,7 @@
             const presencas = db.presencas[turma] || [];
             const observacoes = db.observacoes[turma] || [];
             const obsAluno = observacoes.filter(o => o.aluno === aluno);
+            const conteudos = db.conteudos[turma] || [];
 
             let totalPresencas = 0;
             let totalDias = presencas.length;
@@ -2440,8 +2600,16 @@
                         <strong>Frequência:</strong> ${taxaPresenca.toFixed(1)}% (${totalPresencas}/${totalDias} dias)
                     </div>
                     <div style="margin-top: 10px;">
+                        <strong>Conteúdos Trabalhados:</strong>
+                        ${conteudos.length > 0 ? conteudos.slice(-5).map(c => 
+                            `<br>• ${c.data} - ${c.disciplina}: ${c.conteudo}`
+                        ).join('') : '<br>Nenhum conteúdo registrado.'}
+                    </div>
+                    <div style="margin-top: 10px;">
                         <strong>Observações:</strong>
-                        ${obsAluno.length > 0 ? obsAluno.map(o => `<br>• ${o.data}: ${o.observacao}`).join('') : '<br>Nenhuma observação registrada.'}
+                        ${obsAluno.length > 0 ? obsAluno.map(o => 
+                            `<br>• ${o.data}: ${o.observacao} (${o.tipo})`
+                        ).join('') : '<br>Nenhuma observação registrada.'}
                     </div>
                     <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
                         <strong>💡 Recomendação Pedagógica:</strong>
@@ -2469,6 +2637,9 @@
 
             if (tab === 'presencas' && turmaSelecionada) {
                 carregarPresenca();
+            }
+            if (tab === 'conteudos' && turmaSelecionada) {
+                carregarConteudos();
             }
             if (tab === 'observacoes' && turmaSelecionada) {
                 carregarObservacoes();
@@ -2504,7 +2675,7 @@
             document.getElementById('cardsContainer').innerHTML = '';
             document.getElementById('turmasContainer').innerHTML = '';
             turmaSelecionada = null;
-            currentUser = { cargo: '', nome: '', professorId: '', turmas: [] };
+            currentUser = { cargo: '', nome: '', turmas: [] };
         }
 
         // ============================================
@@ -2514,15 +2685,16 @@
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataPresenca').value = hoje;
             document.getElementById('dataObservacao').value = hoje;
+            document.getElementById('dataConteudo').value = hoje;
 
-            ['dataPresenca', 'dataObservacao'].forEach(id => {
+            ['dataPresenca', 'dataObservacao', 'dataConteudo'].forEach(id => {
                 document.getElementById(id).max = hoje;
             });
 
             console.log('🚀 Sistema iniciado!');
             console.log('📊 Configuração:', SHEET_CONFIG);
+            console.log('📋 Abas configuradas:', Object.keys(SHEET_CONFIG.abas));
 
-            // Carrega dados automaticamente ao iniciar
             setTimeout(() => {
                 carregarDadosPlanilha();
             }, 500);
