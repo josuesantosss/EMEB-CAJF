@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Escolar - Gestão Completa</title>
     <style>
-        /* ... (mesmo CSS anterior, mantido por brevidade) ... */
         * {
             margin: 0;
             padding: 0;
@@ -68,21 +67,6 @@
             color: #2d3748;
             margin-bottom: 20px;
             text-align: center;
-        }
-
-        .login-error {
-            background: #fed7d7;
-            color: #742a2a;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .login-error.show {
-            display: block;
         }
 
         .form-group {
@@ -160,6 +144,14 @@
 
         .btn-warning:hover {
             box-shadow: 0 5px 15px rgba(237, 137, 54, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+
+        .btn-info:hover {
+            box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4);
         }
 
         .btn-small {
@@ -353,7 +345,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .section-container {
@@ -706,29 +698,34 @@
             cursor: pointer;
         }
 
-        .password-wrapper {
-            position: relative;
-        }
-
-        .password-wrapper input {
-            padding-right: 45px;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
+        .toggle-btn {
+            background: #edf2f7;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 20px;
             cursor: pointer;
-            font-size: 18px;
-            color: #718096;
-            background: none;
-            border: none;
-            padding: 5px;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
         }
 
-        .password-toggle:hover {
-            color: #2d3748;
+        .toggle-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .toggle-section {
+            margin-top: 15px;
+        }
+
+        .relatorio-preenchido {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
         }
     </style>
 </head>
@@ -752,20 +749,25 @@
         <!-- Tela de Login -->
         <div id="loginContainer" class="login-container">
             <h2>🔐 Acesso ao Sistema</h2>
-            <div id="loginError" class="login-error">❌ Usuário ou senha inválidos. Tente novamente.</div>
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginUsuario">Selecione seu Nome</label>
-                    <select id="loginUsuario" required>
-                        <option value="">-- Selecione --</option>
+                    <label for="cargo">Selecione seu Cargo</label>
+                    <select id="cargo" required>
+                        <option value="">-- Escolha --</option>
+                        <option value="direcao">👔 Direção</option>
+                        <option value="vice-direcao">👔 Vice-Direção</option>
+                        <option value="secretaria">📁 Secretaria Escolar</option>
+                        <option value="coordenacao">📚 Coordenação Pedagógica</option>
+                        <option value="professor-regente">👨‍🏫 Professor Regente</option>
+                        <option value="professor-artes">🎨 Professor de Artes</option>
+                        <option value="professor-musica">🎵 Professor de Música</option>
+                        <option value="professor-ingles">🌎 Professor de Inglês</option>
+                        <option value="professor-ef">🏃 Professor de Educação Física</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="loginSenha">Senha</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="loginSenha" placeholder="Digite sua senha" required autocomplete="current-password">
-                        <button type="button" class="password-toggle" onclick="toggleSenha()" aria-label="Mostrar/ocultar senha">👁️</button>
-                    </div>
+                    <label for="nome">Seu Nome</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome conforme cadastrado na planilha" required>
                 </div>
                 <button type="submit" class="btn">Entrar no Sistema</button>
             </form>
@@ -800,14 +802,18 @@
                 <div id="registrosSection" class="hidden">
                     <div class="section-container">
                         <h3>📝 Registros da Turma: <span id="turmaSelecionadaNome">-</span></h3>
-                        <div class="tabs">
-                            <button class="tab active" onclick="switchTab('notas')">📊 Notas Bimestrais</button>
-                            <button class="tab" onclick="switchTab('presencas')">✅ Presenças</button>
-                            <button class="tab" onclick="switchTab('conteudos')">📚 Conteúdos</button>
-                            <button class="tab" onclick="switchTab('observacoes')">✏️ Observações</button>
-                            <button class="tab" onclick="switchTab('relatorios')">📄 Relatórios</button>
+                        
+                        <!-- Botões toggle para cada seção -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <button class="toggle-btn active" onclick="toggleSection('notas')">📊 Notas</button>
+                            <button class="toggle-btn" onclick="toggleSection('presencas')">✅ Presenças</button>
+                            <button class="toggle-btn" onclick="toggleSection('conteudos')">📚 Conteúdos</button>
+                            <button class="toggle-btn" onclick="toggleSection('observacoes')">✏️ Observações</button>
+                            <button class="toggle-btn" onclick="toggleSection('relatorios')">📄 Relatórios</button>
                         </div>
-                        <div id="tab-notas" class="tab-content active">
+
+                        <!-- Seção de Notas -->
+                        <div id="section-notas" class="toggle-section">
                             <div class="table-container">
                                 <table id="tabelaNotas">
                                     <thead>
@@ -829,7 +835,9 @@
                                 <button onclick="calcularMedias()" class="btn btn-small">📊 Calcular Médias</button>
                             </div>
                         </div>
-                        <div id="tab-presencas" class="tab-content">
+
+                        <!-- Seção de Presenças -->
+                        <div id="section-presencas" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Data</label>
@@ -847,7 +855,9 @@
                             <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
                             <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-conteudos" class="tab-content">
+
+                        <!-- Seção de Conteúdos -->
+                        <div id="section-conteudos" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Data</label>
@@ -869,7 +879,9 @@
                             <button onclick="salvarConteudo()" class="btn btn-secondary btn-small">💾 Salvar Conteúdo</button>
                             <div id="registrosConteudos" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-observacoes" class="tab-content">
+
+                        <!-- Seção de Observações -->
+                        <div id="section-observacoes" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Aluno</label>
@@ -895,15 +907,25 @@
                             <button onclick="salvarObservacao()" class="btn btn-secondary btn-small">💾 Salvar Observação</button>
                             <div id="registrosObservacoes" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-relatorios" class="tab-content">
-                            <div class="form-row">
+
+                        <!-- Seção de Relatórios -->
+                        <div id="section-relatorios" class="toggle-section hidden">
+                            <!-- Solicitações da Coordenação -->
+                            <div style="margin-bottom: 30px;">
+                                <h4>📋 Solicitações da Coordenação</h4>
+                                <div id="solicitacoesRelatorios" class="registros-list"></div>
+                            </div>
+
+                            <!-- Preencher Relatório -->
+                            <div style="margin-top: 20px; padding: 20px; background: #ebf8ff; border-radius: 10px; border-left: 4px solid #4299e1;">
+                                <h4>✏️ Preencher Relatório</h4>
                                 <div class="form-group">
                                     <label>Aluno</label>
-                                    <select id="alunoRelatorio"></select>
+                                    <select id="alunoRelatorioPreencher"></select>
                                 </div>
                                 <div class="form-group">
                                     <label>Bimestre</label>
-                                    <select id="bimestreRelatorio">
+                                    <select id="bimestreRelatorioPreencher">
                                         <option value="1">1º Bimestre</option>
                                         <option value="2">2º Bimestre</option>
                                         <option value="3">3º Bimestre</option>
@@ -911,12 +933,17 @@
                                         <option value="anual">Anual</option>
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>Relatório</label>
+                                    <textarea id="relatorioTexto" rows="6" placeholder="Digite o relatório do aluno..."></textarea>
+                                </div>
+                                <button onclick="enviarRelatorioCoordenacao()" class="btn btn-info btn-small">📤 Enviar Relatório para Coordenação</button>
                             </div>
-                            <button onclick="gerarRelatorio()" class="btn btn-warning btn-small">📄 Gerar Relatório</button>
-                            <div id="relatorioGerado" style="margin-top: 20px;"></div>
-                            <div style="margin-top: 30px;">
-                                <h4>📋 Relatórios Solicitados pela Coordenação</h4>
-                                <div id="solicitacoesRelatorios" class="registros-list"></div>
+
+                            <!-- Relatórios já enviados -->
+                            <div style="margin-top: 20px;">
+                                <h4>📄 Relatórios Enviados</h4>
+                                <div id="relatoriosEnviados" class="registros-list"></div>
                             </div>
                         </div>
                     </div>
@@ -925,7 +952,16 @@
 
             <!-- ÁREA DO COORDENADOR -->
             <div id="coordenadorArea" class="hidden">
-                <div class="section-container">
+                <!-- Botões toggle para Coordenação -->
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="toggle-btn active" onclick="toggleCoordenacao('visao')">📊 Visão por Turma</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('atribuicao')">📋 Atribuição</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('solicitar')">📄 Solicitar Relatórios</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('receber')">📥 Receber Relatórios</button>
+                </div>
+
+                <!-- Visão por Turma -->
+                <div id="coordenacao-visao" class="section-container">
                     <h3>📊 Visão Geral por Turma</h3>
                     <div class="table-container">
                         <table>
@@ -943,7 +979,9 @@
                         </table>
                     </div>
                 </div>
-                <div class="section-container">
+
+                <!-- Atribuição de Turmas -->
+                <div id="coordenacao-atribuicao" class="section-container hidden">
                     <h3>📋 Atribuição de Turmas</h3>
                     <div class="form-row">
                         <div class="form-group">
@@ -968,7 +1006,9 @@
                         <div id="professoresAtribuidos" class="professores-list"></div>
                     </div>
                 </div>
-                <div class="section-container">
+
+                <!-- Solicitar Relatórios -->
+                <div id="coordenacao-solicitar" class="section-container hidden">
                     <h3>📄 Solicitar Relatório do Aluno</h3>
                     <div class="form-row-3">
                         <div class="form-group">
@@ -999,6 +1039,12 @@
                         <h4>📋 Relatórios Solicitados</h4>
                         <div id="listaSolicitacoes" class="registros-list"></div>
                     </div>
+                </div>
+
+                <!-- Receber Relatórios -->
+                <div id="coordenacao-receber" class="section-container hidden">
+                    <h3>📥 Relatórios Recebidos dos Professores</h3>
+                    <div id="relatoriosRecebidos" class="registros-list"></div>
                 </div>
             </div>
 
@@ -1100,27 +1146,11 @@
         }
 
         // ============================================
-        // FUNÇÃO PARA MOSTRAR/OCULTAR SENHA
-        // ============================================
-        function toggleSenha() {
-            const input = document.getElementById('loginSenha');
-            const btn = document.querySelector('.password-toggle');
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-            }
-        }
-
-        // ============================================
         // CONFIGURAÇÃO DA PLANILHA
         // ============================================
         const SHEET_CONFIG = {
             sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
             abas: {
-                login: 'LOGIN',
                 alunos: 'TURMAS_ALUNOS',
                 atribuicoes: 'ATRIBUICOES',
                 notas: 'NOTAS_BIMESTRAIS',
@@ -1136,7 +1166,6 @@
         // DADOS CARREGADOS DA PLANILHA
         // ============================================
         let dadosPlanilha = {
-            login: [],
             alunos: [],
             atribuicoes: [],
             notas: [],
@@ -1164,40 +1193,9 @@
             observacoes: {},
             conteudos: {},
             relatoriosGerados: [],
-            solicitacoes: []
+            solicitacoes: [],
+            relatoriosPreenchidos: [] // Relatórios preenchidos pelos professores
         };
-
-        // ============================================
-        // USUÁRIO LOGADO
-        // ============================================
-        let usuarioLogado = null;
-
-// ============================================
-// FUNÇÃO PARA CARREGAR O DROPDOWN DE USUÁRIOS
-// ============================================
-function carregarUsuariosDropdown() {
-    const select = document.getElementById('loginUsuario');
-    select.innerHTML = '<option value="">-- Selecione --</option>';
-    
-    if (!dadosPlanilha.login || dadosPlanilha.login.length === 0) {
-        select.innerHTML = '<option value="">-- Nenhum usuário cadastrado --</option>';
-        return;
-    }
-    
-    dadosPlanilha.login.forEach(user => {
-        const nome = texto(user.Nome || user.nome || user['Nome']);
-        if (nome) {
-            const option = document.createElement('option');
-            // O VALUE agora é o NOME, não o ID
-            option.value = nome;
-            option.textContent = nome;
-            select.appendChild(option);
-        }
-    });
-    
-    console.log('📋 Usuários carregados no dropdown:', select.options.length - 1);
-}
-
 
         // ============================================
         // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
@@ -1214,18 +1212,16 @@ function carregarUsuariosDropdown() {
                 }
 
                 atualizarBancoDados();
-                
-                // Carrega o dropdown de usuários
-                carregarUsuariosDropdown();
 
                 // RECARREGA OS DROPDOWNS
-                if (usuarioLogado && usuarioLogado.perfil === 'coordenacao') {
+                if (currentUser.cargo === 'coordenacao') {
                     console.log('🔄 Recarregando dropdowns para Coordenação...');
                     carregarProfessoresAtribuicao();
                     carregarTurmasSelect();
                     carregarSolicitacaoTurmas();
                     renderVisaoGeralTurmas();
                     renderSolicitacoes();
+                    renderRelatoriosRecebidos();
                 }
 
                 const totalAlunos = dadosPlanilha.alunos.length;
@@ -1245,7 +1241,6 @@ function carregarUsuariosDropdown() {
                 document.getElementById('syncStatus').textContent = '✅ Sincronizado';
 
                 console.log('📊 Resumo dos dados carregados da planilha:', {
-                    login: dadosPlanilha.login.length,
                     alunos: totalAlunos,
                     professores: totalProfessores,
                     atribuicoes: totalAtribuicoes,
@@ -1256,6 +1251,8 @@ function carregarUsuariosDropdown() {
                     relatoriosSolicitados: totalSolicitacoes,
                     relatoriosGerados: totalRelatorios
                 });
+
+                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${totalAlunos} alunos\n👨‍🏫 ${totalProfessores} professores\n👨‍🏫 ${totalAtribuicoes} atribuições\n📝 ${totalNotas} notas\n✅ ${totalPresencas} presenças\n📚 ${totalConteudos} conteúdos\n✏️ ${totalObservacoes} observações\n📄 ${totalSolicitacoes} solicitações\n📋 ${totalRelatorios} relatórios gerados`);
 
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
@@ -1303,7 +1300,6 @@ function carregarUsuariosDropdown() {
                     
                     if (dadosPlanilha[chave].length > 0) {
                         console.log(`📋 Primeiros registros de ${chave}:`, dadosPlanilha[chave].slice(0, 3));
-                        console.log(`📋 Colunas de ${chave}:`, Object.keys(dadosPlanilha[chave][0]));
                     }
                 } else {
                     console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
@@ -1320,11 +1316,6 @@ function carregarUsuariosDropdown() {
         // ============================================
         function atualizarBancoDados() {
             console.log('🔄 Atualizando banco de dados local a partir da planilha...');
-
-            // ============================================
-            // 0. LOGIN - apenas armazena os dados para autenticação
-            // ============================================
-            console.log('📋 Dados de login carregados:', dadosPlanilha.login.length);
 
             // ============================================
             // 1. PROFESSORES (derivados da aba ATRIBUICOES)
@@ -1504,44 +1495,15 @@ function carregarUsuariosDropdown() {
             }));
             console.log('📋 Relatórios gerados atualizados:', db.relatoriosGerados.length);
 
-            console.log('✅ Banco de dados atualizado com sucesso!');
-        }
-
-        // ============================================
-        // FUNÇÕES DE AUTENTICAÇÃO - AGORA POR NOME
-        // ============================================
-        function autenticarUsuario(nome, senha) {
-            console.log('🔍 Tentando autenticar:', nome);
-            console.log('📋 Dados de login disponíveis:', dadosPlanilha.login);
-            console.log('📋 Colunas disponíveis:', dadosPlanilha.login.length > 0 ? Object.keys(dadosPlanilha.login[0]) : 'nenhuma');
-            
-            // Normaliza os nomes das colunas para comparação
-            const user = dadosPlanilha.login.find(u => {
-                // Busca pelo Nome (coluna C) e Senha (coluna D)
-                const nomeUsuario = texto(u.Nome || u.nome || u['Nome']);
-                const senhaUsuario = texto(u.Senha || u.senha || u['Senha']);
-                
-                console.log(`   Comparando: Nome="${nomeUsuario}" com "${nome}", Senha="${senhaUsuario}" com "${senha}"`);
-                return nomeUsuario === nome && senhaUsuario === senha;
-            });
-            
-            if (user) {
-                console.log('✅ Usuário autenticado:', user);
-                // Tenta encontrar os campos independente da capitalização
-                const id = texto(user.iD_Login || user.ID_Login || user.id_Login || user.IDLogin || user['iD_Login'] || user['ID_Login']);
-                const perfil = texto(user.PERFIL || user.perfil || user.Perfil || user['PERFIL']);
-                const nome = texto(user.Nome || user.nome || user['Nome']);
-                const senha = texto(user.Senha || user.senha || user['Senha']);
-                
-                return {
-                    id: id,
-                    perfil: perfil,
-                    nome: nome,
-                    senha: senha
-                };
+            // ============================================
+            // 10. RELATÓRIOS PREENCHIDOS PELOS PROFESSORES
+            // ============================================
+            // Inicializa com os relatórios da planilha se existirem
+            if (!db.relatoriosPreenchidos) {
+                db.relatoriosPreenchidos = [];
             }
-            console.log('❌ Usuário não encontrado ou senha inválida');
-            return null;
+
+            console.log('✅ Banco de dados atualizado com sucesso!');
         }
 
         // ============================================
@@ -1584,46 +1546,6 @@ function carregarUsuariosDropdown() {
         }
 
         // ============================================
-        // MAPEAMENTO DE PERFIS PARA CARGOS
-        // ============================================
-        const perfilParaCargo = {
-            'Coordenação Pedagógica': 'coordenacao',
-            'Coordenacao Pedagogica': 'coordenacao',
-            'COORDENACAO PEDAGOGICA': 'coordenacao',
-            'coordenacao pedagogica': 'coordenacao',
-            'Direção': 'direcao',
-            'Direcao': 'direcao',
-            'Secretaria': 'secretaria',
-            'Secretaria 1': 'secretaria',
-            'Gerente': 'direcao',
-            'Professor Regente': 'professor-regente',
-            'Professor': 'professor-regente'
-        };
-
-        function mapearPerfilParaCargo(perfil) {
-            const perfilNormalizado = texto(perfil);
-            for (const [key, value] of Object.entries(perfilParaCargo)) {
-                if (perfilNormalizado.toUpperCase() === key.toUpperCase()) {
-                    return value;
-                }
-            }
-            // Se não encontrar, tenta buscar por substring
-            if (perfilNormalizado.toUpperCase().includes('COORDENACAO') || perfilNormalizado.toUpperCase().includes('COORDENAÇÃO')) {
-                return 'coordenacao';
-            }
-            if (perfilNormalizado.toUpperCase().includes('DIRECAO') || perfilNormalizado.toUpperCase().includes('DIREÇÃO')) {
-                return 'direcao';
-            }
-            if (perfilNormalizado.toUpperCase().includes('SECRETARIA')) {
-                return 'secretaria';
-            }
-            if (perfilNormalizado.toUpperCase().includes('PROFESSOR')) {
-                return 'professor-regente';
-            }
-            return perfilNormalizado.toLowerCase().replace(/\s/g, '-');
-        }
-
-        // ============================================
         // CONFIGURAÇÃO DE CARGOS
         // ============================================
         const cargoConfig = {
@@ -1645,7 +1567,7 @@ function carregarUsuariosDropdown() {
             'coordenacao': {
                 titulo: '📚 Coordenação Pedagógica',
                 cores: 'coordenacao',
-                funcionalidades: ['Visão por Turma', 'Atribuição de Turmas', 'Solicitar Relatórios', 'Acompanhamento Pedagógico']
+                funcionalidades: ['Visão por Turma', 'Atribuição de Turmas', 'Solicitar Relatórios', 'Receber Relatórios']
             },
             'professor-regente': {
                 titulo: '👨‍🏫 Professor Regente',
@@ -1686,87 +1608,117 @@ function carregarUsuariosDropdown() {
         let turmaSelecionada = null;
 
         // ============================================
+        // TOGGLE SECTIONS - PROFESSOR
+        // ============================================
+        let activeSection = 'notas';
+
+        function toggleSection(section) {
+            // Esconde todas as seções
+            document.querySelectorAll('.toggle-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+            // Mostra a seção selecionada
+            const target = document.getElementById(`section-${section}`);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+            // Atualiza botões
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            activeSection = section;
+
+            // Recarrega dados da seção
+            if (section === 'presencas' && turmaSelecionada) {
+                carregarPresenca();
+            }
+            if (section === 'conteudos' && turmaSelecionada) {
+                carregarConteudos();
+            }
+            if (section === 'observacoes' && turmaSelecionada) {
+                carregarObservacoes();
+            }
+            if (section === 'relatorios' && turmaSelecionada) {
+                carregarRelatorios();
+            }
+            if (section === 'notas' && turmaSelecionada) {
+                carregarTabelaNotas();
+            }
+        }
+
+        // ============================================
+        // TOGGLE SECTIONS - COORDENAÇÃO
+        // ============================================
+        let activeCoordenacao = 'visao';
+
+        function toggleCoordenacao(section) {
+            // Esconde todas as seções
+            document.querySelectorAll('#coordenadorArea .section-container').forEach(el => {
+                el.classList.add('hidden');
+            });
+            // Mostra a seção selecionada
+            const target = document.getElementById(`coordenacao-${section}`);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+            // Atualiza botões
+            document.querySelectorAll('#coordenadorArea .toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            activeCoordenacao = section;
+
+            // Recarrega dados se necessário
+            if (section === 'receber') {
+                renderRelatoriosRecebidos();
+            }
+        }
+
+        // ============================================
         // LOGIN
         // ============================================
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const nome = document.getElementById('loginUsuario').value;
-            const senha = document.getElementById('loginSenha').value.trim();
+            const cargo = document.getElementById('cargo').value;
+            const nome = document.getElementById('nome').value.trim();
 
-            if (!nome || !senha) {
-                mostrarErroLogin('Por favor, preencha todos os campos.');
+            if (!cargo || !nome) {
+                alert('Por favor, preencha todos os campos.');
                 return;
             }
 
-            // Tenta autenticar pelo NOME
-            const user = autenticarUsuario(nome, senha);
-            
-            if (!user) {
-                mostrarErroLogin('❌ Usuário ou senha inválidos. Tente novamente.');
-                return;
-            }
-
-            // Limpa erro
-            document.getElementById('loginError').classList.remove('show');
-
-            // Define o usuário logado
-            usuarioLogado = user;
-            
-            // Mapeia o perfil para cargo
-            const cargo = mapearPerfilParaCargo(user.perfil);
-            
             currentUser.cargo = cargo;
-            currentUser.nome = user.nome;
+            currentUser.nome = nome;
 
-            console.log('✅ Login bem-sucedido:', { usuario: user.id, nome: user.nome, perfil: user.perfil, cargo: cargo });
-
-            // Se for professor, busca as turmas atribuídas
             if (cargo.startsWith('professor')) {
-                const profId = getProfessorIdByNome(user.nome);
+                const profId = getProfessorIdByNome(nome);
                 if (profId) {
                     currentUser.turmas = getTurmasByProfessor(profId);
                 } else {
-                    currentUser.turmas = [];
+                    alert('⚠️ Professor não encontrado na planilha. Verifique se seu nome está cadastrado na aba ATRIBUICOES.');
+                    return;
                 }
-                console.log('📚 Turmas do professor:', currentUser.turmas);
             }
 
-            // Oculta login e mostra dashboard
             document.getElementById('loginContainer').style.display = 'none';
             const dashboard = document.getElementById('dashboard');
             dashboard.classList.add('active');
 
-            // Carrega os dados da planilha (se já não estiverem carregados)
-            if (dadosPlanilha.alunos.length === 0) {
-                carregarDadosPlanilha().then(() => {
-                    renderDashboard(cargo);
-                });
-            } else {
-                renderDashboard(cargo);
-            }
-        });
+            const config = cargoConfig[cargo];
+            document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
+            document.getElementById('userDisplay').textContent = `👤 ${nome} - ${config.titulo}`;
 
-        function mostrarErroLogin(mensagem) {
-            const errorEl = document.getElementById('loginError');
-            errorEl.textContent = mensagem;
-            errorEl.classList.add('show');
-        }
+            renderDashboard(cargo);
+        });
 
         // ============================================
         // RENDERIZAÇÃO DO DASHBOARD
         // ============================================
         function renderDashboard(cargo) {
             const config = cargoConfig[cargo];
-            if (!config) {
-                console.error('Cargo não encontrado:', cargo);
-                return;
-            }
-            
             renderCards(config);
-
-            document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
-            document.getElementById('userDisplay').textContent = `👤 ${currentUser.nome} - ${config.titulo}`;
 
             document.getElementById('professorArea').classList.add('hidden');
             document.getElementById('coordenadorArea').classList.add('hidden');
@@ -1780,6 +1732,7 @@ function carregarUsuariosDropdown() {
                 carregarAlunosSelects();
                 carregarPresenca();
                 carregarConteudos();
+                carregarRelatorios();
             }
 
             if (cargo === 'coordenacao') {
@@ -1789,6 +1742,7 @@ function carregarUsuariosDropdown() {
                 carregarSolicitacaoTurmas();
                 renderVisaoGeralTurmas();
                 renderSolicitacoes();
+                renderRelatoriosRecebidos();
             }
 
             if (cargo === 'direcao' || cargo === 'vice-direcao') {
@@ -2137,134 +2091,157 @@ function carregarUsuariosDropdown() {
         function carregarRelatorios() {
             carregarAlunosSelects();
             renderSolicitacoesRelatorios();
+            renderRelatoriosEnviados();
         }
 
         function renderSolicitacoesRelatorios() {
             const container = document.getElementById('solicitacoesRelatorios');
-            const solicitacoes = db.solicitacoes.filter(s => s.turma === turmaSelecionada);
+            const solicitacoes = db.solicitacoes.filter(s => s.turma === turmaSelecionada && s.status === 'Pendente');
 
             if (solicitacoes.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório.</p>';
+                container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório pendente.</p>';
                 return;
             }
 
             container.innerHTML = solicitacoes.map(s => `
-                <div class="registro-item">
+                <div class="registro-item" style="border-left-color: #ed8936;">
                     <div class="data">📄 ${s.aluno} - ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'}</div>
                     <div class="conteudo">
                         Solicitado em: ${s.data}
-                        <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
-                        ${s.status === 'Pendente' ? `<button onclick="gerarRelatorioSolicitado('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-secondary" style="margin-left: 10px; padding: 4px 12px;">Gerar</button>` : ''}
+                        <span class="status-badge pendente">Pendente</span>
+                        <button onclick="prepararRelatorio('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-info" style="margin-left: 10px; padding: 4px 12px;">✏️ Preencher</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function gerarRelatorioSolicitado(aluno, bimestre) {
-            gerarRelatorio(aluno, bimestre);
-            const solicitacao = db.solicitacoes.find(s => 
-                s.turma === turmaSelecionada && s.aluno === aluno && s.bimestre === bimestre
+        function renderRelatoriosEnviados() {
+            const container = document.getElementById('relatoriosEnviados');
+            const relatorios = db.relatoriosPreenchidos.filter(r => 
+                r.turma === turmaSelecionada && r.professor === currentUser.nome
             );
-            if (solicitacao) {
-                solicitacao.status = 'Concluído';
-                solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
+
+            if (relatorios.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum relatório enviado.</p>';
+                return;
             }
-            renderSolicitacoesRelatorios();
+
+            container.innerHTML = getUltimosRegistros(relatorios).map(r => `
+                <div class="registro-item" style="border-left-color: #48bb78;">
+                    <div class="data">📤 ${r.aluno} - ${r.bimestre === 'anual' ? 'Anual' : r.bimestre + 'º Bimestre'}</div>
+                    <div class="conteudo">
+                        Enviado em: ${r.dataEnvio || r.data}
+                        <span class="status-badge concluido">Enviado</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: #718096; margin-top: 5px;">
+                        <button onclick="verRelatorioEnviado('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}')" class="btn btn-small btn-info" style="padding: 2px 10px;">👁️ Ver</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function gerarRelatorio(alunoParam, bimestreParam) {
+        function prepararRelatorio(aluno, bimestre) {
+            // Preenche os campos e muda para a aba de preenchimento
+            document.getElementById('alunoRelatorioPreencher').value = aluno;
+            document.getElementById('bimestreRelatorioPreencher').value = bimestre;
+            document.getElementById('relatorioTexto').value = '';
+            document.getElementById('relatorioTexto').focus();
+            
+            // Scroll para a seção de preenchimento
+            document.getElementById('section-relatorios').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function enviarRelatorioCoordenacao() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
 
-            const aluno = alunoParam || document.getElementById('alunoRelatorio').value;
-            const bimestre = bimestreParam || document.getElementById('bimestreRelatorio').value;
+            const aluno = document.getElementById('alunoRelatorioPreencher').value;
+            const bimestre = document.getElementById('bimestreRelatorioPreencher').value;
+            const relatorioTexto = document.getElementById('relatorioTexto').value.trim();
 
             if (!aluno) {
                 alert('Selecione um aluno.');
                 return;
             }
 
-            const notas = getNotasAluno(turmaSelecionada, aluno);
-            const media = calcularMedia(notas);
-            const presencas = db.presencas[turmaSelecionada] || [];
-            const observacoes = db.observacoes[turmaSelecionada] || [];
-            const obsAluno = observacoes.filter(o => o.aluno === aluno);
+            if (!relatorioTexto) {
+                alert('Digite o relatório do aluno.');
+                return;
+            }
 
-            let totalPresencas = 0;
-            let totalDias = presencas.length;
-            presencas.forEach(p => {
-                if (p.presentes.includes(aluno)) totalPresencas++;
-            });
-            const taxaPresenca = totalDias > 0 ? (totalPresencas / totalDias * 100) : 0;
-
-            const notasStr = `${notas[1] || 0};${notas[2] || 0};${notas[3] || 0};${notas[4] || 0}`;
-
-            let relatorioHtml = `
-                <div class="relatorio-content">
-                    <h4>📄 Relatório do Aluno</h4>
-                    <div class="info-line"><strong>Aluno:</strong> ${aluno}</div>
-                    <div class="info-line"><strong>Turma:</strong> ${labelTurma(turmaSelecionada)}</div>
-                    <div class="info-line"><strong>Professor:</strong> ${currentUser.nome}</div>
-                    <div class="info-line"><strong>Bimestre:</strong> ${bimestre === 'anual' ? 'Anual' : bimestre + 'º Bimestre'}</div>
-                    <div style="margin-top: 15px;">
-                        <strong>Notas:</strong><br>
-                        1º Bim: ${notas[1] || 0} | 2º Bim: ${notas[2] || 0} | 3º Bim: ${notas[3] || 0} | 4º Bim: ${notas[4] || 0}
-                        <br><strong>Média:</strong> ${media.toFixed(1)}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Presença:</strong> ${taxaPresenca.toFixed(1)}% (${totalPresencas}/${totalDias} dias)
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Observações:</strong>
-                        ${obsAluno.length > 0 ? obsAluno.map(o => `<br>• ${o.data}: ${o.observacao} (${o.tipo})`).join('') : '<br>Nenhuma observação registrada.'}
-                    </div>
-                    ${bimestre !== 'anual' ? `
-                        <div style="margin-top: 10px;">
-                            <strong>Desempenho no ${bimestre}º Bimestre:</strong>
-                            ${notas[bimestre] >= 7 ? '✅ Bom desempenho' : notas[bimestre] >= 5 ? '⚠️ Em recuperação' : '❌ Necessita reforço'}
-                        </div>
-                    ` : ''}
-                    <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
-                        <strong>💡 Recomendação:</strong>
-                        ${media >= 7 ? 'Aluno com bom desempenho. Continuar estimulando o aprendizado.' :
-                          media >= 5 ? 'Aluno em processo de recuperação. Reforçar conteúdos com atividades complementares.' :
-                          'Aluno necessita de atenção especial. Recomenda-se plano de recuperação intensivo.'}
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('relatorioGerado').innerHTML = relatorioHtml;
-            document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
-            document.getElementById('modalRelatorio').classList.add('active');
-
-            db.relatoriosGerados.push({
+            // Salva o relatório
+            db.relatoriosPreenchidos.push({
                 turma: turmaSelecionada,
                 aluno: aluno,
                 bimestre: bimestre,
-                data: new Date().toISOString().split('T')[0],
                 professor: currentUser.nome,
-                notas: notasStr,
-                media: media,
-                presenca: taxaPresenca,
-                observacoes: obsAluno.map(o => o.observacao).join('; '),
-                recomendacao: media >= 7 ? 'Bom desempenho' : media >= 5 ? 'Em recuperação' : 'Necessita reforço'
+                relatorio: relatorioTexto,
+                data: new Date().toISOString().split('T')[0],
+                dataEnvio: new Date().toISOString().split('T')[0],
+                status: 'Enviado'
             });
+
+            // Atualiza a solicitação como concluída
+            const solicitacao = db.solicitacoes.find(s => 
+                s.turma === turmaSelecionada && 
+                s.aluno === aluno && 
+                s.bimestre === bimestre &&
+                s.status === 'Pendente'
+            );
+            if (solicitacao) {
+                solicitacao.status = 'Concluído';
+                solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
+            }
+
+            // Limpa o campo
+            document.getElementById('relatorioTexto').value = '';
+
+            // Atualiza as listas
+            renderSolicitacoesRelatorios();
+            renderRelatoriosEnviados();
+            
+            alert('✅ Relatório enviado para a coordenação com sucesso!');
         }
 
-        // ============================================
-        // PROFESSOR - SELECTS
-        // ============================================
+        function verRelatorioEnviado(aluno, bimestre) {
+            const relatorio = db.relatoriosPreenchidos.find(r => 
+                r.turma === turmaSelecionada && 
+                r.aluno === aluno && 
+                r.bimestre === bimestre &&
+                r.professor === currentUser.nome
+            );
+
+            if (relatorio) {
+                const html = `
+                    <div class="relatorio-content">
+                        <h4>📄 Relatório Enviado</h4>
+                        <div class="info-line"><strong>Aluno:</strong> ${relatorio.aluno}</div>
+                        <div class="info-line"><strong>Turma:</strong> ${labelTurma(relatorio.turma)}</div>
+                        <div class="info-line"><strong>Bimestre:</strong> ${relatorio.bimestre === 'anual' ? 'Anual' : relatorio.bimestre + 'º Bimestre'}</div>
+                        <div class="info-line"><strong>Enviado em:</strong> ${relatorio.dataEnvio || relatorio.data}</div>
+                        <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
+                            <strong>Relatório:</strong>
+                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorio.relatorio}</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modalRelatorioContent').innerHTML = html;
+                document.getElementById('modalRelatorio').classList.add('active');
+            }
+        }
+
         function carregarAlunosSelects() {
             if (!turmaSelecionada) return;
             const alunos = getAlunosByTurma(turmaSelecionada);
 
-            ['alunoRelatorio', 'alunoObservacao'].forEach(id => {
+            ['alunoRelatorioPreencher', 'alunoObservacao'].forEach(id => {
                 const select = document.getElementById(id);
                 if (select) {
+                    const valorAtual = select.value;
                     select.innerHTML = alunos.map(aluno =>
-                        `<option value="${aluno}">${aluno}</option>`
+                        `<option value="${aluno}" ${aluno === valorAtual ? 'selected' : ''}>${aluno}</option>`
                     ).join('');
                 }
             });
@@ -2522,6 +2499,72 @@ function carregarUsuariosDropdown() {
         }
 
         // ============================================
+        // COORDENADOR - RECEBER RELATÓRIOS
+        // ============================================
+        function renderRelatoriosRecebidos() {
+            const container = document.getElementById('relatoriosRecebidos');
+            
+            if (!db.relatoriosPreenchidos || db.relatoriosPreenchidos.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum relatório recebido dos professores.</p>';
+                return;
+            }
+
+            // Mostra todos os relatórios recebidos
+            const relatorios = db.relatoriosPreenchidos.slice().reverse();
+
+            container.innerHTML = relatorios.map(r => `
+                <div class="registro-item" style="border-left-color: #48bb78;">
+                    <div class="data">📥 ${labelTurma(r.turma)} - ${r.aluno}</div>
+                    <div class="conteudo">
+                        ${r.bimestre === 'anual' ? 'Anual' : r.bimestre + 'º Bimestre'} - 
+                        Professor: ${r.professor}
+                        <span class="status-badge concluido">Recebido</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: #718096; margin-top: 5px;">
+                        Enviado em: ${r.dataEnvio || r.data}
+                        <button onclick="verRelatorioCoordenacao('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}', '${r.professor.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 10px; margin-left: 10px;">👁️ Ver</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function verRelatorioCoordenacao(aluno, bimestre, professor) {
+            const relatorio = db.relatoriosPreenchidos.find(r => 
+                r.aluno === aluno && 
+                r.bimestre === bimestre &&
+                r.professor === professor
+            );
+
+            if (relatorio) {
+                const html = `
+                    <div class="relatorio-content">
+                        <h4>📄 Relatório do Aluno</h4>
+                        <div class="info-line"><strong>Aluno:</strong> ${relatorio.aluno}</div>
+                        <div class="info-line"><strong>Turma:</strong> ${labelTurma(relatorio.turma)}</div>
+                        <div class="info-line"><strong>Bimestre:</strong> ${relatorio.bimestre === 'anual' ? 'Anual' : relatorio.bimestre + 'º Bimestre'}</div>
+                        <div class="info-line"><strong>Professor:</strong> ${relatorio.professor}</div>
+                        <div class="info-line"><strong>Enviado em:</strong> ${relatorio.dataEnvio || relatorio.data}</div>
+                        <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
+                            <strong>Relatório:</strong>
+                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorio.relatorio}</p>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button onclick="marcarRelatorioComoVisto('${relatorio.aluno.replace(/'/g, "\\'")}', '${relatorio.bimestre}', '${relatorio.professor.replace(/'/g, "\\'")}')" class="btn btn-secondary btn-small">✅ Marcar como visto</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modalRelatorioContent').innerHTML = html;
+                document.getElementById('modalRelatorio').classList.add('active');
+            }
+        }
+
+        function marcarRelatorioComoVisto(aluno, bimestre, professor) {
+            // Na prática, poderia marcar como visto no banco de dados
+            fecharModal('modalRelatorio');
+            alert('✅ Relatório marcado como visto!');
+        }
+
+        // ============================================
         // DIRETORIA - STATS GERENCIAIS
         // ============================================
         function renderStatsGerenciais() {
@@ -2535,6 +2578,7 @@ function carregarUsuariosDropdown() {
             let totalDias = 0;
             let totalSolicitacoes = db.solicitacoes.length;
             let totalRelatorios = db.relatoriosGerados.length;
+            let totalRelatoriosPreenchidos = db.relatoriosPreenchidos ? db.relatoriosPreenchidos.length : 0;
             let totalConteudos = 0;
             let totalObservacoes = 0;
 
@@ -2600,6 +2644,11 @@ function carregarUsuariosDropdown() {
                     <div class="stat-icon">📋</div>
                     <div class="stat-number">${totalRelatorios}</div>
                     <div class="stat-label">Relatórios Gerados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📥</div>
+                    <div class="stat-number">${totalRelatoriosPreenchidos}</div>
+                    <div class="stat-label">Relatórios Recebidos</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📚</div>
@@ -2842,6 +2891,10 @@ function carregarUsuariosDropdown() {
             const obsAluno = observacoes.filter(o => o.aluno === aluno);
             const conteudos = db.conteudos[turma] || [];
 
+            // Verifica se há relatório do professor
+            const relatorioProfessor = db.relatoriosPreenchidos ? 
+                db.relatoriosPreenchidos.find(r => r.turma === turma && r.aluno === aluno) : null;
+
             let totalPresencas = 0;
             let totalDias = presencas.length;
             presencas.forEach(p => {
@@ -2879,6 +2932,13 @@ function carregarUsuariosDropdown() {
                             `<br>• ${o.data}: ${o.observacao} (${o.tipo})`
                         ).join('') : '<br>Nenhuma observação registrada.'}
                     </div>
+                    ${relatorioProfessor ? `
+                        <div style="margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 8px; border-left: 4px solid #4299e1;">
+                            <strong>📝 Relatório do Professor (${relatorioProfessor.professor}):</strong>
+                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorioProfessor.relatorio}</p>
+                            <div style="font-size: 0.85em; color: #718096;">Enviado em: ${relatorioProfessor.dataEnvio || relatorioProfessor.data}</div>
+                        </div>
+                    ` : ''}
                     <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
                         <strong>💡 Recomendação Pedagógica:</strong>
                         ${media >= 7 ? 'Aluno com bom desempenho. Continuar estimulando o aprendizado.' :
@@ -2891,33 +2951,6 @@ function carregarUsuariosDropdown() {
             document.getElementById('relatorioAlunoCompleto').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorio').classList.add('active');
-        }
-
-        // ============================================
-        // TABS
-        // ============================================
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`)?.classList.add('active');
-
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(`tab-${tab}`)?.classList.add('active');
-
-            if (tab === 'presencas' && turmaSelecionada) {
-                carregarPresenca();
-            }
-            if (tab === 'conteudos' && turmaSelecionada) {
-                carregarConteudos();
-            }
-            if (tab === 'observacoes' && turmaSelecionada) {
-                carregarObservacoes();
-            }
-            if (tab === 'relatorios' && turmaSelecionada) {
-                carregarRelatorios();
-            }
-            if (tab === 'notas' && turmaSelecionada) {
-                carregarTabelaNotas();
-            }
         }
 
         // ============================================
@@ -2937,11 +2970,9 @@ function carregarUsuariosDropdown() {
         // LOGOUT
         // ============================================
         function logout() {
-            usuarioLogado = null;
             document.getElementById('dashboard').classList.remove('active');
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('loginForm').reset();
-            document.getElementById('loginError').classList.remove('show');
             document.getElementById('cardsContainer').innerHTML = '';
             document.getElementById('turmasContainer').innerHTML = '';
             turmaSelecionada = null;
@@ -2965,10 +2996,9 @@ function carregarUsuariosDropdown() {
             console.log('📊 Configuração:', SHEET_CONFIG);
             console.log('📋 Abas configuradas:', Object.keys(SHEET_CONFIG.abas));
 
-            // Carrega os dados da planilha em background para agilizar o login
             setTimeout(() => {
                 carregarDadosPlanilha();
-            }, 300);
+            }, 500);
         });
     </script>
 </body>
