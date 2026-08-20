@@ -727,6 +727,42 @@
             background: #ebf8ff;
             border-left: 4px solid #4299e1;
         }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast-success {
+            background: #48bb78;
+        }
+
+        .toast-error {
+            background: #fc8181;
+        }
+
+        .toast-info {
+            background: #4299e1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -805,11 +841,11 @@
                         
                         <!-- Botões toggle para cada seção -->
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-                            <button class="toggle-btn active" onclick="toggleSection('notas')">📊 Notas</button>
-                            <button class="toggle-btn" onclick="toggleSection('presencas')">✅ Presenças</button>
-                            <button class="toggle-btn" onclick="toggleSection('conteudos')">📚 Conteúdos</button>
-                            <button class="toggle-btn" onclick="toggleSection('observacoes')">✏️ Observações</button>
-                            <button class="toggle-btn" onclick="toggleSection('relatorios')">📄 Relatórios</button>
+                            <button class="toggle-btn active" onclick="toggleSection('notas', event)">📊 Notas</button>
+                            <button class="toggle-btn" onclick="toggleSection('presencas', event)">✅ Presenças</button>
+                            <button class="toggle-btn" onclick="toggleSection('conteudos', event)">📚 Conteúdos</button>
+                            <button class="toggle-btn" onclick="toggleSection('observacoes', event)">✏️ Observações</button>
+                            <button class="toggle-btn" onclick="toggleSection('relatorios', event)">📄 Relatórios</button>
                         </div>
 
                         <!-- Seção de Notas -->
@@ -954,10 +990,10 @@
             <div id="coordenadorArea" class="hidden">
                 <!-- Botões toggle para Coordenação -->
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <button class="toggle-btn active" onclick="toggleCoordenacao('visao')">📊 Visão por Turma</button>
-                    <button class="toggle-btn" onclick="toggleCoordenacao('atribuicao')">📋 Atribuição</button>
-                    <button class="toggle-btn" onclick="toggleCoordenacao('solicitar')">📄 Solicitar Relatórios</button>
-                    <button class="toggle-btn" onclick="toggleCoordenacao('receber')">📥 Receber Relatórios</button>
+                    <button class="toggle-btn active" onclick="toggleCoordenacao('visao', event)">📊 Visão por Turma</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('atribuicao', event)">📋 Atribuição</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('solicitar', event)">📄 Solicitar Relatórios</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('receber', event)">📥 Receber Relatórios</button>
                 </div>
 
                 <!-- Visão por Turma -->
@@ -1097,6 +1133,12 @@
 
     <script>
         // ============================================
+        // CONFIGURAÇÃO GAS
+        // ============================================
+        // ⚠️ ALTERE ESTA URL PARA A URL DO SEU WEB APP GAS
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec';
+
+        // ============================================
         // HELPERS
         // ============================================
         function texto(valor) {
@@ -1143,6 +1185,19 @@
 
         function labelTurma(turma) {
             return (escolaData.turmasLabel && escolaData.turmasLabel[turma]) || turma;
+        }
+
+        function mostrarToast(mensagem, tipo = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${tipo}`;
+            toast.textContent = mensagem;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
         // ============================================
@@ -1194,8 +1249,34 @@
             conteudos: {},
             relatoriosGerados: [],
             solicitacoes: [],
-            relatoriosPreenchidos: [] // Relatórios preenchidos pelos professores
+            relatoriosPreenchidos: []
         };
+
+        // ============================================
+        // FUNÇÃO PARA ENVIAR AO GAS
+        // ============================================
+        async function enviarParaGAS(acao, payload) {
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ acao, payload })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Erro ao enviar para GAS:', error);
+                return { success: false, error: error.message };
+            }
+        }
 
         // ============================================
         // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
@@ -1252,21 +1333,14 @@
                     relatoriosGerados: totalRelatorios
                 });
 
-                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${totalAlunos} alunos\n👨‍🏫 ${totalProfessores} professores\n👨‍🏫 ${totalAtribuicoes} atribuições\n📝 ${totalNotas} notas\n✅ ${totalPresencas} presenças\n📚 ${totalConteudos} conteúdos\n✏️ ${totalObservacoes} observações\n📄 ${totalSolicitacoes} solicitações\n📋 ${totalRelatorios} relatórios gerados`);
+                mostrarToast(`✅ Dados carregados com sucesso! ${totalAlunos} alunos, ${totalProfessores} professores`, 'success');
 
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
                 document.getElementById('syncStatus').className = 'sync-status error';
                 document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
                 
-                alert('❌ Erro ao carregar dados da planilha.\n\n' +
-                      '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
-                      'Para tornar pública:\n' +
-                      '1. Abra sua planilha no Google Sheets\n' +
-                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
-                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
-                      '4. Mude para "Qualquer pessoa com o link"\n\n' +
-                      'Detalhes do erro: ' + error.message);
+                mostrarToast('❌ Erro ao carregar dados da planilha. Verifique o console.', 'error');
             } finally {
                 loading.classList.remove('active');
             }
@@ -1340,7 +1414,6 @@
             escolaData.professores = Array.from(professoresMap.values())
                 .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
             console.log('👨‍🏫 Professores carregados (derivados de ATRIBUICOES):', escolaData.professores.length);
-            console.log('📋 Lista de professores:', escolaData.professores.map(p => p.nome).join(', '));
 
             // ============================================
             // 2. ALUNOS POR TURMA (chave normalizada)
@@ -1369,7 +1442,6 @@
             escolaData.turmas = Object.keys(novosAlunos).sort();
             console.log('👥 Alunos atualizados por turma:', Object.keys(novosAlunos).length);
             console.log('🏫 Turmas encontradas:', escolaData.turmas.length);
-            console.log('📋 Turmas com labels:', escolaData.turmasLabel);
 
             // ============================================
             // 3. ATRIBUIÇÕES
@@ -1491,14 +1563,14 @@
                 media: parseFloat(r.Media) || 0,
                 presenca: parseFloat(r.Presenca) || 0,
                 observacoes: r.Observacoes || '',
-                recomendacao: r.Recomendacao || ''
+                recomendacao: r.Recomendacao || '',
+                conteudo: r.Conteudo || ''
             }));
             console.log('📋 Relatórios gerados atualizados:', db.relatoriosGerados.length);
 
             // ============================================
             // 10. RELATÓRIOS PREENCHIDOS PELOS PROFESSORES
             // ============================================
-            // Inicializa com os relatórios da planilha se existirem
             if (!db.relatoriosPreenchidos) {
                 db.relatoriosPreenchidos = [];
             }
@@ -1612,7 +1684,7 @@
         // ============================================
         let activeSection = 'notas';
 
-        function toggleSection(section) {
+        function toggleSection(section, event) {
             // Esconde todas as seções
             document.querySelectorAll('.toggle-section').forEach(el => {
                 el.classList.add('hidden');
@@ -1623,10 +1695,12 @@
                 target.classList.remove('hidden');
             }
             // Atualiza botões
-            document.querySelectorAll('.toggle-btn').forEach(btn => {
+            document.querySelectorAll('#professorArea .toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             activeSection = section;
 
             // Recarrega dados da seção
@@ -1652,7 +1726,7 @@
         // ============================================
         let activeCoordenacao = 'visao';
 
-        function toggleCoordenacao(section) {
+        function toggleCoordenacao(section, event) {
             // Esconde todas as seções
             document.querySelectorAll('#coordenadorArea .section-container').forEach(el => {
                 el.classList.add('hidden');
@@ -1666,7 +1740,9 @@
             document.querySelectorAll('#coordenadorArea .toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             activeCoordenacao = section;
 
             // Recarrega dados se necessário
@@ -1876,34 +1952,42 @@
             alert(relatorio);
         }
 
-        function salvarNotas() {
+        async function salvarNotas() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
 
             const alunos = getAlunosByTurma(turmaSelecionada);
-            let salvos = 0;
+            const notasParaSalvar = [];
 
             alunos.forEach(aluno => {
-                if (!db.notas[turmaSelecionada]) {
-                    db.notas[turmaSelecionada] = {};
-                }
-                if (!db.notas[turmaSelecionada][aluno]) {
-                    db.notas[turmaSelecionada][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                }
                 const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                 for (let bim = 1; bim <= 4; bim++) {
                     const input = document.getElementById(`nota_${alunoId}_${bim}`);
                     if (input) {
-                        db.notas[turmaSelecionada][aluno][bim] = parseFloat(input.value) || 0;
-                        salvos++;
+                        notasParaSalvar.push({
+                            turma: turmaSelecionada,
+                            aluno: aluno,
+                            bimestre: bim,
+                            nota: parseFloat(input.value) || 0
+                        });
                     }
                 }
             });
 
-            alert(`✅ ${salvos} notas salvas com sucesso!`);
-            carregarTabelaNotas();
+            try {
+                const resultado = await enviarParaGAS('salvarNotas', { notas: notasParaSalvar });
+                
+                if (resultado.success) {
+                    mostrarToast(`✅ ${resultado.salvos} notas salvas com sucesso!`, 'success');
+                    carregarTabelaNotas();
+                } else {
+                    mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
         // ============================================
@@ -1951,7 +2035,7 @@
             `).join('');
         }
 
-        function salvarPresenca() {
+        async function salvarPresenca() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
@@ -1971,13 +2055,29 @@
                 db.presencas[turmaSelecionada] = [];
             }
 
-            db.presencas[turmaSelecionada].push({ data, presentes, obs });
-            
-            renderRegistrosPresenca();
-            alert('✅ Presença salva com sucesso!');
+            const payload = {
+                turma: turmaSelecionada,
+                data: data,
+                alunosPresentes: presentes,
+                observacao: obs
+            };
 
-            document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
-            document.getElementById('obsPresenca').value = '';
+            try {
+                const resultado = await enviarParaGAS('salvarPresenca', payload);
+                
+                if (resultado.success) {
+                    db.presencas[turmaSelecionada].push({ data, presentes, obs });
+                    renderRegistrosPresenca();
+                    mostrarToast('✅ Presença salva com sucesso!', 'success');
+                    
+                    document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
+                    document.getElementById('obsPresenca').value = '';
+                } else {
+                    mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
         // ============================================
@@ -2005,7 +2105,7 @@
             `).join('');
         }
 
-        function salvarConteudo() {
+        async function salvarConteudo() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
@@ -2021,16 +2121,32 @@
                 return;
             }
 
-            if (!db.conteudos[turmaSelecionada]) {
-                db.conteudos[turmaSelecionada] = [];
-            }
+            const payload = {
+                turma: turmaSelecionada,
+                data: data,
+                disciplina: disciplina,
+                conteudo: conteudo,
+                objetivos: objetivos
+            };
 
-            db.conteudos[turmaSelecionada].push({ data, disciplina, conteudo, objetivos });
-            
-            renderConteudos();
-            document.getElementById('conteudoText').value = '';
-            document.getElementById('objetivosConteudo').value = '';
-            alert('✅ Conteúdo salvo com sucesso!');
+            try {
+                const resultado = await enviarParaGAS('salvarConteudo', payload);
+                
+                if (resultado.success) {
+                    if (!db.conteudos[turmaSelecionada]) {
+                        db.conteudos[turmaSelecionada] = [];
+                    }
+                    db.conteudos[turmaSelecionada].push({ data, disciplina, conteudo, objetivos });
+                    renderConteudos();
+                    document.getElementById('conteudoText').value = '';
+                    document.getElementById('objetivosConteudo').value = '';
+                    mostrarToast('✅ Conteúdo salvo com sucesso!', 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
         // ============================================
@@ -2058,7 +2174,7 @@
             `).join('');
         }
 
-        function salvarObservacao() {
+        async function salvarObservacao() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
@@ -2074,15 +2190,31 @@
                 return;
             }
 
-            if (!db.observacoes[turmaSelecionada]) {
-                db.observacoes[turmaSelecionada] = [];
-            }
+            const payload = {
+                turma: turmaSelecionada,
+                data: data,
+                aluno: aluno,
+                observacao: observacao,
+                tipo: tipo
+            };
 
-            db.observacoes[turmaSelecionada].push({ data, aluno, observacao, tipo });
-            
-            renderObservacoes();
-            document.getElementById('observacaoText').value = '';
-            alert('✅ Observação salva com sucesso!');
+            try {
+                const resultado = await enviarParaGAS('salvarObservacao', payload);
+                
+                if (resultado.success) {
+                    if (!db.observacoes[turmaSelecionada]) {
+                        db.observacoes[turmaSelecionada] = [];
+                    }
+                    db.observacoes[turmaSelecionada].push({ data, aluno, observacao, tipo });
+                    renderObservacoes();
+                    document.getElementById('observacaoText').value = '';
+                    mostrarToast('✅ Observação salva com sucesso!', 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
         // ============================================
@@ -2141,17 +2273,15 @@
         }
 
         function prepararRelatorio(aluno, bimestre) {
-            // Preenche os campos e muda para a aba de preenchimento
             document.getElementById('alunoRelatorioPreencher').value = aluno;
             document.getElementById('bimestreRelatorioPreencher').value = bimestre;
             document.getElementById('relatorioTexto').value = '';
             document.getElementById('relatorioTexto').focus();
             
-            // Scroll para a seção de preenchimento
             document.getElementById('section-relatorios').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function enviarRelatorioCoordenacao() {
+        async function enviarRelatorioCoordenacao() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
@@ -2171,38 +2301,70 @@
                 return;
             }
 
-            // Salva o relatório
-            db.relatoriosPreenchidos.push({
+            // Calcular média do aluno
+            const notas = getNotasAluno(turmaSelecionada, aluno);
+            const media = calcularMedia(notas);
+            
+            // Calcular presença
+            const presencas = db.presencas[turmaSelecionada] || [];
+            let totalPresencas = 0;
+            let totalDias = presencas.length;
+            presencas.forEach(p => {
+                if (p.presentes.includes(aluno)) totalPresencas++;
+            });
+            const taxaPresenca = totalDias > 0 ? (totalPresencas / totalDias * 100) : 0;
+
+            const payload = {
                 turma: turmaSelecionada,
                 aluno: aluno,
                 bimestre: bimestre,
                 professor: currentUser.nome,
-                relatorio: relatorioTexto,
-                data: new Date().toISOString().split('T')[0],
-                dataEnvio: new Date().toISOString().split('T')[0],
-                status: 'Enviado'
-            });
+                notas: `${notas[1] || 0} | ${notas[2] || 0} | ${notas[3] || 0} | ${notas[4] || 0}`,
+                media: media.toFixed(1),
+                presenca: taxaPresenca.toFixed(1),
+                observacoes: '',
+                recomendacao: '',
+                conteudo: relatorioTexto
+            };
 
-            // Atualiza a solicitação como concluída
-            const solicitacao = db.solicitacoes.find(s => 
-                s.turma === turmaSelecionada && 
-                s.aluno === aluno && 
-                s.bimestre === bimestre &&
-                s.status === 'Pendente'
-            );
-            if (solicitacao) {
-                solicitacao.status = 'Concluído';
-                solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
+            try {
+                const resultado = await enviarParaGAS('enviarRelatorio', payload);
+                
+                if (resultado.success) {
+                    // Salva localmente
+                    db.relatoriosPreenchidos.push({
+                        turma: turmaSelecionada,
+                        aluno: aluno,
+                        bimestre: bimestre,
+                        professor: currentUser.nome,
+                        relatorio: relatorioTexto,
+                        data: new Date().toISOString().split('T')[0],
+                        dataEnvio: new Date().toISOString().split('T')[0],
+                        status: 'Enviado'
+                    });
+
+                    // Atualiza solicitação
+                    const solicitacao = db.solicitacoes.find(s => 
+                        s.turma === turmaSelecionada && 
+                        s.aluno === aluno && 
+                        s.bimestre === bimestre &&
+                        s.status === 'Pendente'
+                    );
+                    if (solicitacao) {
+                        solicitacao.status = 'Concluído';
+                        solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
+                    }
+
+                    document.getElementById('relatorioTexto').value = '';
+                    renderSolicitacoesRelatorios();
+                    renderRelatoriosEnviados();
+                    mostrarToast('✅ Relatório enviado para a coordenação com sucesso!', 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao enviar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
             }
-
-            // Limpa o campo
-            document.getElementById('relatorioTexto').value = '';
-
-            // Atualiza as listas
-            renderSolicitacoesRelatorios();
-            renderRelatoriosEnviados();
-            
-            alert('✅ Relatório enviado para a coordenação com sucesso!');
         }
 
         function verRelatorioEnviado(aluno, bimestre) {
@@ -2371,7 +2533,7 @@
             }).join('');
         }
 
-        function atribuirTurma() {
+        async function atribuirTurma() {
             const profId = document.getElementById('professorSelect').value;
             const turma = document.getElementById('turmaSelect').value;
 
@@ -2379,35 +2541,60 @@
                 alert('Selecione um professor e uma turma.');
                 return;
             }
-
-            if (!db.atribuicoes[profId]) {
-                db.atribuicoes[profId] = [];
-            }
-
-            if (db.atribuicoes[profId].includes(turma)) {
-                alert('Esta turma já está atribuída a este professor.');
-                return;
-            }
-
-            db.atribuicoes[profId].push(turma);
-            renderProfessoresAtribuidos();
-            renderVisaoGeralTurmas();
 
             const prof = getProfessorById(profId);
-            if (prof && prof.nome === currentUser.nome) {
-                currentUser.turmas = getTurmasByProfessor(profId);
-                renderMinhasTurmas();
+            if (!prof) {
+                alert('Professor não encontrado.');
+                return;
             }
 
-            alert(`✅ Turma ${labelTurma(turma)} atribuída a ${getProfessorById(profId).nome} com sucesso!`);
+            const payload = {
+                professorId: profId,
+                professorNome: prof.nome,
+                tipo: prof.tipo || 'Regente',
+                turma: turma,
+                dataAtribuicao: new Date().toISOString().split('T')[0]
+            };
+
+            try {
+                const resultado = await enviarParaGAS('atribuirTurma', payload);
+                
+                if (resultado.success) {
+                    if (!db.atribuicoes[profId]) {
+                        db.atribuicoes[profId] = [];
+                    }
+                    if (!db.atribuicoes[profId].includes(turma)) {
+                        db.atribuicoes[profId].push(turma);
+                    }
+                    renderProfessoresAtribuidos();
+                    renderVisaoGeralTurmas();
+
+                    if (prof.nome === currentUser.nome) {
+                        currentUser.turmas = getTurmasByProfessor(profId);
+                        renderMinhasTurmas();
+                    }
+
+                    mostrarToast(`✅ Turma ${labelTurma(turma)} atribuída a ${prof.nome} com sucesso!`, 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao atribuir: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
-        function removerTurma() {
+        async function removerTurma() {
             const profId = document.getElementById('professorSelect').value;
             const turma = document.getElementById('turmaSelect').value;
 
             if (!profId || !turma) {
                 alert('Selecione um professor e uma turma.');
+                return;
+            }
+
+            const prof = getProfessorById(profId);
+            if (!prof) {
+                alert('Professor não encontrado.');
                 return;
             }
 
@@ -2416,21 +2603,35 @@
                 return;
             }
 
-            if (!confirm(`Remover a turma ${labelTurma(turma)} do professor ${getProfessorById(profId).nome}?`)) {
+            if (!confirm(`Remover a turma ${labelTurma(turma)} do professor ${prof.nome}?`)) {
                 return;
             }
 
-            db.atribuicoes[profId] = db.atribuicoes[profId].filter(t => t !== turma);
-            renderProfessoresAtribuidos();
-            renderVisaoGeralTurmas();
+            const payload = {
+                professorId: profId,
+                turma: turma
+            };
 
-            const prof = getProfessorById(profId);
-            if (prof && prof.nome === currentUser.nome) {
-                currentUser.turmas = getTurmasByProfessor(profId);
-                renderMinhasTurmas();
+            try {
+                const resultado = await enviarParaGAS('removerTurma', payload);
+                
+                if (resultado.success) {
+                    db.atribuicoes[profId] = db.atribuicoes[profId].filter(t => t !== turma);
+                    renderProfessoresAtribuidos();
+                    renderVisaoGeralTurmas();
+
+                    if (prof.nome === currentUser.nome) {
+                        currentUser.turmas = getTurmasByProfessor(profId);
+                        renderMinhasTurmas();
+                    }
+
+                    mostrarToast(`✅ Turma ${labelTurma(turma)} removida de ${prof.nome}.`, 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao remover: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
             }
-
-            alert(`✅ Turma ${labelTurma(turma)} removida de ${getProfessorById(profId).nome}.`);
         }
 
         // ============================================
@@ -2452,7 +2653,7 @@
             };
         }
 
-        function solicitarRelatorio() {
+        async function solicitarRelatorio() {
             const turma = document.getElementById('solicitarTurma').value;
             const aluno = document.getElementById('solicitarAluno').value;
             const bimestre = document.getElementById('solicitarBimestre').value;
@@ -2462,20 +2663,35 @@
                 return;
             }
 
-            const data = new Date().toISOString().split('T')[0];
-            
-            db.solicitacoes.push({
-                turma,
-                aluno,
-                bimestre,
-                data,
-                status: 'Pendente',
-                dataConclusao: '',
-                observacoes: ''
-            });
+            const payload = {
+                turma: turma,
+                aluno: aluno,
+                bimestre: bimestre,
+                professor: ''
+            };
 
-            renderSolicitacoes();
-            alert('✅ Relatório solicitado com sucesso! O professor será notificado.');
+            try {
+                const resultado = await enviarParaGAS('solicitarRelatorio', payload);
+                
+                if (resultado.success) {
+                    const data = new Date().toISOString().split('T')[0];
+                    db.solicitacoes.push({
+                        turma,
+                        aluno,
+                        bimestre,
+                        data,
+                        status: 'Pendente',
+                        dataConclusao: '',
+                        observacoes: ''
+                    });
+                    renderSolicitacoes();
+                    mostrarToast('✅ Relatório solicitado com sucesso! O professor será notificado.', 'success');
+                } else {
+                    mostrarToast(`❌ Erro ao solicitar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
         }
 
         function renderSolicitacoes() {
@@ -2509,7 +2725,6 @@
                 return;
             }
 
-            // Mostra todos os relatórios recebidos
             const relatorios = db.relatoriosPreenchidos.slice().reverse();
 
             container.innerHTML = relatorios.map(r => `
@@ -2559,9 +2774,8 @@
         }
 
         function marcarRelatorioComoVisto(aluno, bimestre, professor) {
-            // Na prática, poderia marcar como visto no banco de dados
             fecharModal('modalRelatorio');
-            alert('✅ Relatório marcado como visto!');
+            mostrarToast('✅ Relatório marcado como visto!', 'success');
         }
 
         // ============================================
@@ -2891,7 +3105,6 @@
             const obsAluno = observacoes.filter(o => o.aluno === aluno);
             const conteudos = db.conteudos[turma] || [];
 
-            // Verifica se há relatório do professor
             const relatorioProfessor = db.relatoriosPreenchidos ? 
                 db.relatoriosPreenchidos.find(r => r.turma === turma && r.aluno === aluno) : null;
 
