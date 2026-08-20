@@ -722,43 +722,6 @@
             background: #ebf8ff;
             border-left: 4px solid #4299e1;
         }
-
-        .edit-mode {
-            background: #fffbeb;
-            border-left: 4px solid #ed8936;
-        }
-
-        .btn-edit {
-            background: #ed8936;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .btn-edit:hover {
-            background: #dd6b20;
-        }
-
-        .btn-cancel {
-            background: #a0aec0;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .btn-cancel:hover {
-            background: #718096;
-        }
     </style>
 </head>
 <body>
@@ -835,10 +798,8 @@
                     <div class="section-container">
                         <h3>📝 Registros da Turma: <span id="turmaSelecionadaNome">-</span></h3>
                         
-                        <!-- Botões toggle para cada seção -->
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
                             <button class="toggle-btn active" onclick="toggleSection('notas')">📊 Notas</button>
-                            <button class="toggle-btn" onclick="toggleSection('presencas')">✅ Presenças</button>
                             <button class="toggle-btn" onclick="toggleSection('conteudos')">📚 Conteúdos</button>
                             <button class="toggle-btn" onclick="toggleSection('observacoes')">✏️ Observações</button>
                             <button class="toggle-btn" onclick="toggleSection('relatorios')">📄 Relatórios</button>
@@ -856,7 +817,6 @@
                                             <th>3º Bim</th>
                                             <th>4º Bim</th>
                                             <th>Média</th>
-                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelaNotasBody"></tbody>
@@ -866,26 +826,6 @@
                                 <button onclick="salvarNotas()" class="btn btn-secondary btn-small">💾 Salvar Todas as Notas</button>
                                 <button onclick="calcularMedias()" class="btn btn-small">📊 Calcular Médias</button>
                             </div>
-                        </div>
-
-                        <!-- Seção de Presenças -->
-                        <div id="section-presencas" class="toggle-section hidden">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Data</label>
-                                    <input type="date" id="dataPresenca">
-                                </div>
-                                <div class="form-group">
-                                    <label>Observação da Aula</label>
-                                    <input type="text" id="obsPresenca" placeholder="Ex: Aula sobre adição">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Alunos Presentes</label>
-                                <div id="alunosPresenca" class="checkbox-grid"></div>
-                            </div>
-                            <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
-                            <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
 
                         <!-- Seção de Conteúdos -->
@@ -942,15 +882,13 @@
 
                         <!-- Seção de Relatórios -->
                         <div id="section-relatorios" class="toggle-section hidden">
-                            <!-- Solicitações da Coordenação -->
                             <div style="margin-bottom: 30px;">
                                 <h4>📋 Solicitações da Coordenação</h4>
                                 <div id="solicitacoesRelatorios" class="registros-list"></div>
                             </div>
 
-                            <!-- Preencher/Editar Relatório -->
                             <div style="margin-top: 20px; padding: 20px; background: #ebf8ff; border-radius: 10px; border-left: 4px solid #4299e1;">
-                                <h4 id="relatorioFormTitle">✏️ Preencher Relatório</h4>
+                                <h4>✏️ Preencher Relatório</h4>
                                 <div class="form-group">
                                     <label>Aluno</label>
                                     <select id="alunoRelatorioPreencher"></select>
@@ -969,18 +907,7 @@
                                     <label>Relatório</label>
                                     <textarea id="relatorioTexto" rows="6" placeholder="Digite o relatório do aluno..."></textarea>
                                 </div>
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <button onclick="enviarRelatorioCoordenacao()" class="btn btn-info btn-small">📤 Enviar/Atualizar Relatório</button>
-                                    <button onclick="cancelarEdicaoRelatorio()" class="btn btn-cancel btn-small" id="btnCancelarEdicao" style="display: none;">❌ Cancelar Edição</button>
-                                </div>
-                                <input type="hidden" id="editandoRelatorioAluno" value="">
-                                <input type="hidden" id="editandoRelatorioBimestre" value="">
-                            </div>
-
-                            <!-- Relatórios já enviados -->
-                            <div style="margin-top: 20px;">
-                                <h4>📄 Relatórios Enviados</h4>
-                                <div id="relatoriosEnviados" class="registros-list"></div>
+                                <button onclick="enviarRelatorioCoordenacao()" class="btn btn-info btn-small">📤 Enviar Relatório para Coordenação</button>
                             </div>
                         </div>
                     </div>
@@ -989,12 +916,10 @@
 
             <!-- ÁREA DO COORDENADOR -->
             <div id="coordenadorArea" class="hidden">
-                <!-- Botões toggle para Coordenação -->
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
                     <button class="toggle-btn active" onclick="toggleCoordenacao('visao')">📊 Visão por Turma</button>
                     <button class="toggle-btn" onclick="toggleCoordenacao('atribuicao')">📋 Atribuição</button>
                     <button class="toggle-btn" onclick="toggleCoordenacao('solicitar')">📄 Solicitar Relatórios</button>
-                    <button class="toggle-btn" onclick="toggleCoordenacao('receber')">📥 Receber Relatórios</button>
                 </div>
 
                 <!-- Visão por Turma -->
@@ -1007,9 +932,7 @@
                                     <th>Turma</th>
                                     <th>Professor Regente</th>
                                     <th>Média Geral</th>
-                                    <th>Presença</th>
                                     <th>Relatórios Pendentes</th>
-                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="visaoGeralTurmas"></tbody>
@@ -1077,12 +1000,6 @@
                         <div id="listaSolicitacoes" class="registros-list"></div>
                     </div>
                 </div>
-
-                <!-- Receber Relatórios -->
-                <div id="coordenacao-receber" class="section-container hidden">
-                    <h3>📥 Relatórios Recebidos dos Professores</h3>
-                    <div id="relatoriosRecebidos" class="registros-list"></div>
-                </div>
             </div>
 
             <!-- ÁREA DA DIRETORIA -->
@@ -1096,7 +1013,6 @@
                     <div class="btn-group" style="margin-bottom: 20px;">
                         <button onclick="gerarRelatorioGeral()" class="btn btn-secondary btn-small">📊 Relatório Geral</button>
                         <button onclick="gerarRelatorioPorTurma()" class="btn btn-secondary btn-small">📊 Por Turma</button>
-                        <button onclick="gerarRelatorioPorProfessor()" class="btn btn-secondary btn-small">📊 Por Professor</button>
                     </div>
                     <div id="relatorioConsolidado" style="margin-top: 20px;"></div>
                 </div>
@@ -1134,6 +1050,13 @@
 
     <script>
         // ============================================
+        // CONFIGURAÇÃO DA API
+        // ============================================
+        const API_CONFIG = {
+            url: 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec'
+        };
+
+        // ============================================
         // HELPERS
         // ============================================
         function texto(valor) {
@@ -1164,54 +1087,42 @@
                 .trim();
         }
 
-        function valorCelula(cell) {
-            if (!cell) return '';
-            const v = cell.v;
-            if (v === null || v === undefined) return cell.f || '';
-            if (typeof v === 'string') {
-                const m = /^Date\((\d+),(\d+),(\d+)/.exec(v);
-                if (m) {
-                    const d = new Date(Number(m[1]), Number(m[2]), Number(m[3]));
-                    return d.toISOString().split('T')[0];
-                }
-            }
-            return v;
-        }
-
         function labelTurma(turma) {
             return (escolaData.turmasLabel && escolaData.turmasLabel[turma]) || turma;
         }
 
         // ============================================
-        // CONFIGURAÇÃO DA PLANILHA
+        // FUNÇÃO PARA CHAMAR A API
         // ============================================
-        const SHEET_CONFIG = {
-            sheetId: '1vfgwXNrZuQ8KBcjCuJB_5RKUQ3imAYbAHsMX1yG3It0',
-            abas: {
-                alunos: 'TURMAS_ALUNOS',
-                atribuicoes: 'ATRIBUICOES',
-                notas: 'NOTAS_BIMESTRAIS',
-                presencas: 'PRESENCAS',
-                conteudos: 'CONTEUDOS',
-                observacoes: 'OBSERVACOES',
-                relatoriosSolicitados: 'RELATORIOS_SOLICITADOS',
-                relatoriosGerados: 'RELATORIOS_GERADOS'
+        async function chamarAPI(acao, dados = {}) {
+            try {
+                const response = await fetch(API_CONFIG.url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        acao: acao,
+                        dados: dados
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (!resultado.success) {
+                    throw new Error(resultado.error || 'Erro desconhecido');
+                }
+                
+                return resultado;
+            } catch (error) {
+                console.error(`❌ Erro ao chamar API (${acao}):`, error);
+                throw error;
             }
-        };
-
-        // ============================================
-        // DADOS CARREGADOS DA PLANILHA
-        // ============================================
-        let dadosPlanilha = {
-            alunos: [],
-            atribuicoes: [],
-            notas: [],
-            presencas: [],
-            conteudos: [],
-            observacoes: [],
-            relatoriosSolicitados: [],
-            relatoriosGerados: []
-        };
+        }
 
         // ============================================
         // BANCO DE DADOS LOCAL
@@ -1226,13 +1137,21 @@
         let db = {
             atribuicoes: {},
             notas: {},
-            presencas: {},
             observacoes: {},
             conteudos: {},
             relatoriosGerados: [],
             solicitacoes: [],
-            relatoriosPreenchidos: [] // Relatórios preenchidos pelos professores
+            relatoriosPreenchidos: []
         };
+
+        let currentUser = {
+            cargo: '',
+            nome: '',
+            turmas: [],
+            id: null
+        };
+
+        let turmaSelecionada = null;
 
         // ============================================
         // FUNÇÃO PARA CARREGAR DADOS DA PLANILHA
@@ -1242,293 +1161,198 @@
             loading.classList.add('active');
 
             try {
-                console.log('📡 Iniciando carregamento da planilha...');
+                console.log('📡 Iniciando carregamento via API...');
                 
-                for (const [key, aba] of Object.entries(SHEET_CONFIG.abas)) {
-                    await carregarAbaEspecifica(aba, key);
-                }
-
-                atualizarBancoDados();
-
-                // RECARREGA OS DROPDOWNS
-                if (currentUser.cargo === 'coordenacao') {
-                    console.log('🔄 Recarregando dropdowns para Coordenação...');
-                    carregarProfessoresAtribuicao();
-                    carregarTurmasSelect();
-                    carregarSolicitacaoTurmas();
-                    renderVisaoGeralTurmas();
-                    renderSolicitacoes();
-                    renderRelatoriosRecebidos();
-                }
-
-                const totalAlunos = dadosPlanilha.alunos.length;
-                const totalProfessores = escolaData.professores.length;
-                const totalAtribuicoes = dadosPlanilha.atribuicoes.length;
-                const totalNotas = dadosPlanilha.notas.length;
-                const totalPresencas = dadosPlanilha.presencas.length;
-                const totalConteudos = dadosPlanilha.conteudos.length;
-                const totalObservacoes = dadosPlanilha.observacoes.length;
-                const totalSolicitacoes = dadosPlanilha.relatoriosSolicitados.length;
-                const totalRelatorios = dadosPlanilha.relatoriosGerados.length;
-
-                const status = document.getElementById('dataStatus');
-                status.innerHTML = `✅ Dados carregados: ${totalAlunos} alunos, ${totalProfessores} professores, ${totalAtribuicoes} atribuições, ${totalNotas} notas, ${totalPresencas} presenças, ${totalConteudos} conteúdos, ${totalObservacoes} observações, ${totalSolicitacoes} solicitações, ${totalRelatorios} relatórios`;
+                const resultado = await chamarAPI('lerTodasAbas');
                 
-                document.getElementById('syncStatus').className = 'sync-status synced';
-                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-
-                console.log('📊 Resumo dos dados carregados da planilha:', {
-                    alunos: totalAlunos,
-                    professores: totalProfessores,
-                    atribuicoes: totalAtribuicoes,
-                    notas: totalNotas,
-                    presencas: totalPresencas,
-                    conteudos: totalConteudos,
-                    observacoes: totalObservacoes,
-                    relatoriosSolicitados: totalSolicitacoes,
-                    relatoriosGerados: totalRelatorios
-                });
-
-                alert(`✅ Dados carregados com sucesso!\n\n📊 Resumo:\n👥 ${totalAlunos} alunos\n👨‍🏫 ${totalProfessores} professores\n👨‍🏫 ${totalAtribuicoes} atribuições\n📝 ${totalNotas} notas\n✅ ${totalPresencas} presenças\n📚 ${totalConteudos} conteúdos\n✏️ ${totalObservacoes} observações\n📄 ${totalSolicitacoes} solicitações\n📋 ${totalRelatorios} relatórios gerados`);
-
+                if (resultado.success && resultado.dados) {
+                    const dados = resultado.dados;
+                    
+                    atualizarBancoDados(dados);
+                    
+                    const status = document.getElementById('dataStatus');
+                    status.innerHTML = `✅ Dados carregados com sucesso!`;
+                    
+                    document.getElementById('syncStatus').className = 'sync-status synced';
+                    document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+                    
+                    console.log('📊 Dados carregados:', Object.keys(dados));
+                    
+                    if (currentUser.cargo) {
+                        renderDashboard(currentUser.cargo);
+                    }
+                }
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
                 document.getElementById('syncStatus').className = 'sync-status error';
                 document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
                 
-                alert('❌ Erro ao carregar dados da planilha.\n\n' +
-                      '⚠️ IMPORTANTE: Sua planilha precisa estar PÚBLICA!\n\n' +
-                      'Para tornar pública:\n' +
-                      '1. Abra sua planilha no Google Sheets\n' +
-                      '2. Clique em "Arquivo" → "Compartilhar" → "Publicar na web"\n' +
-                      '3. Ou clique em "Compartilhar" (botão azul)\n' +
-                      '4. Mude para "Qualquer pessoa com o link"\n\n' +
-                      'Detalhes do erro: ' + error.message);
+                alert('❌ Erro ao carregar dados.\n\n' +
+                      'Verifique se:\n' +
+                      '1. O Google Apps Script está publicado\n' +
+                      '2. A URL da API está correta\n' +
+                      '3. O script tem permissão para acessar a planilha\n\n' +
+                      'Detalhes: ' + error.message);
             } finally {
                 loading.classList.remove('active');
-            }
-        }
-
-        async function carregarAbaEspecifica(nomeAba, chave) {
-            try {
-                const url = `https://docs.google.com/spreadsheets/d/${SHEET_CONFIG.sheetId}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(nomeAba)}`;
-                console.log(`🔗 Carregando aba ${nomeAba}...`);
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP ${response.status} ao carregar aba ${nomeAba}`);
-                }
-
-                const text = await response.text();
-                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                const data = JSON.parse(jsonStr);
-
-                if (data.table && data.table.rows) {
-                    const cols = data.table.cols.map(c => texto(c.label) || c.id || '');
-                    dadosPlanilha[chave] = data.table.rows.map(row => {
-                        const obj = {};
-                        (row.c || []).forEach((cell, i) => {
-                            obj[cols[i] || `coluna_${i}`] = valorCelula(cell);
-                        });
-                        return obj;
-                    });
-                    console.log(`✅ ${chave} carregados:`, dadosPlanilha[chave].length);
-                    
-                    if (dadosPlanilha[chave].length > 0) {
-                        console.log(`📋 Primeiros registros de ${chave}:`, dadosPlanilha[chave].slice(0, 3));
-                    }
-                } else {
-                    console.warn(`⚠️ Aba "${nomeAba}" está vazia ou sem dados`);
-                    dadosPlanilha[chave] = [];
-                }
-            } catch (error) {
-                console.error(`❌ Erro ao carregar aba ${nomeAba}:`, error);
-                dadosPlanilha[chave] = [];
             }
         }
 
         // ============================================
         // ATUALIZAR BANCO DE DADOS LOCAL
         // ============================================
-        function atualizarBancoDados() {
-            console.log('🔄 Atualizando banco de dados local a partir da planilha...');
-
-            // ============================================
-            // 1. PROFESSORES (derivados da aba ATRIBUICOES)
-            // ============================================
-            const professoresMap = new Map();
-            dadosPlanilha.atribuicoes.forEach(attr => {
-                const id = texto(attr.ID_Professor || attr.IDProfessor);
-                const nome = texto(attr.Nome_Professor || attr.NomeProfessor);
-                const tipo = texto(attr.Tipo) || 'Regente';
-                if (id && nome && !professoresMap.has(id) && isAtivo(attr.Ativo)) {
-                    professoresMap.set(id, { 
-                        id, 
-                        nome, 
-                        tipo, 
-                        email: '', 
-                        telefone: '', 
-                        formacao: '', 
-                        dataAdmissao: '' 
-                    });
-                }
-            });
-            escolaData.professores = Array.from(professoresMap.values())
-                .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-            console.log('👨‍🏫 Professores carregados (derivados de ATRIBUICOES):', escolaData.professores.length);
-
-            // ============================================
-            // 2. ALUNOS POR TURMA (chave normalizada)
-            // ============================================
-            const novosAlunos = {};
-            escolaData.turmasLabel = {};
+        function atualizarBancoDados(dadosAPI) {
+            console.log('🔄 Atualizando banco de dados local...');
             
-            dadosPlanilha.alunos.forEach(aluno => {
-                const bruta = texto(aluno.Turma);
-                const turma = normalizarTurma(bruta);
-                const nome = texto(aluno.Nome_Aluno || aluno.Nome);
-                if (!turma || !nome || !isAtivo(aluno.Ativo)) return;
+            // 1. ALUNOS
+            if (dadosAPI.TURMAS_ALUNOS && dadosAPI.TURMAS_ALUNOS.dados) {
+                const novosAlunos = {};
+                escolaData.turmasLabel = {};
                 
-                if (!escolaData.turmasLabel[turma]) {
-                    escolaData.turmasLabel[turma] = bruta;
-                }
-                if (!novosAlunos[turma]) {
-                    novosAlunos[turma] = [];
-                }
-                if (!novosAlunos[turma].includes(nome)) {
-                    novosAlunos[turma].push(nome);
-                }
-            });
-            
-            escolaData.alunos = novosAlunos;
-            escolaData.turmas = Object.keys(novosAlunos).sort();
-
-            // ============================================
-            // 3. ATRIBUIÇÕES
-            // ============================================
-            const novasAtribuicoes = {};
-            dadosPlanilha.atribuicoes.forEach(attr => {
-                const profId = texto(attr.ID_Professor || attr.IDProfessor);
-                const turma = normalizarTurma(attr.Turma);
-                if (!profId || !turma || !isAtivo(attr.Ativo)) return;
-                
-                if (!novasAtribuicoes[profId]) {
-                    novasAtribuicoes[profId] = [];
-                }
-                if (!novasAtribuicoes[profId].includes(turma)) {
-                    novasAtribuicoes[profId].push(turma);
-                }
-            });
-            db.atribuicoes = novasAtribuicoes;
-
-            // ============================================
-            // 4. NOTAS
-            // ============================================
-            db.notas = {};
-            dadosPlanilha.notas.forEach(nota => {
-                const turma = normalizarTurma(nota.Turma);
-                const aluno = texto(nota.Aluno);
-                const bimestre = parseInt(nota.Bimestre) || 1;
-                const valor = parseFloat(nota.Nota) || 0;
-                
-                if (turma && aluno) {
-                    if (!db.notas[turma]) db.notas[turma] = {};
-                    if (!db.notas[turma][aluno]) db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                    if (bimestre >= 1 && bimestre <= 4) {
-                        db.notas[turma][aluno][bimestre] = valor;
+                dadosAPI.TURMAS_ALUNOS.dados.forEach(aluno => {
+                    const bruta = texto(aluno.Turma);
+                    const turma = normalizarTurma(bruta);
+                    const nome = texto(aluno.Nome_Aluno || aluno.Nome);
+                    
+                    if (!turma || !nome) return;
+                    
+                    if (!escolaData.turmasLabel[turma]) {
+                        escolaData.turmasLabel[turma] = bruta;
                     }
-                }
-            });
-
-            // ============================================
-            // 5. PRESENÇAS
-            // ============================================
-            db.presencas = {};
-            dadosPlanilha.presencas.forEach(p => {
-                const turma = normalizarTurma(p.Turma);
-                if (turma) {
-                    if (!db.presencas[turma]) db.presencas[turma] = [];
-                    const presentes = (p.Alunos_Presentes || '').split(';').filter(a => texto(a));
-                    db.presencas[turma].push({
-                        data: p.Data || '',
-                        presentes: presentes,
-                        obs: p.Observacao_Aula || ''
-                    });
-                }
-            });
-
-            // ============================================
-            // 6. CONTEÚDOS
-            // ============================================
-            db.conteudos = {};
-            dadosPlanilha.conteudos.forEach(c => {
-                const turma = normalizarTurma(c.Turma);
-                if (turma) {
-                    if (!db.conteudos[turma]) db.conteudos[turma] = [];
-                    db.conteudos[turma].push({
-                        data: c.Data || '',
-                        disciplina: c.Disciplina || '',
-                        conteudo: c.Conteudo || '',
-                        objetivos: c.Objetivos || ''
-                    });
-                }
-            });
-
-            // ============================================
-            // 7. OBSERVAÇÕES
-            // ============================================
-            db.observacoes = {};
-            dadosPlanilha.observacoes.forEach(o => {
-                const turma = normalizarTurma(o.Turma);
-                if (turma) {
-                    if (!db.observacoes[turma]) db.observacoes[turma] = [];
-                    db.observacoes[turma].push({
-                        data: o.Data || '',
-                        aluno: o.Aluno || '',
-                        observacao: o.Observacao || '',
-                        tipo: o.Tipo || 'Neutra'
-                    });
-                }
-            });
-
-            // ============================================
-            // 8. SOLICITAÇÕES DE RELATÓRIO
-            // ============================================
-            db.solicitacoes = dadosPlanilha.relatoriosSolicitados.map(s => ({
-                turma: normalizarTurma(s.Turma),
-                aluno: texto(s.Aluno),
-                bimestre: s.Bimestre || '1',
-                data: s.Data_Solicitacao || '',
-                status: s.Status || 'Pendente',
-                dataConclusao: s.Data_Conclusao || '',
-                observacoes: s.Observacoes || ''
-            }));
-
-            // ============================================
-            // 9. RELATÓRIOS GERADOS
-            // ============================================
-            db.relatoriosGerados = dadosPlanilha.relatoriosGerados.map(r => ({
-                turma: normalizarTurma(r.Turma),
-                aluno: texto(r.Aluno),
-                bimestre: r.Bimestre || '1',
-                data: r.Data_Geracao || '',
-                professor: r.Professor || '',
-                notas: r.Notas || '',
-                media: parseFloat(r.Media) || 0,
-                presenca: parseFloat(r.Presenca) || 0,
-                observacoes: r.Observacoes || '',
-                recomendacao: r.Recomendacao || ''
-            }));
-
-            // ============================================
-            // 10. RELATÓRIOS PREENCHIDOS PELOS PROFESSORES
-            // ============================================
-            // Inicializa se não existir
-            if (!db.relatoriosPreenchidos) {
-                db.relatoriosPreenchidos = [];
+                    if (!novosAlunos[turma]) {
+                        novosAlunos[turma] = [];
+                    }
+                    if (!novosAlunos[turma].includes(nome)) {
+                        novosAlunos[turma].push(nome);
+                    }
+                });
+                
+                escolaData.alunos = novosAlunos;
+                escolaData.turmas = Object.keys(novosAlunos).sort();
             }
-
+            
+            // 2. PROFESSORES
+            if (dadosAPI.PROFESSORES && dadosAPI.PROFESSORES.dados) {
+                escolaData.professores = dadosAPI.PROFESSORES.dados
+                    .filter(p => isAtivo(p.Ativo))
+                    .map(p => ({
+                        id: texto(p.ID_Professor),
+                        nome: texto(p.Nome),
+                        tipo: texto(p.Tipo) || 'Regente',
+                        email: p.Email || '',
+                        telefone: p.Telefone || '',
+                        formacao: p.Formacao || '',
+                        dataAdmissao: p.Data_Admissao || ''
+                    }))
+                    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+            }
+            
+            // 3. ATRIBUIÇÕES
+            if (dadosAPI.ATRIBUICOES && dadosAPI.ATRIBUICOES.dados) {
+                const novasAtribuicoes = {};
+                
+                dadosAPI.ATRIBUICOES.dados.forEach(attr => {
+                    const profId = texto(attr.ID_Professor);
+                    const turma = normalizarTurma(attr.Turma);
+                    
+                    if (!profId || !turma || !isAtivo(attr.Ativo)) return;
+                    
+                    if (!novasAtribuicoes[profId]) {
+                        novasAtribuicoes[profId] = [];
+                    }
+                    if (!novasAtribuicoes[profId].includes(turma)) {
+                        novasAtribuicoes[profId].push(turma);
+                    }
+                });
+                
+                db.atribuicoes = novasAtribuicoes;
+            }
+            
+            // 4. NOTAS
+            if (dadosAPI.NOTAS_BIMESTRAIS && dadosAPI.NOTAS_BIMESTRAIS.dados) {
+                db.notas = {};
+                
+                dadosAPI.NOTAS_BIMESTRAIS.dados.forEach(nota => {
+                    const turma = normalizarTurma(nota.Turma);
+                    const aluno = texto(nota.Nome_Aluno || nota.Aluno);
+                    const bimestre = parseInt(nota.Bimestre) || 1;
+                    const valor = parseFloat(nota.Nota) || 0;
+                    
+                    if (turma && aluno) {
+                        if (!db.notas[turma]) db.notas[turma] = {};
+                        if (!db.notas[turma][aluno]) db.notas[turma][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+                        if (bimestre >= 1 && bimestre <= 4) {
+                            db.notas[turma][aluno][bimestre] = valor;
+                        }
+                    }
+                });
+            }
+            
+            // 5. CONTEÚDOS
+            if (dadosAPI.CONTEUDOS && dadosAPI.CONTEUDOS.dados) {
+                db.conteudos = {};
+                
+                dadosAPI.CONTEUDOS.dados.forEach(c => {
+                    const turma = normalizarTurma(c.Turma);
+                    if (turma) {
+                        if (!db.conteudos[turma]) db.conteudos[turma] = [];
+                        db.conteudos[turma].push({
+                            data: c.Data || '',
+                            disciplina: c.Disciplina || '',
+                            conteudo: c.Conteudo || '',
+                            objetivos: c.Objetivos || ''
+                        });
+                    }
+                });
+            }
+            
+            // 6. OBSERVAÇÕES
+            if (dadosAPI.OBSERVACOES && dadosAPI.OBSERVACOES.dados) {
+                db.observacoes = {};
+                
+                dadosAPI.OBSERVACOES.dados.forEach(o => {
+                    const turma = normalizarTurma(o.Turma);
+                    if (turma) {
+                        if (!db.observacoes[turma]) db.observacoes[turma] = [];
+                        db.observacoes[turma].push({
+                            data: o.Data || '',
+                            aluno: o.Aluno || '',
+                            observacao: o.Observacao || '',
+                            tipo: o.Tipo || 'Neutra'
+                        });
+                    }
+                });
+            }
+            
+            // 7. SOLICITAÇÕES
+            if (dadosAPI.RELATORIOS_SOLICITADOS && dadosAPI.RELATORIOS_SOLICITADOS.dados) {
+                db.solicitacoes = dadosAPI.RELATORIOS_SOLICITADOS.dados.map(s => ({
+                    turma: normalizarTurma(s.Turma),
+                    aluno: texto(s.Aluno),
+                    bimestre: s.Bimestre || '1',
+                    data: s.Data_Solicitacao || '',
+                    status: s.Status || 'Pendente',
+                    dataConclusao: s.Data_Conclusao || '',
+                    observacoes: s.Observacoes || ''
+                }));
+            }
+            
+            // 8. RELATÓRIOS GERADOS
+            if (dadosAPI.RELATORIOS_GERADOS && dadosAPI.RELATORIOS_GERADOS.dados) {
+                db.relatoriosGerados = dadosAPI.RELATORIOS_GERADOS.dados.map(r => ({
+                    turma: normalizarTurma(r.Turma),
+                    aluno: texto(r.Aluno),
+                    bimestre: r.Bimestre || '1',
+                    data: r.Data_Geracao || '',
+                    professor: r.Professor || '',
+                    notas: r.Notas || '',
+                    media: parseFloat(r.Media) || 0,
+                    presenca: parseFloat(r.Presenca) || 0,
+                    observacoes: r.Observacoes || '',
+                    recomendacao: r.Recomendacao || ''
+                }));
+            }
+            
             console.log('✅ Banco de dados atualizado com sucesso!');
         }
 
@@ -1598,74 +1422,55 @@
             'professor-regente': {
                 titulo: '👨‍🏫 Professor Regente',
                 cores: 'professor',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                funcionalidades: ['Notas Bimestrais', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-artes': {
                 titulo: '🎨 Professor de Artes',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                funcionalidades: ['Notas Bimestrais', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-musica': {
                 titulo: '🎵 Professor de Música',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                funcionalidades: ['Notas Bimestrais', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-ingles': {
                 titulo: '🌎 Professor de Inglês',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                funcionalidades: ['Notas Bimestrais', 'Conteúdos', 'Observações', 'Relatórios']
             },
             'professor-ef': {
                 titulo: '🏃 Professor de Educação Física',
                 cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                funcionalidades: ['Notas Bimestrais', 'Conteúdos', 'Observações', 'Relatórios']
             }
         };
-
-        // ============================================
-        // ESTADO DO USUÁRIO
-        // ============================================
-        let currentUser = {
-            cargo: '',
-            nome: '',
-            turmas: []
-        };
-
-        let turmaSelecionada = null;
-        let relatorioEditando = null; // { aluno, bimestre }
 
         // ============================================
         // TOGGLE SECTIONS - PROFESSOR
         // ============================================
-        let activeSection = 'notas';
-
         function toggleSection(section) {
-            // Esconde todas as seções
             document.querySelectorAll('.toggle-section').forEach(el => {
                 el.classList.add('hidden');
             });
-            // Mostra a seção selecionada
+            
             const target = document.getElementById(`section-${section}`);
             if (target) {
                 target.classList.remove('hidden');
             }
-            // Atualiza botões
+            
             document.querySelectorAll('#professorArea .toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            // Encontra o botão clicado
+            
             const btns = document.querySelectorAll('#professorArea .toggle-btn');
             btns.forEach(btn => {
-                if (btn.textContent.includes(section.charAt(0).toUpperCase() + section.slice(1))) {
+                const btnText = btn.textContent.toLowerCase();
+                if (btnText.includes(section)) {
                     btn.classList.add('active');
                 }
             });
-            activeSection = section;
-
-            // Recarrega dados da seção
-            if (section === 'presencas' && turmaSelecionada) {
-                carregarPresenca();
-            }
+            
             if (section === 'conteudos' && turmaSelecionada) {
                 carregarConteudos();
             }
@@ -1683,35 +1488,27 @@
         // ============================================
         // TOGGLE SECTIONS - COORDENAÇÃO
         // ============================================
-        let activeCoordenacao = 'visao';
-
         function toggleCoordenacao(section) {
-            // Esconde todas as seções
             document.querySelectorAll('#coordenadorArea .section-container').forEach(el => {
                 el.classList.add('hidden');
             });
-            // Mostra a seção selecionada
+            
             const target = document.getElementById(`coordenacao-${section}`);
             if (target) {
                 target.classList.remove('hidden');
             }
-            // Atualiza botões
+            
             document.querySelectorAll('#coordenadorArea .toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
+            
             const btns = document.querySelectorAll('#coordenadorArea .toggle-btn');
             btns.forEach(btn => {
-                if (btn.textContent.includes('Visão') && section === 'visao') btn.classList.add('active');
-                if (btn.textContent.includes('Atribuição') && section === 'atribuicao') btn.classList.add('active');
-                if (btn.textContent.includes('Solicitar') && section === 'solicitar') btn.classList.add('active');
-                if (btn.textContent.includes('Receber') && section === 'receber') btn.classList.add('active');
+                const btnText = btn.textContent.toLowerCase();
+                if (btnText.includes(section)) {
+                    btn.classList.add('active');
+                }
             });
-            activeCoordenacao = section;
-
-            // Recarrega dados se necessário
-            if (section === 'receber') {
-                renderRelatoriosRecebidos();
-            }
         }
 
         // ============================================
@@ -1719,36 +1516,36 @@
         // ============================================
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
+            
             const cargo = document.getElementById('cargo').value;
             const nome = document.getElementById('nome').value.trim();
-
+            
             if (!cargo || !nome) {
                 alert('Por favor, preencha todos os campos.');
                 return;
             }
-
+            
             currentUser.cargo = cargo;
             currentUser.nome = nome;
-
+            
             if (cargo.startsWith('professor')) {
                 const profId = getProfessorIdByNome(nome);
                 if (profId) {
                     currentUser.turmas = getTurmasByProfessor(profId);
                 } else {
-                    alert('⚠️ Professor não encontrado na planilha. Verifique se seu nome está cadastrado na aba ATRIBUICOES.');
+                    alert('⚠️ Professor não encontrado na planilha. Verifique seu cadastro.');
                     return;
                 }
             }
-
+            
             document.getElementById('loginContainer').style.display = 'none';
             const dashboard = document.getElementById('dashboard');
             dashboard.classList.add('active');
-
+            
             const config = cargoConfig[cargo];
             document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
             document.getElementById('userDisplay').textContent = `👤 ${nome} - ${config.titulo}`;
-
+            
             renderDashboard(cargo);
         });
 
@@ -1758,22 +1555,19 @@
         function renderDashboard(cargo) {
             const config = cargoConfig[cargo];
             renderCards(config);
-
+            
             document.getElementById('professorArea').classList.add('hidden');
             document.getElementById('coordenadorArea').classList.add('hidden');
             document.getElementById('direcaoArea').classList.add('hidden');
-
+            
             if (cargo.startsWith('professor')) {
                 document.getElementById('professorArea').classList.remove('hidden');
                 document.getElementById('turmasSection').classList.remove('hidden');
                 document.getElementById('registrosSection').classList.remove('hidden');
                 renderMinhasTurmas();
                 carregarAlunosSelects();
-                carregarPresenca();
-                carregarConteudos();
-                carregarRelatorios();
             }
-
+            
             if (cargo === 'coordenacao') {
                 document.getElementById('coordenadorArea').classList.remove('hidden');
                 carregarProfessoresAtribuicao();
@@ -1781,9 +1575,8 @@
                 carregarSolicitacaoTurmas();
                 renderVisaoGeralTurmas();
                 renderSolicitacoes();
-                renderRelatoriosRecebidos();
             }
-
+            
             if (cargo === 'direcao' || cargo === 'vice-direcao') {
                 document.getElementById('direcaoArea').classList.remove('hidden');
                 renderStatsGerenciais();
@@ -1813,7 +1606,7 @@
         // ============================================
         function renderMinhasTurmas() {
             const container = document.getElementById('turmasContainer');
-
+            
             if (currentUser.turmas.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #718096;">
@@ -1823,7 +1616,7 @@
                 `;
                 return;
             }
-
+            
             container.innerHTML = currentUser.turmas.map(turma => `
                 <div class="turma-item ${turmaSelecionada === turma ? 'selected' : ''}" 
                      onclick="selecionarTurma('${turma}')">
@@ -1832,7 +1625,7 @@
                     <span class="status">✅ Ativa</span>
                 </div>
             `).join('');
-
+            
             if (!turmaSelecionada && currentUser.turmas.length > 0) {
                 selecionarTurma(currentUser.turmas[0]);
             }
@@ -1843,7 +1636,6 @@
             document.getElementById('turmaSelecionadaNome').textContent = labelTurma(turma);
             renderMinhasTurmas();
             carregarTabelaNotas();
-            carregarPresenca();
             carregarConteudos();
             carregarObservacoes();
             carregarRelatorios();
@@ -1855,15 +1647,15 @@
         // ============================================
         function carregarTabelaNotas() {
             if (!turmaSelecionada) return;
-
+            
             const alunos = getAlunosByTurma(turmaSelecionada);
             const tbody = document.getElementById('tabelaNotasBody');
             
             if (alunos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #718096;">Nenhum aluno nesta turma</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #718096;">Nenhum aluno nesta turma</td></tr>';
                 return;
             }
-
+            
             tbody.innerHTML = alunos.map(aluno => {
                 const notas = getNotasAluno(turmaSelecionada, aluno);
                 const media = calcularMedia(notas);
@@ -1876,24 +1668,9 @@
                         <td><input type="number" class="nota-input" id="nota_${alunoId}_3" value="${notas[3] || 0}" min="0" max="10" step="0.5"></td>
                         <td><input type="number" class="nota-input" id="nota_${alunoId}_4" value="${notas[4] || 0}" min="0" max="10" step="0.5"></td>
                         <td><strong>${media.toFixed(1)}</strong></td>
-                        <td>
-                            <button onclick="calcularMediaAluno('${aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">📊</button>
-                        </td>
                     </tr>
                 `;
             }).join('');
-        }
-
-        function calcularMediaAluno(aluno) {
-            if (!turmaSelecionada) return;
-            const notas = {};
-            const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-            for (let bim = 1; bim <= 4; bim++) {
-                const input = document.getElementById(`nota_${alunoId}_${bim}`);
-                notas[bim] = parseFloat(input.value) || 0;
-            }
-            const media = calcularMedia(notas);
-            alert(`📊 Média de ${aluno}: ${media.toFixed(1)}`);
         }
 
         function calcularMedias() {
@@ -1915,108 +1692,46 @@
             alert(relatorio);
         }
 
-        function salvarNotas() {
+        async function salvarNotas() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
-
+            
             const alunos = getAlunosByTurma(turmaSelecionada);
-            let salvos = 0;
-
+            const notasParaSalvar = [];
+            
             alunos.forEach(aluno => {
-                if (!db.notas[turmaSelecionada]) {
-                    db.notas[turmaSelecionada] = {};
-                }
-                if (!db.notas[turmaSelecionada][aluno]) {
-                    db.notas[turmaSelecionada][aluno] = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                }
                 const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                
                 for (let bim = 1; bim <= 4; bim++) {
                     const input = document.getElementById(`nota_${alunoId}_${bim}`);
                     if (input) {
-                        db.notas[turmaSelecionada][aluno][bim] = parseFloat(input.value) || 0;
-                        salvos++;
+                        const nota = parseFloat(input.value) || 0;
+                        
+                        notasParaSalvar.push({
+                            aluno: aluno,
+                            bimestre: bim,
+                            nota: nota,
+                            disciplina: 'GERAL'
+                        });
                     }
                 }
             });
-
-            alert(`✅ ${salvos} notas salvas com sucesso!`);
-            carregarTabelaNotas();
-        }
-
-        // ============================================
-        // PROFESSOR - PRESENÇAS
-        // ============================================
-        function carregarPresenca() {
-            if (!turmaSelecionada) return;
-
-            const alunos = getAlunosByTurma(turmaSelecionada);
-            const container = document.getElementById('alunosPresenca');
-
-            if (alunos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma</p>';
-                return;
-            }
-
-            container.innerHTML = alunos.map(aluno => {
-                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-                return `
-                    <label>
-                        <input type="checkbox" id="pres_${alunoId}" value="${aluno}" checked>
-                        ${aluno}
-                    </label>
-                `;
-            }).join('');
-
-            renderRegistrosPresenca();
-        }
-
-        function renderRegistrosPresenca() {
-            const container = document.getElementById('registrosPresenca');
-            const registros = db.presencas[turmaSelecionada] || [];
-
-            if (registros.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum registro de presença.</p>';
-                return;
-            }
-
-            container.innerHTML = getUltimosRegistros(registros).map(r => `
-                <div class="registro-item">
-                    <div class="data">📅 ${r.data} ${r.obs ? '- ' + r.obs : ''}</div>
-                    <div class="conteudo">✅ ${r.presentes.length} alunos presentes</div>
-                    <div style="font-size: 0.9em; color: #718096;">${r.presentes.join(', ')}</div>
-                </div>
-            `).join('');
-        }
-
-        function salvarPresenca() {
-            if (!turmaSelecionada) {
-                alert('Selecione uma turma primeiro!');
-                return;
-            }
-
-            const data = document.getElementById('dataPresenca').value;
-            const obs = document.getElementById('obsPresenca').value.trim();
-            const checkboxes = document.querySelectorAll('#alunosPresenca input[type="checkbox"]:checked');
-            const presentes = Array.from(checkboxes).map(cb => cb.value);
-
-            if (presentes.length === 0) {
-                alert('Marque pelo menos um aluno presente!');
-                return;
-            }
-
-            if (!db.presencas[turmaSelecionada]) {
-                db.presencas[turmaSelecionada] = [];
-            }
-
-            db.presencas[turmaSelecionada].push({ data, presentes, obs });
             
-            renderRegistrosPresenca();
-            alert('✅ Presença salva com sucesso!');
-
-            document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
-            document.getElementById('obsPresenca').value = '';
+            try {
+                const resultado = await chamarAPI('salvarNotas', {
+                    turma: turmaSelecionada,
+                    notas: notasParaSalvar,
+                    professor: currentUser.nome,
+                    anoLetivo: '2026'
+                });
+                
+                alert(`✅ ${resultado.mensagem || 'Notas salvas com sucesso!'}`);
+                carregarTabelaNotas();
+            } catch (error) {
+                alert('❌ Erro ao salvar notas: ' + error.message);
+            }
         }
 
         // ============================================
@@ -2029,12 +1744,12 @@
         function renderConteudos() {
             const container = document.getElementById('registrosConteudos');
             const registros = db.conteudos[turmaSelecionada] || [];
-
+            
             if (registros.length === 0) {
                 container.innerHTML = '<p style="color: #718096;">Nenhum conteúdo registrado.</p>';
                 return;
             }
-
+            
             container.innerHTML = getUltimosRegistros(registros).map(c => `
                 <div class="registro-item">
                     <div class="data">📚 ${c.data} - ${c.disciplina}</div>
@@ -2044,32 +1759,40 @@
             `).join('');
         }
 
-        function salvarConteudo() {
+        async function salvarConteudo() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
-
+            
             const data = document.getElementById('dataConteudo').value;
             const disciplina = document.getElementById('disciplinaConteudo').value.trim();
             const conteudo = document.getElementById('conteudoText').value.trim();
             const objetivos = document.getElementById('objetivosConteudo').value.trim();
-
+            
             if (!conteudo) {
                 alert('Digite o conteúdo trabalhado.');
                 return;
             }
-
-            if (!db.conteudos[turmaSelecionada]) {
-                db.conteudos[turmaSelecionada] = [];
-            }
-
-            db.conteudos[turmaSelecionada].push({ data, disciplina, conteudo, objetivos });
             
-            renderConteudos();
-            document.getElementById('conteudoText').value = '';
-            document.getElementById('objetivosConteudo').value = '';
-            alert('✅ Conteúdo salvo com sucesso!');
+            try {
+                const resultado = await chamarAPI('salvarConteudo', {
+                    turma: turmaSelecionada,
+                    data: data,
+                    professor: currentUser.nome,
+                    disciplina: disciplina,
+                    conteudo: conteudo,
+                    objetivos: objetivos,
+                    anoLetivo: '2026'
+                });
+                
+                alert('✅ Conteúdo salvo com sucesso!');
+                document.getElementById('conteudoText').value = '';
+                document.getElementById('objetivosConteudo').value = '';
+                carregarConteudos();
+            } catch (error) {
+                alert('❌ Erro ao salvar conteúdo: ' + error.message);
+            }
         }
 
         // ============================================
@@ -2082,12 +1805,12 @@
         function renderObservacoes() {
             const container = document.getElementById('registrosObservacoes');
             const registros = db.observacoes[turmaSelecionada] || [];
-
+            
             if (registros.length === 0) {
                 container.innerHTML = '<p style="color: #718096;">Nenhuma observação registrada.</p>';
                 return;
             }
-
+            
             container.innerHTML = getUltimosRegistros(registros).map(o => `
                 <div class="registro-item">
                     <div class="data">✏️ ${o.data} - ${o.aluno}</div>
@@ -2097,31 +1820,39 @@
             `).join('');
         }
 
-        function salvarObservacao() {
+        async function salvarObservacao() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
-
+            
             const data = document.getElementById('dataObservacao').value;
             const aluno = document.getElementById('alunoObservacao').value;
             const observacao = document.getElementById('observacaoText').value.trim();
             const tipo = document.getElementById('tipoObservacao').value;
-
+            
             if (!observacao) {
                 alert('Digite a observação.');
                 return;
             }
-
-            if (!db.observacoes[turmaSelecionada]) {
-                db.observacoes[turmaSelecionada] = [];
-            }
-
-            db.observacoes[turmaSelecionada].push({ data, aluno, observacao, tipo });
             
-            renderObservacoes();
-            document.getElementById('observacaoText').value = '';
-            alert('✅ Observação salva com sucesso!');
+            try {
+                const resultado = await chamarAPI('salvarObservacao', {
+                    turma: turmaSelecionada,
+                    data: data,
+                    aluno: aluno,
+                    professor: currentUser.nome,
+                    observacao: observacao,
+                    tipo: tipo,
+                    anoLetivo: '2026'
+                });
+                
+                alert('✅ Observação salva com sucesso!');
+                document.getElementById('observacaoText').value = '';
+                carregarObservacoes();
+            } catch (error) {
+                alert('❌ Erro ao salvar observação: ' + error.message);
+            }
         }
 
         // ============================================
@@ -2130,20 +1861,17 @@
         function carregarRelatorios() {
             carregarAlunosSelects();
             renderSolicitacoesRelatorios();
-            renderRelatoriosEnviados();
-            // Limpa o estado de edição
-            cancelarEdicaoRelatorio();
         }
 
         function renderSolicitacoesRelatorios() {
             const container = document.getElementById('solicitacoesRelatorios');
             const solicitacoes = db.solicitacoes.filter(s => s.turma === turmaSelecionada && s.status === 'Pendente');
-
+            
             if (solicitacoes.length === 0) {
                 container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório pendente.</p>';
                 return;
             }
-
+            
             container.innerHTML = solicitacoes.map(s => `
                 <div class="registro-item" style="border-left-color: #ed8936;">
                     <div class="data">📄 ${s.aluno} - ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'}</div>
@@ -2156,202 +1884,56 @@
             `).join('');
         }
 
-        function renderRelatoriosEnviados() {
-            const container = document.getElementById('relatoriosEnviados');
-            const relatorios = db.relatoriosPreenchidos.filter(r => 
-                r.turma === turmaSelecionada && r.professor === currentUser.nome
-            );
-
-            if (relatorios.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum relatório enviado.</p>';
-                return;
-            }
-
-            container.innerHTML = getUltimosRegistros(relatorios).map(r => {
-                const isEditing = relatorioEditando && 
-                                 relatorioEditando.aluno === r.aluno && 
-                                 relatorioEditando.bimestre === r.bimestre;
-                return `
-                    <div class="registro-item ${isEditing ? 'edit-mode' : 'relatorio-preenchido'}" style="border-left-color: ${isEditing ? '#ed8936' : '#48bb78'};">
-                        <div class="data">📤 ${r.aluno} - ${r.bimestre === 'anual' ? 'Anual' : r.bimestre + 'º Bimestre'}</div>
-                        <div class="conteudo">
-                            Enviado em: ${r.dataEnvio || r.data}
-                            <span class="status-badge ${isEditing ? 'aguardando' : 'concluido'}">${isEditing ? 'Editando' : 'Enviado'}</span>
-                        </div>
-                        <div style="font-size: 0.9em; color: #718096; margin-top: 5px;">
-                            ${!isEditing ? `
-                                <button onclick="editarRelatorio('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}')" class="btn-edit">✏️ Editar</button>
-                            ` : `
-                                <span style="color: #ed8936;">Editando este relatório...</span>
-                            `}
-                            <button onclick="verRelatorioEnviado('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}')" class="btn btn-small btn-info" style="padding: 2px 10px;">👁️ Ver</button>
-                        </div>
-                        ${isEditing ? `
-                            <div style="margin-top: 10px; padding: 10px; background: #fffbeb; border-radius: 5px;">
-                                <small style="color: #744210;">✏️ Editando - clique em "Enviar/Atualizar Relatório" para salvar as alterações</small>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
         function prepararRelatorio(aluno, bimestre) {
-            // Verifica se já existe um relatório enviado para este aluno/bimestre
-            const relatorioExistente = db.relatoriosPreenchidos.find(r => 
-                r.turma === turmaSelecionada && 
-                r.aluno === aluno && 
-                r.bimestre === bimestre &&
-                r.professor === currentUser.nome
-            );
-
-            // Preenche os campos
             document.getElementById('alunoRelatorioPreencher').value = aluno;
             document.getElementById('bimestreRelatorioPreencher').value = bimestre;
-            
-            if (relatorioExistente) {
-                document.getElementById('relatorioTexto').value = relatorioExistente.relatorio;
-                document.getElementById('relatorioFormTitle').textContent = '✏️ Editando Relatório';
-                // Marca como edição
-                relatorioEditando = { aluno, bimestre };
-                document.getElementById('editandoRelatorioAluno').value = aluno;
-                document.getElementById('editandoRelatorioBimestre').value = bimestre;
-                document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
-            } else {
-                document.getElementById('relatorioTexto').value = '';
-                document.getElementById('relatorioFormTitle').textContent = '✏️ Preencher Relatório';
-                relatorioEditando = null;
-                document.getElementById('editandoRelatorioAluno').value = '';
-                document.getElementById('editandoRelatorioBimestre').value = '';
-                document.getElementById('btnCancelarEdicao').style.display = 'none';
-            }
-            
+            document.getElementById('relatorioTexto').value = '';
             document.getElementById('relatorioTexto').focus();
             
-            // Scroll para a seção de preenchimento
             document.getElementById('section-relatorios').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Atualiza a lista de relatórios enviados para mostrar o estado de edição
-            renderRelatoriosEnviados();
         }
 
-        function editarRelatorio(aluno, bimestre) {
-            prepararRelatorio(aluno, bimestre);
-        }
-
-        function cancelarEdicaoRelatorio() {
-            relatorioEditando = null;
-            document.getElementById('editandoRelatorioAluno').value = '';
-            document.getElementById('editandoRelatorioBimestre').value = '';
-            document.getElementById('btnCancelarEdicao').style.display = 'none';
-            document.getElementById('relatorioFormTitle').textContent = '✏️ Preencher Relatório';
-            document.getElementById('relatorioTexto').value = '';
-            renderRelatoriosEnviados();
-        }
-
-        function enviarRelatorioCoordenacao() {
+        async function enviarRelatorioCoordenacao() {
             if (!turmaSelecionada) {
                 alert('Selecione uma turma primeiro!');
                 return;
             }
-
+            
             const aluno = document.getElementById('alunoRelatorioPreencher').value;
             const bimestre = document.getElementById('bimestreRelatorioPreencher').value;
             const relatorioTexto = document.getElementById('relatorioTexto').value.trim();
-
+            
             if (!aluno) {
                 alert('Selecione um aluno.');
                 return;
             }
-
+            
             if (!relatorioTexto) {
                 alert('Digite o relatório do aluno.');
                 return;
             }
-
-            // Verifica se já existe um relatório para este aluno/bimestre/professor
-            const indexExistente = db.relatoriosPreenchidos.findIndex(r => 
-                r.turma === turmaSelecionada && 
-                r.aluno === aluno && 
-                r.bimestre === bimestre &&
-                r.professor === currentUser.nome
-            );
-
-            if (indexExistente !== -1) {
-                // Atualiza o relatório existente
-                db.relatoriosPreenchidos[indexExistente].relatorio = relatorioTexto;
-                db.relatoriosPreenchidos[indexExistente].data = new Date().toISOString().split('T')[0];
-                db.relatoriosPreenchidos[indexExistente].dataEnvio = new Date().toISOString().split('T')[0];
-            } else {
-                // Salva novo relatório
-                db.relatoriosPreenchidos.push({
+            
+            try {
+                const resultado = await chamarAPI('salvarRelatorio', {
                     turma: turmaSelecionada,
                     aluno: aluno,
                     bimestre: bimestre,
                     professor: currentUser.nome,
-                    relatorio: relatorioTexto,
-                    data: new Date().toISOString().split('T')[0],
-                    dataEnvio: new Date().toISOString().split('T')[0],
-                    status: 'Enviado'
+                    relatorio: relatorioTexto
                 });
-            }
-
-            // Atualiza a solicitação como concluída se existir
-            const solicitacao = db.solicitacoes.find(s => 
-                s.turma === turmaSelecionada && 
-                s.aluno === aluno && 
-                s.bimestre === bimestre &&
-                s.status === 'Pendente'
-            );
-            if (solicitacao) {
-                solicitacao.status = 'Concluído';
-                solicitacao.dataConclusao = new Date().toISOString().split('T')[0];
-            }
-
-            // Limpa o estado de edição
-            cancelarEdicaoRelatorio();
-
-            // Atualiza as listas
-            renderSolicitacoesRelatorios();
-            renderRelatoriosEnviados();
-            
-            alert('✅ Relatório enviado/atualizado com sucesso!');
-        }
-
-        function verRelatorioEnviado(aluno, bimestre) {
-            const relatorio = db.relatoriosPreenchidos.find(r => 
-                r.turma === turmaSelecionada && 
-                r.aluno === aluno && 
-                r.bimestre === bimestre &&
-                r.professor === currentUser.nome
-            );
-
-            if (relatorio) {
-                const html = `
-                    <div class="relatorio-content">
-                        <h4>📄 Relatório Enviado</h4>
-                        <div class="info-line"><strong>Aluno:</strong> ${relatorio.aluno}</div>
-                        <div class="info-line"><strong>Turma:</strong> ${labelTurma(relatorio.turma)}</div>
-                        <div class="info-line"><strong>Bimestre:</strong> ${relatorio.bimestre === 'anual' ? 'Anual' : relatorio.bimestre + 'º Bimestre'}</div>
-                        <div class="info-line"><strong>Enviado em:</strong> ${relatorio.dataEnvio || relatorio.data}</div>
-                        <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
-                            <strong>Relatório:</strong>
-                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorio.relatorio}</p>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <button onclick="fecharModal('modalRelatorio'); editarRelatorio('${relatorio.aluno.replace(/'/g, "\\'")}', '${relatorio.bimestre}')" class="btn-edit" style="padding: 8px 20px; font-size: 14px;">✏️ Editar</button>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('modalRelatorioContent').innerHTML = html;
-                document.getElementById('modalRelatorio').classList.add('active');
+                
+                alert('✅ Relatório enviado com sucesso!');
+                document.getElementById('relatorioTexto').value = '';
+                carregarRelatorios();
+            } catch (error) {
+                alert('❌ Erro ao enviar relatório: ' + error.message);
             }
         }
 
         function carregarAlunosSelects() {
             if (!turmaSelecionada) return;
             const alunos = getAlunosByTurma(turmaSelecionada);
-
+            
             ['alunoRelatorioPreencher', 'alunoObservacao'].forEach(id => {
                 const select = document.getElementById(id);
                 if (select) {
@@ -2370,16 +1952,14 @@
             const tbody = document.getElementById('visaoGeralTurmas');
             
             if (escolaData.turmas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #718096;">Nenhuma turma cadastrada</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #718096;">Nenhuma turma cadastrada</td></tr>';
                 return;
             }
-
+            
             tbody.innerHTML = escolaData.turmas.map(turma => {
                 const alunos = getAlunosByTurma(turma);
                 let somaMedias = 0;
                 let totalAlunos = 0;
-                let totalPresencas = 0;
-                let totalDias = 0;
                 
                 alunos.forEach(aluno => {
                     const notas = getNotasAluno(turma, aluno);
@@ -2391,21 +1971,13 @@
                 });
                 
                 const mediaGeral = totalAlunos > 0 ? (somaMedias / totalAlunos) : 0;
-                
-                const presencas = db.presencas[turma] || [];
-                presencas.forEach(p => {
-                    totalDias++;
-                    totalPresencas += p.presentes.length;
-                });
-                const mediaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * alunos.length) * 100) : 0;
-                
                 const solicitacoes = db.solicitacoes.filter(s => s.turma === turma && s.status === 'Pendente');
                 
                 let professor = 'Não atribuído';
                 for (const [profId, turmas] of Object.entries(db.atribuicoes)) {
                     if (turmas.includes(turma)) {
                         const prof = getProfessorById(profId);
-                        if (prof && prof.tipo === 'Regente') {
+                        if (prof) {
                             professor = prof.nome;
                             break;
                         }
@@ -2417,19 +1989,10 @@
                         <td><strong>${labelTurma(turma)}</strong></td>
                         <td>${professor}</td>
                         <td>${mediaGeral.toFixed(1)}</td>
-                        <td>${mediaPresenca.toFixed(1)}%</td>
                         <td>${solicitacoes.length}</td>
-                        <td>
-                            <button onclick="verDetalhesTurma('${turma}')" class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">👁️ Ver</button>
-                        </td>
                     </tr>
                 `;
             }).join('');
-        }
-
-        function verDetalhesTurma(turma) {
-            turmaSelecionada = turma;
-            alert(`📊 Detalhes da ${labelTurma(turma)}\n\nAcesse a área de Professor para ver todos os detalhes.`);
         }
 
         // ============================================
@@ -2470,7 +2033,7 @@
                 container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado.</p>';
                 return;
             }
-
+            
             container.innerHTML = escolaData.professores.map(prof => {
                 const turmas = getTurmasByProfessor(prof.id);
                 return `
@@ -2490,63 +2053,51 @@
         function atribuirTurma() {
             const profId = document.getElementById('professorSelect').value;
             const turma = document.getElementById('turmaSelect').value;
-
+            
             if (!profId || !turma) {
                 alert('Selecione um professor e uma turma.');
                 return;
             }
-
+            
             if (!db.atribuicoes[profId]) {
                 db.atribuicoes[profId] = [];
             }
-
+            
             if (db.atribuicoes[profId].includes(turma)) {
                 alert('Esta turma já está atribuída a este professor.');
                 return;
             }
-
+            
             db.atribuicoes[profId].push(turma);
             renderProfessoresAtribuidos();
             renderVisaoGeralTurmas();
-
-            const prof = getProfessorById(profId);
-            if (prof && prof.nome === currentUser.nome) {
-                currentUser.turmas = getTurmasByProfessor(profId);
-                renderMinhasTurmas();
-            }
-
-            alert(`✅ Turma ${labelTurma(turma)} atribuída a ${getProfessorById(profId).nome} com sucesso!`);
+            
+            alert(`✅ Turma ${labelTurma(turma)} atribuída com sucesso!`);
         }
 
         function removerTurma() {
             const profId = document.getElementById('professorSelect').value;
             const turma = document.getElementById('turmaSelect').value;
-
+            
             if (!profId || !turma) {
                 alert('Selecione um professor e uma turma.');
                 return;
             }
-
+            
             if (!db.atribuicoes[profId] || !db.atribuicoes[profId].includes(turma)) {
                 alert('Esta turma não está atribuída a este professor.');
                 return;
             }
-
-            if (!confirm(`Remover a turma ${labelTurma(turma)} do professor ${getProfessorById(profId).nome}?`)) {
+            
+            if (!confirm(`Remover a turma ${labelTurma(turma)} deste professor?`)) {
                 return;
             }
-
+            
             db.atribuicoes[profId] = db.atribuicoes[profId].filter(t => t !== turma);
             renderProfessoresAtribuidos();
             renderVisaoGeralTurmas();
-
-            const prof = getProfessorById(profId);
-            if (prof && prof.nome === currentUser.nome) {
-                currentUser.turmas = getTurmasByProfessor(profId);
-                renderMinhasTurmas();
-            }
-
-            alert(`✅ Turma ${labelTurma(turma)} removida de ${getProfessorById(profId).nome}.`);
+            
+            alert(`✅ Turma ${labelTurma(turma)} removida com sucesso.`);
         }
 
         // ============================================
@@ -2568,30 +2119,29 @@
             };
         }
 
-        function solicitarRelatorio() {
+        async function solicitarRelatorio() {
             const turma = document.getElementById('solicitarTurma').value;
             const aluno = document.getElementById('solicitarAluno').value;
             const bimestre = document.getElementById('solicitarBimestre').value;
-
+            
             if (!turma || !aluno) {
                 alert('Selecione a turma e o aluno.');
                 return;
             }
-
-            const data = new Date().toISOString().split('T')[0];
             
-            db.solicitacoes.push({
-                turma,
-                aluno,
-                bimestre,
-                data,
-                status: 'Pendente',
-                dataConclusao: '',
-                observacoes: ''
-            });
-
-            renderSolicitacoes();
-            alert('✅ Relatório solicitado com sucesso! O professor será notificado.');
+            try {
+                const resultado = await chamarAPI('solicitarRelatorio', {
+                    turma: turma,
+                    aluno: aluno,
+                    bimestre: bimestre,
+                    professor: currentUser.nome
+                });
+                
+                alert('✅ Relatório solicitado com sucesso!');
+                renderSolicitacoes();
+            } catch (error) {
+                alert('❌ Erro ao solicitar relatório: ' + error.message);
+            }
         }
 
         function renderSolicitacoes() {
@@ -2601,82 +2151,16 @@
                 container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório.</p>';
                 return;
             }
-
+            
             container.innerHTML = db.solicitacoes.slice().reverse().map(s => `
                 <div class="registro-item">
                     <div class="data">📄 ${labelTurma(s.turma)} - ${s.aluno}</div>
                     <div class="conteudo">
                         ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'} - Solicitado em: ${s.data}
                         <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
-                        ${s.status === 'Concluído' ? `<span style="font-size: 0.8em; color: #718096;">Concluído em: ${s.dataConclusao || ''}</span>` : ''}
                     </div>
                 </div>
             `).join('');
-        }
-
-        // ============================================
-        // COORDENADOR - RECEBER RELATÓRIOS
-        // ============================================
-        function renderRelatoriosRecebidos() {
-            const container = document.getElementById('relatoriosRecebidos');
-            
-            if (!db.relatoriosPreenchidos || db.relatoriosPreenchidos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum relatório recebido dos professores.</p>';
-                return;
-            }
-
-            // Mostra todos os relatórios recebidos
-            const relatorios = db.relatoriosPreenchidos.slice().reverse();
-
-            container.innerHTML = relatorios.map(r => `
-                <div class="registro-item" style="border-left-color: #48bb78;">
-                    <div class="data">📥 ${labelTurma(r.turma)} - ${r.aluno}</div>
-                    <div class="conteudo">
-                        ${r.bimestre === 'anual' ? 'Anual' : r.bimestre + 'º Bimestre'} - 
-                        Professor: ${r.professor}
-                        <span class="status-badge concluido">Recebido</span>
-                    </div>
-                    <div style="font-size: 0.9em; color: #718096; margin-top: 5px;">
-                        Enviado em: ${r.dataEnvio || r.data}
-                        <button onclick="verRelatorioCoordenacao('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}', '${r.professor.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 10px; margin-left: 10px;">👁️ Ver</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function verRelatorioCoordenacao(aluno, bimestre, professor) {
-            const relatorio = db.relatoriosPreenchidos.find(r => 
-                r.aluno === aluno && 
-                r.bimestre === bimestre &&
-                r.professor === professor
-            );
-
-            if (relatorio) {
-                const html = `
-                    <div class="relatorio-content">
-                        <h4>📄 Relatório do Aluno</h4>
-                        <div class="info-line"><strong>Aluno:</strong> ${relatorio.aluno}</div>
-                        <div class="info-line"><strong>Turma:</strong> ${labelTurma(relatorio.turma)}</div>
-                        <div class="info-line"><strong>Bimestre:</strong> ${relatorio.bimestre === 'anual' ? 'Anual' : relatorio.bimestre + 'º Bimestre'}</div>
-                        <div class="info-line"><strong>Professor:</strong> ${relatorio.professor}</div>
-                        <div class="info-line"><strong>Enviado em:</strong> ${relatorio.dataEnvio || relatorio.data}</div>
-                        <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
-                            <strong>Relatório:</strong>
-                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorio.relatorio}</p>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <button onclick="marcarRelatorioComoVisto('${relatorio.aluno.replace(/'/g, "\\'")}', '${relatorio.bimestre}', '${relatorio.professor.replace(/'/g, "\\'")}')" class="btn btn-secondary btn-small">✅ Marcar como visto</button>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('modalRelatorioContent').innerHTML = html;
-                document.getElementById('modalRelatorio').classList.add('active');
-            }
-        }
-
-        function marcarRelatorioComoVisto(aluno, bimestre, professor) {
-            fecharModal('modalRelatorio');
-            alert('✅ Relatório marcado como visto!');
         }
 
         // ============================================
@@ -2689,14 +2173,10 @@
             let totalTurmas = escolaData.turmas.length;
             let somaMedias = 0;
             let totalComMedia = 0;
-            let totalPresencas = 0;
-            let totalDias = 0;
             let totalSolicitacoes = db.solicitacoes.length;
-            let totalRelatorios = db.relatoriosGerados.length;
-            let totalRelatoriosPreenchidos = db.relatoriosPreenchidos ? db.relatoriosPreenchidos.length : 0;
             let totalConteudos = 0;
             let totalObservacoes = 0;
-
+            
             escolaData.turmas.forEach(turma => {
                 const alunos = getAlunosByTurma(turma);
                 totalAlunos += alunos.length;
@@ -2710,20 +2190,12 @@
                     }
                 });
                 
-                const presencas = db.presencas[turma] || [];
-                presencas.forEach(p => {
-                    totalDias++;
-                    totalPresencas += p.presentes.length;
-                });
-
                 totalConteudos += (db.conteudos[turma] || []).length;
                 totalObservacoes += (db.observacoes[turma] || []).length;
             });
-
+            
             const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
-            const taxaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * (totalAlunos / totalTurmas || 1)) * 100) : 0;
-            const taxaAprovacao = mediaGeral >= 7 ? 85 : 75;
-
+            
             container.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-icon">📈</div>
@@ -2731,19 +2203,9 @@
                     <div class="stat-label">Média Geral da Escola</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🎓</div>
-                    <div class="stat-number">${taxaAprovacao}%</div>
-                    <div class="stat-label">Taxa de Aprovação</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-icon">👥</div>
                     <div class="stat-number">${totalAlunos}</div>
                     <div class="stat-label">Total de Alunos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-number">${taxaPresenca.toFixed(1)}%</div>
-                    <div class="stat-label">Presença Média</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">🏫</div>
@@ -2754,16 +2216,6 @@
                     <div class="stat-icon">📄</div>
                     <div class="stat-number">${totalSolicitacoes}</div>
                     <div class="stat-label">Relatórios Solicitados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📋</div>
-                    <div class="stat-number">${totalRelatorios}</div>
-                    <div class="stat-label">Relatórios Gerados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📥</div>
-                    <div class="stat-number">${totalRelatoriosPreenchidos}</div>
-                    <div class="stat-label">Relatórios Recebidos</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📚</div>
@@ -2798,10 +2250,8 @@
                                     <th>Turma</th>
                                     <th>Alunos</th>
                                     <th>Média</th>
-                                    <th>Presença</th>
                                     <th>Conteúdos</th>
                                     <th>Observações</th>
-                                    <th>Relatórios</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2815,13 +2265,6 @@
                                         if (media > 0) { somaMedias += media; count++; }
                                     });
                                     const media = count > 0 ? somaMedias / count : 0;
-                                    
-                                    const presencas = db.presencas[turma] || [];
-                                    let totalPres = 0, totalDias = 0;
-                                    presencas.forEach(p => { totalDias++; totalPres += p.presentes.length; });
-                                    const taxaPres = totalDias > 0 ? (totalPres / (totalDias * alunos.length) * 100) : 0;
-                                    
-                                    const solicitacoes = db.solicitacoes.filter(s => s.turma === turma);
                                     const conteudos = db.conteudos[turma] || [];
                                     const observacoes = db.observacoes[turma] || [];
                                     
@@ -2830,10 +2273,8 @@
                                             <td>${labelTurma(turma)}</td>
                                             <td>${alunos.length}</td>
                                             <td>${media.toFixed(1)}</td>
-                                            <td>${taxaPres.toFixed(1)}%</td>
                                             <td>${conteudos.length}</td>
                                             <td>${observacoes.length}</td>
-                                            <td>${solicitacoes.length}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -2867,20 +2308,12 @@
                                                 <th>3ºB</th>
                                                 <th>4ºB</th>
                                                 <th>Média</th>
-                                                <th>Presença</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             ${alunos.map(aluno => {
                                                 const notas = getNotasAluno(turma, aluno);
                                                 const media = calcularMedia(notas);
-                                                
-                                                const presencas = db.presencas[turma] || [];
-                                                let totalPres = 0, totalDias = presencas.length;
-                                                presencas.forEach(p => {
-                                                    if (p.presentes.includes(aluno)) totalPres++;
-                                                });
-                                                const taxaPres = totalDias > 0 ? (totalPres / totalDias * 100) : 0;
                                                 
                                                 return `
                                                     <tr>
@@ -2890,77 +2323,11 @@
                                                         <td>${notas[3] || 0}</td>
                                                         <td>${notas[4] || 0}</td>
                                                         <td><strong>${media.toFixed(1)}</strong></td>
-                                                        <td>${taxaPres.toFixed(1)}%</td>
                                                     </tr>
                                                 `;
                                             }).join('')}
                                         </tbody>
                                     </table>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-            
-            container.innerHTML = html;
-        }
-
-        function gerarRelatorioPorProfessor() {
-            const container = document.getElementById('relatorioConsolidado');
-            
-            let html = `
-                <div class="relatorio-content">
-                    <h4>📊 Relatório por Professor</h4>
-                    <div style="margin-top: 15px;">
-                        ${escolaData.professores.map(prof => {
-                            const turmas = getTurmasByProfessor(prof.id);
-                            return `
-                                <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
-                                    <h5>${prof.nome} (${prof.tipo})</h5>
-                                    <p style="color: #718096;">Turmas: ${turmas.length > 0 ? turmas.map(t => labelTurma(t)).join(', ') : 'Nenhuma'}</p>
-                                    ${turmas.length > 0 ? `
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Turma</th>
-                                                    <th>Alunos</th>
-                                                    <th>Média</th>
-                                                    <th>Presença</th>
-                                                    <th>Conteúdos</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${turmas.map(turma => {
-                                                    const alunos = getAlunosByTurma(turma);
-                                                    let somaMedias = 0, count = 0;
-                                                    alunos.forEach(aluno => {
-                                                        const notas = getNotasAluno(turma, aluno);
-                                                        const media = calcularMedia(notas);
-                                                        if (media > 0) { somaMedias += media; count++; }
-                                                    });
-                                                    const media = count > 0 ? somaMedias / count : 0;
-                                                    
-                                                    const presencas = db.presencas[turma] || [];
-                                                    let totalPres = 0, totalDias = 0;
-                                                    presencas.forEach(p => { totalDias++; totalPres += p.presentes.length; });
-                                                    const taxaPres = totalDias > 0 ? (totalPres / (totalDias * alunos.length) * 100) : 0;
-                                                    
-                                                    const conteudos = db.conteudos[turma] || [];
-                                                    
-                                                    return `
-                                                        <tr>
-                                                            <td>${labelTurma(turma)}</td>
-                                                            <td>${alunos.length}</td>
-                                                            <td>${media.toFixed(1)}</td>
-                                                            <td>${taxaPres.toFixed(1)}%</td>
-                                                            <td>${conteudos.length}</td>
-                                                        </tr>
-                                                    `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -2993,30 +2360,15 @@
         function visualizarRelatorioAluno() {
             const turma = document.getElementById('direcaoTurma').value;
             const aluno = document.getElementById('direcaoAluno').value;
-
+            
             if (!turma || !aluno) {
                 alert('Selecione a turma e o aluno.');
                 return;
             }
-
+            
             const notas = getNotasAluno(turma, aluno);
             const media = calcularMedia(notas);
-            const presencas = db.presencas[turma] || [];
-            const observacoes = db.observacoes[turma] || [];
-            const obsAluno = observacoes.filter(o => o.aluno === aluno);
-            const conteudos = db.conteudos[turma] || [];
-
-            // Verifica se há relatório do professor
-            const relatorioProfessor = db.relatoriosPreenchidos ? 
-                db.relatoriosPreenchidos.find(r => r.turma === turma && r.aluno === aluno) : null;
-
-            let totalPresencas = 0;
-            let totalDias = presencas.length;
-            presencas.forEach(p => {
-                if (p.presentes.includes(aluno)) totalPresencas++;
-            });
-            const taxaPresenca = totalDias > 0 ? (totalPresencas / totalDias * 100) : 0;
-
+            
             const relatorioHtml = `
                 <div class="relatorio-content">
                     <h4>📄 Relatório Completo do Aluno</h4>
@@ -3032,28 +2384,6 @@
                         <br><strong>Média Final:</strong> ${media.toFixed(1)}
                         <br><strong>Status:</strong> ${media >= 7 ? '✅ Aprovado' : media >= 5 ? '⚠️ Recuperação' : '❌ Reprovado'}
                     </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Frequência:</strong> ${taxaPresenca.toFixed(1)}% (${totalPresencas}/${totalDias} dias)
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Conteúdos Trabalhados:</strong>
-                        ${conteudos.length > 0 ? conteudos.slice(-5).map(c => 
-                            `<br>• ${c.data} - ${c.disciplina}: ${c.conteudo}`
-                        ).join('') : '<br>Nenhum conteúdo registrado.'}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>Observações:</strong>
-                        ${obsAluno.length > 0 ? obsAluno.map(o => 
-                            `<br>• ${o.data}: ${o.observacao} (${o.tipo})`
-                        ).join('') : '<br>Nenhuma observação registrada.'}
-                    </div>
-                    ${relatorioProfessor ? `
-                        <div style="margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 8px; border-left: 4px solid #4299e1;">
-                            <strong>📝 Relatório do Professor (${relatorioProfessor.professor}):</strong>
-                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorioProfessor.relatorio}</p>
-                            <div style="font-size: 0.85em; color: #718096;">Enviado em: ${relatorioProfessor.dataEnvio || relatorioProfessor.data}</div>
-                        </div>
-                    ` : ''}
                     <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
                         <strong>💡 Recomendação Pedagógica:</strong>
                         ${media >= 7 ? 'Aluno com bom desempenho. Continuar estimulando o aprendizado.' :
@@ -3062,7 +2392,7 @@
                     </div>
                 </div>
             `;
-
+            
             document.getElementById('relatorioAlunoCompleto').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
             document.getElementById('modalRelatorio').classList.add('active');
@@ -3091,8 +2421,7 @@
             document.getElementById('cardsContainer').innerHTML = '';
             document.getElementById('turmasContainer').innerHTML = '';
             turmaSelecionada = null;
-            currentUser = { cargo: '', nome: '', turmas: [] };
-            relatorioEditando = null;
+            currentUser = { cargo: '', nome: '', turmas: [], id: null };
         }
 
         // ============================================
@@ -3100,18 +2429,16 @@
         // ============================================
         document.addEventListener('DOMContentLoaded', function() {
             const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('dataPresenca').value = hoje;
-            document.getElementById('dataObservacao').value = hoje;
             document.getElementById('dataConteudo').value = hoje;
-
-            ['dataPresenca', 'dataObservacao', 'dataConteudo'].forEach(id => {
+            document.getElementById('dataObservacao').value = hoje;
+            
+            ['dataConteudo', 'dataObservacao'].forEach(id => {
                 document.getElementById(id).max = hoje;
             });
-
+            
             console.log('🚀 Sistema iniciado!');
-            console.log('📊 Configuração:', SHEET_CONFIG);
-            console.log('📋 Abas configuradas:', Object.keys(SHEET_CONFIG.abas));
-
+            console.log('📡 API URL:', API_CONFIG.url);
+            
             setTimeout(() => {
                 carregarDadosPlanilha();
             }, 500);
