@@ -866,1032 +866,1571 @@
     </div>
 
     <script>
-   // ============================================
-// GOOGLE APPS SCRIPT - API ESCOLAR (JSONP)
-// ============================================
+        // ============================================
+        // DISCIPLINAS
+        // ============================================
+        const DISCIPLINAS = {
+            'LP': 'Língua Portuguesa',
+            'MAT': 'Matemática',
+            'CIE': 'Ciências',
+            'HIST': 'História',
+            'GEO': 'Geografia',
+            'ING': 'Inglês',
+            'EDFIS': 'Ed. Física',
+            'ARTE': 'Artes',
+            'MUSICA': 'Música'
+        };
 
-const VERSION = "5.0.0";
+        const DISCIPLINAS_LIST = ['LP', 'MAT', 'CIE', 'HIST', 'GEO', 'ING', 'EDFIS', 'ARTE', 'MUSICA'];
 
-// ============================================
-// FUNÇÃO PRINCIPAL - doGet (Suporte JSONP)
-// ============================================
-function doGet(e) {
-    try {
-        const params = e?.parameter || {};
-        
-        // Verifica se é uma chamada JSONP
-        if (params.callback) {
-            return handleJsonpRequest(params);
+        // ============================================
+        // CONFIGURAÇÃO GAS (JSONP)
+        // ============================================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec';
+
+        // ============================================
+        // FUNÇÃO JSONP PARA CHAMAR A API
+        // ============================================
+        function chamarAPI(acao, dados = {}) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'callback_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                
+                window[callbackName] = function(resultado) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    
+                    if (resultado && resultado.success) {
+                        resolve(resultado);
+                    } else {
+                        reject(new Error(resultado?.error || 'Erro desconhecido'));
+                    }
+                };
+                
+                const script = document.createElement('script');
+                const params = new URLSearchParams({
+                    acao: acao,
+                    dados: JSON.stringify(dados),
+                    callback: callbackName
+                });
+                
+                script.src = `${GAS_URL}?${params.toString()}`;
+                script.onerror = function() {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    reject(new Error('Falha ao carregar API'));
+                };
+                
+                document.body.appendChild(script);
+                
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                        document.body.removeChild(script);
+                        reject(new Error('Timeout'));
+                    }
+                }, 30000);
+            });
         }
-        
-        // Verifica se é uma chamada de API normal
-        if (params.acao) {
-            return handleApiRequest(params, null);
+
+        // ============================================
+        // HELPERS
+        // ============================================
+        function texto(valor) {
+            if (valor === null || valor === undefined) return '';
+            return String(valor).trim();
         }
-        
-        // Resposta padrão
-        return ContentService
-            .createTextOutput(JSON.stringify({
-                success: true,
-                mensagem: 'API funcionando! Use ?acao=testar ou ?callback=teste&acao=testar',
-                version: VERSION
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
+
+        function isAtivo(valor) {
+            const v = texto(valor).toUpperCase();
+            if (v === '') return true;
+            return !['NÃO', 'NAO', 'FALSE', 'N', '0'].includes(v);
+        }
+
+        function normalizarTurma(valor) {
+            return texto(valor)
+                .toUpperCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\bANO\b/g, '')
+                .replace(/[^A-Z0-9]/g, '');
+        }
+
+        function formatarTurma(turma) {
+            const t = normalizarTurma(turma);
+            if (!t) return turma;
             
-    } catch (error) {
-        return ContentService
-            .createTextOutput(JSON.stringify({
-                success: false,
-                error: error.toString()
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-// ============================================
-// FUNÇÃO PRINCIPAL - doPost
-// ============================================
-function doPost(e) {
-    try {
-        const params = e?.parameter || {};
-        let dados = {};
-        
-        try {
-            const postData = e?.postData?.contents || '{}';
-            dados = typeof postData === 'string' ? JSON.parse(postData) : postData;
-        } catch (err) {
-            dados = {};
-        }
-        
-        return handleApiRequest(params, dados);
-    } catch (error) {
-        return ContentService
-            .createTextOutput(JSON.stringify({
-                success: false,
-                error: error.toString()
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-// ============================================
-// FUNÇÃO JSONP
-// ============================================
-function handleJsonpRequest(params) {
-    try {
-        const callback = params.callback;
-        const acao = params.acao || 'testar';
-        let dados = {};
-        
-        try {
-            if (params.dados) {
-                dados = JSON.parse(params.dados);
+            const match = t.match(/^(\d)([A-E])$/);
+            if (match) {
+                return `${match[1]}º Ano ${match[2]}`;
             }
-        } catch (err) {
-            dados = {};
+            return turma;
         }
-        
-        console.log('JSONP - Ação:', acao);
-        console.log('JSONP - Dados:', JSON.stringify(dados));
-        
-        const resultado = executarAcao(acao, dados);
-        resultado.timestamp = new Date().toISOString();
-        resultado.version = VERSION;
-        
-        const json = JSON.stringify(resultado);
-        const output = `${callback}(${json})`;
-        
-        return ContentService
-            .createTextOutput(output)
-            .setMimeType(ContentService.MimeType.JAVASCRIPT);
-            
-    } catch (error) {
-        console.error('Erro JSONP:', error);
-        const callback = params.callback || 'callback';
-        const json = JSON.stringify({
-            success: false,
-            error: error.toString()
-        });
-        
-        return ContentService
-            .createTextOutput(`${callback}(${json})`)
-            .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-}
 
-// ============================================
-// FUNÇÃO API NORMAL
-// ============================================
-function handleApiRequest(params, dadosPost) {
-    try {
-        const acao = params.acao || (dadosPost && dadosPost.acao) || 'testar';
-        const dadosEnvio = (dadosPost && dadosPost.dados) || dadosPost || {};
-        
-        console.log('API - Ação:', acao);
-        
-        const resultado = executarAcao(acao, dadosEnvio);
-        resultado.timestamp = new Date().toISOString();
-        resultado.version = VERSION;
-        
-        return ContentService
-            .createTextOutput(JSON.stringify(resultado))
-            .setMimeType(ContentService.MimeType.JSON);
-            
-    } catch (error) {
-        return ContentService
-            .createTextOutput(JSON.stringify({
-                success: false,
-                error: error.toString()
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-// ============================================
-// FUNÇÃO EXECUTAR AÇÃO
-// ============================================
-function executarAcao(acao, dados) {
-    switch (acao) {
-        case 'testar':
-            return testarAPI();
-            
-        case 'lerTodasAbas':
-            return lerTodasAbas();
-            
-        case 'salvarNotas':
-            return salvarNotas(dados);
-            
-        case 'salvarPresenca':
-            return salvarPresenca(dados);
-            
-        case 'salvarConteudo':
-            return salvarConteudo(dados);
-            
-        case 'salvarObservacao':
-            return salvarObservacao(dados);
-            
-        case 'atribuirTurma':
-            return atribuirTurma(dados);
-            
-        case 'removerTurma':
-            return removerTurma(dados);
-            
-        case 'solicitarRelatorio':
-            return solicitarRelatorio(dados);
-            
-        case 'enviarRelatorio':
-            return salvarRelatorio(dados);
-            
-        case 'marcarRelatorioComoVisto':
-            return marcarRelatorioComoVisto(dados);
-            
-        case 'getRelatorioParaImpressao':
-            return getRelatorioParaImpressao(dados);
-            
-        case 'getFaltasAluno':
-            return getFaltasAluno(dados);
-            
-        default:
-            return {
-                success: false,
-                error: 'Ação não reconhecida: ' + acao
-            };
-    }
-}
-
-// ============================================
-// FUNÇÃO: TESTAR API
-// ============================================
-function testarAPI() {
-    try {
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        
-        if (!spreadsheet) {
-            return {
-                success: false,
-                error: 'Nenhuma planilha encontrada. Execute criarPlanilhaSeNecessario() primeiro.'
-            };
+        function normalizarNome(valor) {
+            return texto(valor)
+                .toUpperCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/^PROF(ESSOR|ESSORA)?\.?\s/, '')
+                .replace(/\s+/g, ' ')
+                .trim();
         }
-        
-        const sheets = spreadsheet.getSheets();
-        const nomesAbas = sheets.map(sheet => sheet.getName());
-        
-        return {
-            success: true,
-            mensagem: 'API funcionando corretamente!',
-            planilha: {
-                nome: spreadsheet.getName(),
-                totalAbas: nomesAbas.length
-            }
-        };
-    } catch (error) {
-        return {
-            success: false,
-            error: error.toString()
-        };
-    }
-}
 
-// ============================================
-// FUNÇÃO: NORMALIZAR TURMA
-// ============================================
-function normalizarTurma(turma) {
-    if (!turma) return '';
-    return String(turma)
-        .toUpperCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/\bANO\b/g, '')
-        .replace(/[^A-Z0-9]/g, '');
-}
-
-// ============================================
-// FUNÇÃO: FORMATAR TURMA
-// ============================================
-function formatarTurma(turma) {
-    const t = normalizarTurma(turma);
-    if (!t) return turma;
-    
-    const match = t.match(/^(\d)([A-E])$/);
-    if (match) {
-        return `${match[1]}º Ano ${match[2]}`;
-    }
-    return turma;
-}
-
-// ============================================
-// FUNÇÃO: LER TODAS AS ABAS
-// ============================================
-function lerTodasAbas() {
-    try {
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        
-        if (!spreadsheet) {
-            return {
-                success: false,
-                error: 'Nenhuma planilha encontrada.'
-            };
+        function labelTurma(turma) {
+            const t = normalizarTurma(turma);
+            return formatarTurma(t);
         }
-        
-        const resultado = {
-            success: true,
-            dados: {}
-        };
-        
-        // Lê todas as abas da planilha
-        const sheets = spreadsheet.getSheets();
-        
-        for (const sheet of sheets) {
-            const nomeAba = sheet.getName();
+
+        function mostrarToast(mensagem, tipo = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${tipo}`;
+            toast.textContent = mensagem;
+            document.body.appendChild(toast);
             
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ============================================
+        // DADOS LOCAIS
+        // ============================================
+        let escolaData = {
+            turmas: [],
+            turmasLabel: {},
+            alunos: {},
+            professores: []
+        };
+
+        let db = {
+            atribuicoes: {},
+            notas: {},
+            presencas: {},
+            observacoes: {},
+            conteudos: {},
+            relatoriosGerados: [],
+            solicitacoes: [],
+            relatoriosPreenchidos: []
+        };
+
+        let currentUser = { cargo: '', nome: '', turmas: [] };
+        let turmaSelecionada = null;
+
+        // ============================================
+        // CONTROLE DE RELATÓRIOS VISUALIZADOS
+        // ============================================
+        let relatoriosVisualizados = new Set();
+        let relatoriosNaoVisualizados = new Set();
+
+        function marcarRelatorioComoVisualizado(idRelatorio) {
+            relatoriosVisualizados.add(idRelatorio);
+            relatoriosNaoVisualizados.delete(idRelatorio);
+            atualizarNotificacoes();
+            localStorage.setItem('relatoriosVisualizados', JSON.stringify([...relatoriosVisualizados]));
+        }
+
+        function isRelatorioVisualizado(idRelatorio) {
+            return relatoriosVisualizados.has(idRelatorio);
+        }
+
+        function carregarRelatoriosVisualizados() {
             try {
-                const dados = sheet.getDataRange().getValues();
-                const cabecalhos = dados[0] || [];
-                const linhas = [];
-                
-                for (let i = 1; i < dados.length; i++) {
-                    const linha = {};
-                    for (let j = 0; j < cabecalhos.length; j++) {
-                        const chave = String(cabecalhos[j] || '').trim();
-                        linha[chave] = dados[i][j] || '';
+                const saved = localStorage.getItem('relatoriosVisualizados');
+                if (saved) {
+                    relatoriosVisualizados = new Set(JSON.parse(saved));
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar visualizações:', e);
+            }
+            relatoriosNaoVisualizados.clear();
+            if (db.relatoriosPreenchidos) {
+                db.relatoriosPreenchidos.forEach(r => {
+                    const id = r.ID_Relatorio || `${r.aluno}_${r.bimestre}_${r.professor}`;
+                    if (!relatoriosVisualizados.has(id)) {
+                        relatoriosNaoVisualizados.add(id);
                     }
-                    linhas.push(linha);
-                }
+                });
+            }
+        }
+
+        function atualizarNotificacoes() {
+            const count = relatoriosNaoVisualizados.size;
+            const badge = document.getElementById('notificacaoRelatorios');
+            const badge2 = document.getElementById('notificacaoRelatoriosBadge');
+            
+            if (count > 0) {
+                if (badge) { badge.textContent = count; badge.classList.remove('hidden'); }
+                if (badge2) { badge2.textContent = count; badge2.classList.remove('hidden'); }
+            } else {
+                if (badge) { badge.classList.add('hidden'); }
+                if (badge2) { badge2.classList.add('hidden'); }
+            }
+        }
+
+        // ============================================
+        // FUNÇÃO PARA CARREGAR DADOS
+        // ============================================
+        async function carregarDadosPlanilha() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            try {
+                console.log('📡 Carregando dados via JSONP...');
                 
-                resultado.dados[nomeAba] = {
-                    cabecalhos: cabecalhos,
-                    dados: linhas,
-                    total: linhas.length
-                };
-            } catch (err) {
-                resultado.dados[nomeAba] = {
-                    cabecalhos: [],
-                    dados: [],
-                    total: 0,
-                    error: err.toString()
-                };
-            }
-        }
-        
-        return resultado;
-    } catch (error) {
-        return {
-            success: false,
-            error: error.toString()
-        };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SALVAR NOTAS
-// ============================================
-function salvarNotas(dados) {
-    try {
-        const { turma, notas, disciplina, bimestre } = dados;
-        
-        if (!turma || !notas || notas.length === 0) {
-            return { success: false, error: 'Turma e notas são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const turmaNormalizada = normalizarTurma(turma);
-        const nomeAba = `NOTAS_BIMESTRAIS_${turmaNormalizada}`;
-        const sheet = spreadsheet.getSheetByName(nomeAba);
-        
-        if (!sheet) {
-            return { success: false, error: `Aba ${nomeAba} não encontrada` };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        const cabecalhos = dadosExistentes[0] || [];
-        
-        // Mapeia colunas de disciplinas
-        const colunasDisciplinas = {};
-        cabecalhos.forEach((cab, index) => {
-            const cabStr = String(cab || '').trim().toUpperCase();
-            if (cabStr.includes('-') && index >= 3) {
-                const partes = cabStr.split('-');
-                if (partes.length === 2) {
-                    const disc = partes[0];
-                    const bim = parseInt(partes[1]);
-                    if (!colunasDisciplinas[disc]) {
-                        colunasDisciplinas[disc] = {};
-                    }
-                    colunasDisciplinas[disc][bim] = index;
-                }
-            }
-        });
-        
-        let salvos = 0;
-        
-        for (const nota of notas) {
-            const aluno = nota.aluno;
-            const disc = nota.disciplina || disciplina;
-            const bim = parseInt(nota.bimestre || bimestre);
-            const valor = parseFloat(nota.nota) || 0;
-            
-            // Encontra a linha do aluno
-            let linhaAluno = -1;
-            for (let i = 1; i < dadosExistentes.length; i++) {
-                const nome = String(dadosExistentes[i][2] || '').trim();
-                if (nome === aluno) {
-                    linhaAluno = i + 1;
-                    break;
-                }
-            }
-            
-            if (linhaAluno === -1) {
-                // Adiciona novo aluno
-                const novaLinha = [];
-                for (let c = 0; c < cabecalhos.length; c++) {
-                    novaLinha.push('');
-                }
-                novaLinha[0] = dadosExistentes.length;
-                novaLinha[1] = turma;
-                novaLinha[2] = aluno;
+                const resultado = await chamarAPI('lerTodasAbas');
                 
-                sheet.appendRow(novaLinha);
-                linhaAluno = sheet.getLastRow();
-            }
-            
-            // Encontra a coluna
-            const coluna = colunasDisciplinas[disc] && colunasDisciplinas[disc][bim];
-            if (coluna !== undefined) {
-                sheet.getRange(linhaAluno, coluna + 1).setValue(valor);
-                salvos++;
-            }
-        }
-        
-        return {
-            success: true,
-            mensagem: `${salvos} notas salvas!`,
-            salvos
-        };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SALVAR PRESENÇA
-// ============================================
-function salvarPresenca(dados) {
-    try {
-        const { turma, data, alunosPresentes, alunosFaltantes, observacao } = dados;
-        
-        if (!turma || !data) {
-            return { success: false, error: 'Turma e data são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const turmaNormalizada = normalizarTurma(turma);
-        const nomeAba = `PRESENCA_${turmaNormalizada}`;
-        const sheet = spreadsheet.getSheetByName(nomeAba);
-        
-        if (!sheet) {
-            return { success: false, error: `Aba ${nomeAba} não encontrada` };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        const cabecalhos = dadosExistentes[0] || [];
-        
-        // Encontra ou cria coluna para esta data
-        let colunaData = -1;
-        for (let j = 0; j < cabecalhos.length; j++) {
-            const cabStr = String(cabecalhos[j] || '').trim();
-            if (cabStr === data) {
-                colunaData = j;
-                break;
-            }
-        }
-        
-        if (colunaData === -1) {
-            colunaData = cabecalhos.length;
-            sheet.getRange(1, colunaData + 1).setValue(data);
-        }
-        
-        const presentes = alunosPresentes || [];
-        const faltantes = alunosFaltantes || [];
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const aluno = String(dadosExistentes[i][0] || '').trim();
-            if (!aluno) continue;
-            
-            const linha = i + 1;
-            
-            if (presentes.includes(aluno)) {
-                sheet.getRange(linha, colunaData + 1).setValue('P');
-            } else if (faltantes.includes(aluno)) {
-                sheet.getRange(linha, colunaData + 1).setValue('F');
-            }
-        }
-        
-        return {
-            success: true,
-            mensagem: 'Presença salva!'
-        };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SALVAR CONTEÚDO
-// ============================================
-function salvarConteudo(dados) {
-    try {
-        const { turma, data, professor, disciplina, conteudo, objetivos } = dados;
-        
-        if (!turma || !conteudo) {
-            return { success: false, error: 'Turma e conteúdo são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('CONTEUDOS');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba CONTEUDOS não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        let ultimoId = 0;
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const id = parseInt(dadosExistentes[i][0]);
-            if (!isNaN(id) && id > ultimoId) ultimoId = id;
-        }
-        
-        const novaLinha = [
-            ultimoId + 1,
-            data || new Date().toISOString().split('T')[0],
-            turma,
-            professor || '',
-            disciplina || '',
-            conteudo,
-            objetivos || '',
-            new Date().getFullYear().toString()
-        ];
-        
-        sheet.appendRow(novaLinha);
-        
-        return { success: true, mensagem: 'Conteúdo salvo!', id: ultimoId + 1 };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SALVAR OBSERVAÇÃO
-// ============================================
-function salvarObservacao(dados) {
-    try {
-        const { turma, data, aluno, professor, observacao, tipo } = dados;
-        
-        if (!turma || !aluno || !observacao) {
-            return { success: false, error: 'Turma, aluno e observação são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('OBSERVACOES');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba OBSERVACOES não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        let ultimoId = 0;
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const id = parseInt(dadosExistentes[i][0]);
-            if (!isNaN(id) && id > ultimoId) ultimoId = id;
-        }
-        
-        const novaLinha = [
-            ultimoId + 1,
-            data || new Date().toISOString().split('T')[0],
-            turma,
-            aluno,
-            professor || '',
-            observacao,
-            tipo || 'Neutra',
-            new Date().getFullYear().toString()
-        ];
-        
-        sheet.appendRow(novaLinha);
-        
-        return { success: true, mensagem: 'Observação salva!', id: ultimoId + 1 };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: ATRIBUIR TURMA
-// ============================================
-function atribuirTurma(dados) {
-    try {
-        const { professorId, professorNome, tipo, turma } = dados;
-        
-        if (!professorId || !turma) {
-            return { success: false, error: 'Professor e turma são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('ATRIBUICOES');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba ATRIBUICOES não encontrada' };
-        }
-        
-        const novaLinha = [
-            professorId,
-            professorNome || '',
-            tipo || 'Regente',
-            turma,
-            new Date().toISOString().split('T')[0],
-            'SIM'
-        ];
-        
-        sheet.appendRow(novaLinha);
-        
-        return { success: true, mensagem: 'Turma atribuída!' };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: REMOVER TURMA
-// ============================================
-function removerTurma(dados) {
-    try {
-        const { professorId, turma } = dados;
-        
-        if (!professorId || !turma) {
-            return { success: false, error: 'Professor e turma são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('ATRIBUICOES');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba ATRIBUICOES não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        let linhaParaAtualizar = -1;
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const profId = String(dadosExistentes[i][0] || '').trim();
-            const turmaExistente = String(dadosExistentes[i][3] || '').trim();
-            
-            if (profId === professorId && normalizarTurma(turmaExistente) === normalizarTurma(turma)) {
-                linhaParaAtualizar = i + 1;
-                break;
-            }
-        }
-        
-        if (linhaParaAtualizar === -1) {
-            return { success: false, error: 'Atribuição não encontrada.' };
-        }
-        
-        sheet.getRange(linhaParaAtualizar, 6).setValue('NÃO');
-        
-        return { success: true, mensagem: 'Turma removida!' };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SOLICITAR RELATÓRIO
-// ============================================
-function solicitarRelatorio(dados) {
-    try {
-        const { turma, aluno, bimestre, professor } = dados;
-        
-        if (!turma || !aluno || !bimestre) {
-            return { success: false, error: 'Turma, aluno e bimestre são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('RELATORIOS_SOLICITADOS');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba RELATORIOS_SOLICITADOS não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        let ultimoId = 0;
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const id = parseInt(dadosExistentes[i][0]);
-            if (!isNaN(id) && id > ultimoId) ultimoId = id;
-        }
-        
-        const novaLinha = [
-            ultimoId + 1,
-            new Date().toISOString().split('T')[0],
-            turma,
-            aluno,
-            bimestre,
-            professor || '',
-            'Pendente',
-            '',
-            ''
-        ];
-        
-        sheet.appendRow(novaLinha);
-        
-        return { success: true, mensagem: 'Relatório solicitado!', id: ultimoId + 1 };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: SALVAR RELATÓRIO
-// ============================================
-function salvarRelatorio(dados) {
-    try {
-        const { turma, aluno, bimestre, professor, notas, media, presenca, observacoes, recomendacao, conteudo } = dados;
-        
-        if (!turma || !aluno || !conteudo) {
-            return { success: false, error: 'Turma, aluno e relatório são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('RELATORIOS_GERADOS');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba RELATORIOS_GERADOS não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        let ultimoId = 0;
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const id = parseInt(dadosExistentes[i][0]);
-            if (!isNaN(id) && id > ultimoId) ultimoId = id;
-        }
-        
-        const novaLinha = [
-            ultimoId + 1,
-            new Date().toISOString().split('T')[0],
-            turma,
-            aluno,
-            bimestre || '1',
-            professor || '',
-            notas || '',
-            media || '',
-            presenca || '',
-            observacoes || '',
-            recomendacao || '',
-            conteudo,
-            '',
-            ''
-        ];
-        
-        sheet.appendRow(novaLinha);
-        
-        return { success: true, mensagem: 'Relatório salvo!', id: ultimoId + 1 };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: MARCAR RELATÓRIO COMO VISTO
-// ============================================
-function marcarRelatorioComoVisto(dados) {
-    try {
-        const { idRelatorio } = dados;
-        
-        if (!idRelatorio) {
-            return { success: false, error: 'ID do relatório é obrigatório' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const sheet = spreadsheet.getSheetByName('RELATORIOS_GERADOS');
-        
-        if (!sheet) {
-            return { success: false, error: 'Aba RELATORIOS_GERADOS não encontrada' };
-        }
-        
-        const dadosExistentes = sheet.getDataRange().getValues();
-        const agora = new Date();
-        const dataHora = agora.toLocaleString('pt-BR');
-        
-        for (let i = 1; i < dadosExistentes.length; i++) {
-            const id = String(dadosExistentes[i][0] || '');
-            if (id === String(idRelatorio)) {
-                const linha = i + 1;
-                sheet.getRange(linha, 13).setValue('SIM');
-                sheet.getRange(linha, 14).setValue(dataHora);
-                break;
-            }
-        }
-        
-        return {
-            success: true,
-            mensagem: 'Relatório marcado como visto!',
-            dataHora: dataHora
-        };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: GET RELATÓRIO PARA IMPRESSÃO
-// ============================================
-function getRelatorioParaImpressao(dados) {
-    try {
-        const { aluno, turma, bimestre, professor } = dados;
-        
-        if (!aluno || !turma) {
-            return { success: false, error: 'Aluno e turma são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const turmaNormalizada = normalizarTurma(turma);
-        
-        // Busca o relatório
-        const relatoriosSheet = spreadsheet.getSheetByName('RELATORIOS_GERADOS');
-        let relatorio = null;
-        
-        if (relatoriosSheet) {
-            const dadosRelatorios = relatoriosSheet.getDataRange().getValues();
-            
-            for (let i = 1; i < dadosRelatorios.length; i++) {
-                const alunoRel = String(dadosRelatorios[i][3] || '').trim();
-                const turmaRel = normalizarTurma(dadosRelatorios[i][2]);
-                
-                if (alunoRel === aluno && turmaRel === turmaNormalizada) {
-                    relatorio = {
-                        aluno: alunoRel,
-                        turma: dadosRelatorios[i][2],
-                        bimestre: dadosRelatorios[i][4] || '',
-                        professor: dadosRelatorios[i][5] || '',
-                        notas: dadosRelatorios[i][6] || '',
-                        media: dadosRelatorios[i][7] || '',
-                        conteudo: dadosRelatorios[i][11] || '',
-                        recomendacao: dadosRelatorios[i][10] || ''
-                    };
-                    break;
-                }
-            }
-        }
-        
-        // Calcula faltas
-        let totalFaltas = 0;
-        const nomeAbaPresenca = `PRESENCA_${turmaNormalizada}`;
-        const presencaSheet = spreadsheet.getSheetByName(nomeAbaPresenca);
-        
-        if (presencaSheet) {
-            const dadosPresenca = presencaSheet.getDataRange().getValues();
-            const cabecalhos = dadosPresenca[0] || [];
-            
-            let linhaAluno = -1;
-            for (let i = 1; i < dadosPresenca.length; i++) {
-                const nomeAluno = String(dadosPresenca[i][0] || '').trim();
-                if (nomeAluno === aluno) {
-                    linhaAluno = i;
-                    break;
-                }
-            }
-            
-            if (linhaAluno !== -1) {
-                for (let j = 1; j < cabecalhos.length; j++) {
-                    const valor = String(dadosPresenca[linhaAluno][j] || '').trim().toUpperCase();
-                    if (valor === 'F' || valor === 'FALTA') {
-                        totalFaltas++;
-                    }
-                }
-            }
-        }
-        
-        return {
-            success: true,
-            relatorio: {
-                aluno: aluno,
-                turma: formatarTurma(turma),
-                totalFaltas: totalFaltas,
-                relatorio: relatorio,
-                textoImpressao: `${aluno} APRESENTOU ${totalFaltas} FALTAS NO ANO LETIVO`
-            }
-        };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: GET FALTAS ALUNO
-// ============================================
-function getFaltasAluno(dados) {
-    try {
-        const { aluno, turma } = dados;
-        
-        if (!aluno || !turma) {
-            return { success: false, error: 'Aluno e turma são obrigatórios' };
-        }
-        
-        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        const turmaNormalizada = normalizarTurma(turma);
-        const nomeAba = `PRESENCA_${turmaNormalizada}`;
-        const sheet = spreadsheet.getSheetByName(nomeAba);
-        
-        if (!sheet) {
-            return { success: false, error: `Aba ${nomeAba} não encontrada` };
-        }
-        
-        const dadosPresenca = sheet.getDataRange().getValues();
-        const cabecalhos = dadosPresenca[0] || [];
-        
-        let linhaAluno = -1;
-        for (let i = 1; i < dadosPresenca.length; i++) {
-            const nomeAluno = String(dadosPresenca[i][0] || '').trim();
-            if (nomeAluno === aluno) {
-                linhaAluno = i;
-                break;
-            }
-        }
-        
-        if (linhaAluno === -1) {
-            return { success: false, error: 'Aluno não encontrado' };
-        }
-        
-        let totalFaltas = 0;
-        for (let j = 1; j < cabecalhos.length; j++) {
-            const valor = String(dadosPresenca[linhaAluno][j] || '').trim().toUpperCase();
-            if (valor === 'F' || valor === 'FALTA') {
-                totalFaltas++;
-            }
-        }
-        
-        return {
-            success: true,
-            aluno: aluno,
-            turma: formatarTurma(turma),
-            totalFaltas: totalFaltas,
-            texto: `${aluno} APRESENTOU ${totalFaltas} FALTAS NO ANO LETIVO`
-        };
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
-// FUNÇÃO: CRIAR PLANILHA SE NECESSÁRIO
-// ============================================
-function criarPlanilhaSeNecessario() {
-    try {
-        let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        
-        if (!spreadsheet) {
-            spreadsheet = SpreadsheetApp.create('ESCOLA_FUNDAMENTAL_I_SISTEMA_GESTAO');
-        }
-        
-        // Cria abas fixas
-        const abasFixas = {
-            'TURMAS_ALUNOS': ['Turma', 'Nome_Aluno', 'ID_Aluno', 'RA', 'Situacao'],
-            'ATRIBUICOES': ['ID_Professor', 'Nome_Professor', 'Tipo', 'Turma', 'Data_Atribuicao', 'Ativo'],
-            'CONTEUDOS': ['ID_Registro', 'Data', 'Turma', 'Professor', 'Disciplina', 'Conteudo', 'Objetivos', 'Ano_Letivo'],
-            'OBSERVACOES': ['ID_Registro', 'Data', 'Turma', 'Aluno', 'Professor', 'Observacao', 'Tipo', 'Ano_Letivo'],
-            'RELATORIOS_SOLICITADOS': ['ID_Solicitacao', 'Data_Solicitacao', 'Turma', 'Aluno', 'Bimestre', 'Professor', 'Status', 'Data_Conclusao', 'Observacoes'],
-            'RELATORIOS_GERADOS': ['ID_Relatorio', 'Data_Geracao', 'Turma', 'Aluno', 'Bimestre', 'Professor', 'Notas', 'Media', 'Presenca', 'Observacoes', 'Recomendacao', 'Conteudo', 'Visto', 'Data_Hora_Visto'],
-            'PROFESSORES': ['ID_Professor', 'Nome', 'Tipo', 'Email', 'Telefone', 'Formacao', 'Data_Admissao', 'Ativo']
-        };
-        
-        // Remove Sheet1
-        const sheet1 = spreadsheet.getSheetByName('Sheet1');
-        if (sheet1 && spreadsheet.getSheets().length > 1) {
-            spreadsheet.deleteSheet(sheet1);
-        }
-        
-        // Cria abas fixas
-        for (const [nomeAba, cabecalhos] of Object.entries(abasFixas)) {
-            let sheet = spreadsheet.getSheetByName(nomeAba);
-            
-            if (!sheet) {
-                sheet = spreadsheet.insertSheet(nomeAba);
-            }
-            
-            if (sheet.getLastRow() === 0) {
-                const range = sheet.getRange(1, 1, 1, cabecalhos.length);
-                range.setValues([cabecalhos]);
-                range.setFontWeight('bold');
-                range.setBackground('#4285F4');
-                range.setFontColor('white');
-                sheet.setFrozenRows(1);
-            }
-        }
-        
-        // Cria abas de presença e notas
-        const series = ['1', '2', '3', '4', '5'];
-        const letras = ['A', 'B', 'C', 'D', 'E'];
-        
-        const cabecalhosNotas = [
-            'ID_Registro', 'Turma', 'Nome_Aluno',
-            'LP-1', 'MAT-1', 'CIE-1', 'HIST-1', 'GEO-1', 'ING-1', 'EDFIS-1', 'ARTE-1', 'MUSICA-1',
-            'LP-2', 'MAT-2', 'CIE-2', 'HIST-2', 'GEO-2', 'ING-2', 'EDFIS-2', 'ARTE-2', 'MUSICA-2',
-            'LP-3', 'MAT-3', 'CIE-3', 'HIST-3', 'GEO-3', 'ING-3', 'EDFIS-3', 'ARTE-3', 'MUSICA-3',
-            'LP-4', 'MAT-4', 'CIE-4', 'HIST-4', 'GEO-4', 'ING-4', 'EDFIS-4', 'ARTE-4', 'MUSICA-4'
-        ];
-        
-        series.forEach(s => {
-            letras.forEach(l => {
-                const turma = `${s}${l}`;
-                
-                // Aba de presença
-                const nomeAbaPresenca = `PRESENCA_${turma}`;
-                let sheetPresenca = spreadsheet.getSheetByName(nomeAbaPresenca);
-                if (!sheetPresenca) {
-                    sheetPresenca = spreadsheet.insertSheet(nomeAbaPresenca);
-                    sheetPresenca.getRange(1, 1).setValue('Nome_Aluno');
-                    sheetPresenca.getRange(1, 1).setFontWeight('bold');
-                    sheetPresenca.getRange(1, 1).setBackground('#4285F4');
-                    sheetPresenca.getRange(1, 1).setFontColor('white');
-                    sheetPresenca.setFrozenRows(1);
-                    sheetPresenca.setColumnWidth(1, 200);
-                }
-                
-                // Aba de notas
-                const nomeAbaNotas = `NOTAS_BIMESTRAIS_${turma}`;
-                let sheetNotas = spreadsheet.getSheetByName(nomeAbaNotas);
-                if (!sheetNotas) {
-                    sheetNotas = spreadsheet.insertSheet(nomeAbaNotas);
+                if (resultado.success && resultado.dados) {
+                    processarDados(resultado.dados);
                     
-                    const range = sheetNotas.getRange(1, 1, 1, cabecalhosNotas.length);
-                    range.setValues([cabecalhosNotas]);
-                    range.setFontWeight('bold');
-                    range.setBackground('#4285F4');
-                    range.setFontColor('white');
-                    range.setHorizontalAlignment('center');
-                    sheetNotas.setFrozenRows(1);
+                    document.getElementById('syncStatus').className = 'sync-status synced';
+                    document.getElementById('syncStatus').textContent = '✅ Sincronizado';
                     
-                    sheetNotas.setColumnWidth(1, 100);
-                    sheetNotas.setColumnWidth(2, 120);
-                    sheetNotas.setColumnWidth(3, 200);
-                    for (let c = 4; c <= cabecalhosNotas.length; c++) {
-                        sheetNotas.setColumnWidth(c, 70);
+                    if (currentUser.cargo) {
+                        renderDashboard(currentUser.cargo);
                     }
+                    
+                    mostrarToast('✅ Dados carregados com sucesso!', 'success');
+                }
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                document.getElementById('syncStatus').className = 'sync-status error';
+                document.getElementById('syncStatus').textContent = '❌ Erro ao carregar';
+                mostrarToast('❌ Erro ao carregar dados: ' + error.message, 'error');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ============================================
+        // PROCESSAR DADOS
+        // ============================================
+        function processarDados(dadosAPI) {
+            console.log('🔄 Processando dados...');
+            
+            // Processa alunos
+            if (dadosAPI.TURMAS_ALUNOS && dadosAPI.TURMAS_ALUNOS.dados) {
+                const novosAlunos = {};
+                escolaData.turmasLabel = {};
+                
+                dadosAPI.TURMAS_ALUNOS.dados.forEach(aluno => {
+                    const bruta = texto(aluno.Turma);
+                    const turma = normalizarTurma(bruta);
+                    const nome = texto(aluno.Nome_Aluno || aluno.Nome);
+                    
+                    if (!turma || !nome) return;
+                    
+                    if (!escolaData.turmasLabel[turma]) {
+                        escolaData.turmasLabel[turma] = bruta;
+                    }
+                    if (!novosAlunos[turma]) novosAlunos[turma] = [];
+                    if (!novosAlunos[turma].includes(nome)) {
+                        novosAlunos[turma].push(nome);
+                    }
+                });
+                
+                escolaData.alunos = novosAlunos;
+                escolaData.turmas = Object.keys(novosAlunos).sort();
+            }
+            
+            // Processa professores
+            if (dadosAPI.PROFESSORES && dadosAPI.PROFESSORES.dados) {
+                escolaData.professores = dadosAPI.PROFESSORES.dados
+                    .filter(p => isAtivo(p.Ativo))
+                    .map(p => ({
+                        id: texto(p.ID_Professor),
+                        nome: texto(p.Nome),
+                        tipo: texto(p.Tipo) || 'Regente'
+                    }))
+                    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+            }
+            
+            // Processa atribuições
+            if (dadosAPI.ATRIBUICOES && dadosAPI.ATRIBUICOES.dados) {
+                const novasAtribuicoes = {};
+                
+                dadosAPI.ATRIBUICOES.dados.forEach(attr => {
+                    const profId = texto(attr.ID_Professor);
+                    const turma = normalizarTurma(attr.Turma);
+                    
+                    if (!profId || !turma || !isAtivo(attr.Ativo)) return;
+                    
+                    if (!novasAtribuicoes[profId]) novasAtribuicoes[profId] = [];
+                    if (!novasAtribuicoes[profId].includes(turma)) {
+                        novasAtribuicoes[profId].push(turma);
+                    }
+                });
+                
+                db.atribuicoes = novasAtribuicoes;
+            }
+            
+            // Processa notas das abas dinâmicas
+            db.notas = {};
+            for (const [nomeAba, dadosAba] of Object.entries(dadosAPI)) {
+                if (nomeAba.startsWith('NOTAS_BIMESTRAIS_')) {
+                    const turma = normalizarTurma(nomeAba.replace('NOTAS_BIMESTRAIS_', ''));
+                    
+                    if (dadosAba.dados && dadosAba.dados.length > 0) {
+                        dadosAba.dados.forEach(nota => {
+                            const aluno = texto(nota.Nome_Aluno || nota.Aluno);
+                            if (!aluno) return;
+                            
+                            if (!db.notas[turma]) db.notas[turma] = {};
+                            if (!db.notas[turma][aluno]) db.notas[turma][aluno] = {};
+                            
+                            // Processa todas as disciplinas
+                            DISCIPLINAS_LIST.forEach(disc => {
+                                if (!db.notas[turma][aluno][disc]) {
+                                    db.notas[turma][aluno][disc] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+                                }
+                                
+                                for (let bim = 1; bim <= 4; bim++) {
+                                    const chave = `${disc}-${bim}`;
+                                    const valor = parseFloat(nota[chave]) || 0;
+                                    if (valor > 0) {
+                                        db.notas[turma][aluno][disc][bim] = valor;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                }
+            }
+            
+            // Processa presenças das abas dinâmicas
+            db.presencas = {};
+            for (const [nomeAba, dadosAba] of Object.entries(dadosAPI)) {
+                if (nomeAba.startsWith('PRESENCA_')) {
+                    const turma = normalizarTurma(nomeAba.replace('PRESENCA_', ''));
+                    
+                    if (dadosAba.dados && dadosAba.dados.length > 0) {
+                        db.presencas[turma] = dadosAba.dados;
+                    }
+                }
+            }
+            
+            // Processa solicitações
+            if (dadosAPI.RELATORIOS_SOLICITADOS && dadosAPI.RELATORIOS_SOLICITADOS.dados) {
+                db.solicitacoes = dadosAPI.RELATORIOS_SOLICITADOS.dados.map(s => ({
+                    turma: normalizarTurma(s.Turma),
+                    aluno: texto(s.Aluno),
+                    bimestre: s.Bimestre || '1',
+                    data: s.Data_Solicitacao || '',
+                    status: s.Status || 'Pendente',
+                    dataConclusao: s.Data_Conclusao || ''
+                }));
+            }
+            
+            // Processa relatórios gerados
+            if (dadosAPI.RELATORIOS_GERADOS && dadosAPI.RELATORIOS_GERADOS.dados) {
+                db.relatoriosGerados = dadosAPI.RELATORIOS_GERADOS.dados.map(r => ({
+                    ID_Relatorio: r.ID_Relatorio || '',
+                    turma: normalizarTurma(r.Turma),
+                    aluno: texto(r.Aluno),
+                    bimestre: r.Bimestre || '1',
+                    professor: r.Professor || '',
+                    notas: r.Notas || '',
+                    media: r.Media || '',
+                    presenca: r.Presenca || '',
+                    recomendacao: r.Recomendacao || '',
+                    conteudo: r.Conteudo || '',
+                    visto: r.Visto || '',
+                    dataHoraVisto: r.Data_Hora_Visto || ''
+                }));
+                
+                // Converte para relatoriosPreenchidos
+                db.relatoriosPreenchidos = db.relatoriosGerados.filter(r => r.conteudo).map(r => ({
+                    ...r,
+                    relatorio: r.conteudo,
+                    dataEnvio: r.data || '',
+                    data: r.data || ''
+                }));
+            }
+            
+            carregarRelatoriosVisualizados();
+            atualizarNotificacoes();
+            
+            console.log('✅ Dados processados:', {
+                turmas: escolaData.turmas.length,
+                professores: escolaData.professores.length,
+                relatorios: db.relatoriosPreenchidos.length
+            });
+        }
+
+        // ============================================
+        // FUNÇÕES DE NOTAS
+        // ============================================
+        function getNotaDisciplina(turma, aluno, disciplina, bimestre) {
+            const t = normalizarTurma(turma);
+            if (!db.notas[t]) return 0;
+            if (!db.notas[t][aluno]) return 0;
+            if (!db.notas[t][aluno][disciplina]) return 0;
+            return db.notas[t][aluno][disciplina][bimestre] || 0;
+        }
+
+        function setNotaDisciplina(turma, aluno, disciplina, bimestre, valor) {
+            const t = normalizarTurma(turma);
+            if (!db.notas[t]) db.notas[t] = {};
+            if (!db.notas[t][aluno]) db.notas[t][aluno] = {};
+            if (!db.notas[t][aluno][disciplina]) db.notas[t][aluno][disciplina] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+            db.notas[t][aluno][disciplina][bimestre] = parseFloat(valor) || 0;
+        }
+
+        function calcularMediaDisciplina(turma, aluno, disciplina) {
+            let soma = 0;
+            let count = 0;
+            for (let bim = 1; bim <= 4; bim++) {
+                const nota = getNotaDisciplina(turma, aluno, disciplina, bim);
+                if (nota > 0) {
+                    soma += nota;
+                    count++;
+                }
+            }
+            return count > 0 ? soma / count : 0;
+        }
+
+        function calcularMediaGeralAluno(turma, aluno) {
+            let soma = 0;
+            let count = 0;
+            DISCIPLINAS_LIST.forEach(disciplina => {
+                const media = calcularMediaDisciplina(turma, aluno, disciplina);
+                if (media > 0) {
+                    soma += media;
+                    count++;
                 }
             });
+            return count > 0 ? soma / count : 0;
+        }
+
+        // ============================================
+        // LOGIN
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cargo = document.getElementById('cargo').value;
+            const nome = document.getElementById('nome').value.trim();
+            
+            if (!cargo || !nome) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            currentUser.cargo = cargo;
+            currentUser.nome = nome;
+            
+            if (cargo.startsWith('professor')) {
+                const prof = escolaData.professores.find(p => 
+                    normalizarNome(p.nome) === normalizarNome(nome)
+                );
+                
+                if (prof) {
+                    currentUser.turmas = db.atribuicoes[prof.id] || [];
+                } else {
+                    alert('⚠️ Professor não encontrado. Verifique seu cadastro.');
+                    return;
+                }
+            }
+            
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            
+            const config = cargoConfig[cargo] || { titulo: cargo, cores: 'professor' };
+            document.getElementById('dashboardTitle').textContent = `📊 ${config.titulo}`;
+            document.getElementById('userDisplay').textContent = `👤 ${nome}`;
+            
+            renderDashboard(cargo);
         });
-        
-        return {
-            success: true,
-            url: spreadsheet.getUrl(),
-            mensagem: 'Planilha criada com sucesso!'
+
+        // ============================================
+        // CONFIGURAÇÃO DE CARGOS
+        // ============================================
+        const cargoConfig = {
+            'direcao': { titulo: '👔 Direção', cores: 'direcao' },
+            'vice-direcao': { titulo: '👔 Vice-Direção', cores: 'direcao' },
+            'secretaria': { titulo: '📁 Secretaria Escolar', cores: 'secretaria' },
+            'coordenacao': { titulo: '📚 Coordenação Pedagógica', cores: 'coordenacao' },
+            'professor-regente': { titulo: '👨‍🏫 Professor Regente', cores: 'professor' },
+            'professor-artes': { titulo: '🎨 Professor de Artes', cores: 'especialista' },
+            'professor-musica': { titulo: '🎵 Professor de Música', cores: 'especialista' },
+            'professor-ingles': { titulo: '🌎 Professor de Inglês', cores: 'especialista' },
+            'professor-ef': { titulo: '🏃 Professor de Educação Física', cores: 'especialista' }
         };
-    } catch (error) {
-        return {
-            success: false,
-            error: error.toString()
-        };
-    }
-}
+
+        // ============================================
+        // RENDERIZAÇÃO DO DASHBOARD
+        // ============================================
+        function renderDashboard(cargo) {
+            const config = cargoConfig[cargo] || { titulo: cargo, cores: 'professor' };
+            renderCards(config);
+            
+            document.getElementById('professorArea').classList.add('hidden');
+            document.getElementById('coordenadorArea').classList.add('hidden');
+            document.getElementById('direcaoArea').classList.add('hidden');
+            
+            if (cargo.startsWith('professor')) {
+                document.getElementById('professorArea').classList.remove('hidden');
+                document.getElementById('turmasSection').classList.remove('hidden');
+                document.getElementById('registrosSection').classList.remove('hidden');
+                renderMinhasTurmas();
+            }
+            
+            if (cargo === 'coordenacao') {
+                document.getElementById('coordenadorArea').classList.remove('hidden');
+                carregarProfessoresAtribuicao();
+                carregarTurmasSelect();
+                carregarSolicitacaoTurmas();
+                renderVisaoGeralTurmas();
+                renderSolicitacoes();
+                renderRelatoriosRecebidos();
+                carregarFiltrosRelatorios();
+            }
+            
+            if (cargo === 'direcao' || cargo === 'vice-direcao') {
+                document.getElementById('direcaoArea').classList.remove('hidden');
+                renderStatsGerenciais();
+                carregarTurmasDirecao();
+            }
+        }
+
+        function renderCards(config) {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = `
+                <div class="card ${config.cores}">
+                    <h3>📌 ${config.titulo}</h3>
+                    <p>Bem-vindo ao seu painel de controle</p>
+                    <span class="badge">Acesso Ativo</span>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // TOGGLE SECTIONS
+        // ============================================
+        function toggleSection(section, event) {
+            document.querySelectorAll('.toggle-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+            const target = document.getElementById(`section-${section}`);
+            if (target) target.classList.remove('hidden');
+            
+            document.querySelectorAll('#professorArea .toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (event && event.target) event.target.classList.add('active');
+            
+            if (section === 'notas' && turmaSelecionada) carregarTabelaNotas();
+            if (section === 'presencas' && turmaSelecionada) carregarPresenca();
+            if (section === 'conteudos' && turmaSelecionada) carregarConteudos();
+            if (section === 'observacoes' && turmaSelecionada) carregarObservacoes();
+            if (section === 'relatorios' && turmaSelecionada) carregarRelatorios();
+        }
+
+        function toggleCoordenacao(section, event) {
+            document.querySelectorAll('#coordenadorArea .section-container').forEach(el => {
+                el.classList.add('hidden');
+            });
+            const target = document.getElementById(`coordenacao-${section}`);
+            if (target) target.classList.remove('hidden');
+            
+            document.querySelectorAll('#coordenadorArea .toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (event && event.target) event.target.classList.add('active');
+            
+            if (section === 'receber') {
+                renderRelatoriosRecebidos();
+                atualizarNotificacoes();
+            }
+        }
+
+        // ============================================
+        // PROFESSOR - MINHAS TURMAS
+        // ============================================
+        function renderMinhasTurmas() {
+            const container = document.getElementById('turmasContainer');
+            
+            if (currentUser.turmas.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #718096;">
+                        <p>📭 Nenhuma turma atribuída.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentUser.turmas.map(turma => `
+                <div class="turma-item ${turmaSelecionada === turma ? 'selected' : ''}" 
+                     onclick="selecionarTurma('${turma}')">
+                    ${formatarTurma(turma)}
+                    <span class="ano">Fundamental I</span>
+                    <span class="status">✅ Ativa</span>
+                </div>
+            `).join('');
+            
+            if (!turmaSelecionada && currentUser.turmas.length > 0) {
+                selecionarTurma(currentUser.turmas[0]);
+            }
+        }
+
+        function selecionarTurma(turma) {
+            turmaSelecionada = turma;
+            document.getElementById('turmaSelecionadaNome').textContent = formatarTurma(turma);
+            renderMinhasTurmas();
+            carregarTabelaNotas();
+            carregarPresenca();
+            carregarConteudos();
+            carregarObservacoes();
+            carregarRelatorios();
+            carregarAlunosSelects();
+        }
+
+        // ============================================
+        // PROFESSOR - TABELA DE NOTAS
+        // ============================================
+        function carregarTabelaNotas() {
+            if (!turmaSelecionada) return;
+            
+            const disciplina = document.getElementById('disciplinaNota').value;
+            const bimestre = parseInt(document.getElementById('bimestreNota').value);
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            const tbody = document.getElementById('tabelaNotasBody');
+            
+            document.getElementById('disciplinaNotaHeader').textContent = `${DISCIPLINAS[disciplina] || disciplina} - ${bimestre}º Bim`;
+            
+            if (alunos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #718096;">Nenhum aluno nesta turma</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = alunos.map(aluno => {
+                const nota = getNotaDisciplina(turmaSelecionada, aluno, disciplina, bimestre);
+                const media = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
+                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                return `
+                    <tr>
+                        <td><strong>${aluno}</strong></td>
+                        <td>
+                            <input type="number" class="nota-input" id="nota_${alunoId}_${disciplina}_${bimestre}" 
+                                   value="${nota}" min="0" max="10" step="0.5">
+                        </td>
+                        <td><strong>${media.toFixed(1)}</strong></td>
+                        <td>
+                            <button onclick="calcularMediaAlunoDisciplina('${aluno.replace(/'/g, "\\'")}', '${disciplina}')" 
+                                    class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">📊</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calcularMediaAlunoDisciplina(aluno, disciplina) {
+            if (!turmaSelecionada) return;
+            const media = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
+            const notas = [];
+            for (let bim = 1; bim <= 4; bim++) {
+                notas.push(getNotaDisciplina(turmaSelecionada, aluno, disciplina, bim));
+            }
+            alert(`📊 ${aluno}\n${DISCIPLINAS[disciplina] || disciplina}\n\nNotas: ${notas.join(' | ')}\nMédia: ${media.toFixed(1)}`);
+        }
+
+        function calcularMediasPorDisciplina() {
+            if (!turmaSelecionada) return;
+            const disciplina = document.getElementById('disciplinaNota').value;
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            let relatorio = `📊 Médias de ${DISCIPLINAS[disciplina] || disciplina}\nTurma: ${formatarTurma(turmaSelecionada)}\n\n`;
+            relatorio += 'Aluno | 1ºB | 2ºB | 3ºB | 4ºB | Média\n';
+            relatorio += '-'.repeat(50) + '\n';
+            
+            alunos.forEach(aluno => {
+                const notas = [];
+                for (let bim = 1; bim <= 4; bim++) {
+                    notas.push(getNotaDisciplina(turmaSelecionada, aluno, disciplina, bim));
+                }
+                const media = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
+                relatorio += `${aluno} | ${notas.join(' | ')} | ${media.toFixed(1)}\n`;
+            });
+            alert(relatorio);
+        }
+
+        async function salvarNotas() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const disciplina = document.getElementById('disciplinaNota').value;
+            const bimestre = parseInt(document.getElementById('bimestreNota').value);
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            const notasSalvas = [];
+            
+            alunos.forEach(aluno => {
+                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const input = document.getElementById(`nota_${alunoId}_${disciplina}_${bimestre}`);
+                if (input) {
+                    const valor = parseFloat(input.value) || 0;
+                    setNotaDisciplina(turmaSelecionada, aluno, disciplina, bimestre, valor);
+                    notasSalvas.push({ aluno, disciplina, bimestre, nota: valor });
+                }
+            });
+            
+            try {
+                const resultado = await chamarAPI('salvarNotas', {
+                    turma: turmaSelecionada,
+                    notas: notasSalvas,
+                    disciplina: disciplina,
+                    bimestre: bimestre
+                });
+                
+                mostrarToast(`✅ ${notasSalvas.length} notas salvas com sucesso!`, 'success');
+            } catch (error) {
+                mostrarToast('❌ Erro ao salvar notas: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // PROFESSOR - PRESENÇAS
+        // ============================================
+        function carregarPresenca() {
+            if (!turmaSelecionada) return;
+            
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            const container = document.getElementById('alunosPresenca');
+            
+            if (alunos.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma</p>';
+                return;
+            }
+            
+            container.innerHTML = alunos.map(aluno => {
+                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                return `
+                    <label>
+                        <input type="checkbox" id="pres_${alunoId}" value="${aluno}" checked>
+                        ${aluno}
+                    </label>
+                `;
+            }).join('');
+        }
+
+        async function salvarPresenca() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataPresenca').value;
+            const obs = document.getElementById('obsPresenca').value.trim();
+            const checkboxes = document.querySelectorAll('#alunosPresenca input[type="checkbox"]:checked');
+            const presentes = Array.from(checkboxes).map(cb => cb.value);
+            const todosAlunos = getAlunosByTurma(turmaSelecionada);
+            const faltantes = todosAlunos.filter(aluno => !presentes.includes(aluno));
+            
+            if (presentes.length === 0) {
+                alert('Marque pelo menos um aluno presente!');
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('salvarPresenca', {
+                    turma: turmaSelecionada,
+                    data: data,
+                    alunosPresentes: presentes,
+                    alunosFaltantes: faltantes,
+                    observacao: obs
+                });
+                
+                mostrarToast('✅ Presença salva com sucesso!', 'success');
+                document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
+                document.getElementById('obsPresenca').value = '';
+            } catch (error) {
+                mostrarToast('❌ Erro ao salvar presença: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // PROFESSOR - CONTEÚDOS
+        // ============================================
+        function carregarConteudos() {
+            const container = document.getElementById('registrosConteudos');
+            const registros = db.conteudos ? Object.values(db.conteudos).flat().filter(c => c.turma === turmaSelecionada) : [];
+            
+            if (registros.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum conteúdo registrado.</p>';
+                return;
+            }
+            
+            container.innerHTML = registros.slice(-10).reverse().map(c => `
+                <div class="registro-item">
+                    <div class="data">📚 ${c.data} - ${c.disciplina}</div>
+                    <div class="conteudo"><strong>Conteúdo:</strong> ${c.conteudo}</div>
+                </div>
+            `).join('');
+        }
+
+        async function salvarConteudo() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataConteudo').value;
+            const disciplina = document.getElementById('disciplinaConteudo').value.trim();
+            const conteudo = document.getElementById('conteudoText').value.trim();
+            const objetivos = document.getElementById('objetivosConteudo').value.trim();
+            
+            if (!conteudo) {
+                alert('Digite o conteúdo trabalhado.');
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('salvarConteudo', {
+                    turma: turmaSelecionada,
+                    data: data,
+                    disciplina: disciplina,
+                    conteudo: conteudo,
+                    objetivos: objetivos,
+                    professor: currentUser.nome
+                });
+                
+                mostrarToast('✅ Conteúdo salvo com sucesso!', 'success');
+                document.getElementById('conteudoText').value = '';
+                document.getElementById('objetivosConteudo').value = '';
+            } catch (error) {
+                mostrarToast('❌ Erro ao salvar conteúdo: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // PROFESSOR - OBSERVAÇÕES
+        // ============================================
+        function carregarObservacoes() {
+            const container = document.getElementById('registrosObservacoes');
+            container.innerHTML = '<p style="color: #718096;">Nenhuma observação registrada.</p>';
+        }
+
+        async function salvarObservacao() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const data = document.getElementById('dataObservacao').value;
+            const aluno = document.getElementById('alunoObservacao').value;
+            const observacao = document.getElementById('observacaoText').value.trim();
+            const tipo = document.getElementById('tipoObservacao').value;
+            
+            if (!observacao) {
+                alert('Digite a observação.');
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('salvarObservacao', {
+                    turma: turmaSelecionada,
+                    data: data,
+                    aluno: aluno,
+                    observacao: observacao,
+                    tipo: tipo,
+                    professor: currentUser.nome
+                });
+                
+                mostrarToast('✅ Observação salva com sucesso!', 'success');
+                document.getElementById('observacaoText').value = '';
+            } catch (error) {
+                mostrarToast('❌ Erro ao salvar observação: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // PROFESSOR - RELATÓRIOS
+        // ============================================
+        function carregarRelatorios() {
+            carregarAlunosSelects();
+            renderSolicitacoesRelatorios();
+        }
+
+        function renderSolicitacoesRelatorios() {
+            const container = document.getElementById('solicitacoesRelatorios');
+            const solicitacoes = db.solicitacoes.filter(s => s.turma === turmaSelecionada && s.status === 'Pendente');
+            
+            if (solicitacoes.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório pendente.</p>';
+                return;
+            }
+            
+            container.innerHTML = solicitacoes.map(s => `
+                <div class="registro-item" style="border-left-color: #ed8936;">
+                    <div class="data">📄 ${s.aluno} - ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'}</div>
+                    <div class="conteudo">
+                        Solicitado em: ${s.data}
+                        <span class="status-badge pendente">Pendente</span>
+                        <button onclick="prepararRelatorio('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-info" style="margin-left: 10px; padding: 4px 12px;">✏️ Preencher</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function prepararRelatorio(aluno, bimestre) {
+            document.getElementById('alunoRelatorioPreencher').value = aluno;
+            document.getElementById('bimestreRelatorioPreencher').value = bimestre;
+            document.getElementById('relatorioTexto').value = '';
+            document.getElementById('relatorioTexto').focus();
+        }
+
+        async function enviarRelatorioCoordenacao() {
+            if (!turmaSelecionada) {
+                alert('Selecione uma turma primeiro!');
+                return;
+            }
+            
+            const aluno = document.getElementById('alunoRelatorioPreencher').value;
+            const bimestre = document.getElementById('bimestreRelatorioPreencher').value;
+            const relatorioTexto = document.getElementById('relatorioTexto').value.trim();
+            
+            if (!aluno) {
+                alert('Selecione um aluno.');
+                return;
+            }
+            
+            if (!relatorioTexto) {
+                alert('Digite o relatório do aluno.');
+                return;
+            }
+            
+            const mediasDisciplinas = {};
+            DISCIPLINAS_LIST.forEach(disciplina => {
+                mediasDisciplinas[disciplina] = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
+            });
+            const mediaGeral = calcularMediaGeralAluno(turmaSelecionada, aluno);
+            
+            try {
+                const resultado = await chamarAPI('enviarRelatorio', {
+                    turma: turmaSelecionada,
+                    aluno: aluno,
+                    bimestre: bimestre,
+                    professor: currentUser.nome,
+                    notas: Object.entries(mediasDisciplinas).map(([d, m]) => `${d}: ${m.toFixed(1)}`).join(' | '),
+                    media: mediaGeral.toFixed(1),
+                    presenca: '0',
+                    observacoes: '',
+                    recomendacao: mediaGeral >= 7 ? 'Bom desempenho' : 'Necessita atenção',
+                    conteudo: relatorioTexto
+                });
+                
+                mostrarToast('✅ Relatório enviado com sucesso!', 'success');
+                document.getElementById('relatorioTexto').value = '';
+            } catch (error) {
+                mostrarToast('❌ Erro ao enviar relatório: ' + error.message, 'error');
+            }
+        }
+
+        function carregarAlunosSelects() {
+            if (!turmaSelecionada) return;
+            const alunos = getAlunosByTurma(turmaSelecionada);
+            
+            ['alunoRelatorioPreencher', 'alunoObservacao'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    const valorAtual = select.value;
+                    select.innerHTML = alunos.map(aluno =>
+                        `<option value="${aluno}" ${aluno === valorAtual ? 'selected' : ''}>${aluno}</option>`
+                    ).join('');
+                }
+            });
+        }
+
+        // ============================================
+        // COORDENADOR - VISÃO GERAL
+        // ============================================
+        function renderVisaoGeralTurmas() {
+            const tbody = document.getElementById('visaoGeralTurmas');
+            
+            if (escolaData.turmas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #718096;">Nenhuma turma cadastrada</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = escolaData.turmas.map(turma => {
+                const alunos = getAlunosByTurma(turma);
+                let somaMedias = 0;
+                let totalAlunos = 0;
+                
+                alunos.forEach(aluno => {
+                    const media = calcularMediaGeralAluno(turma, aluno);
+                    if (media > 0) {
+                        somaMedias += media;
+                        totalAlunos++;
+                    }
+                });
+                
+                const mediaGeral = totalAlunos > 0 ? (somaMedias / totalAlunos) : 0;
+                const solicitacoesPendentes = db.solicitacoes.filter(s => s.turma === turma && s.status === 'Pendente');
+                const relatoriosEnviados = db.relatoriosPreenchidos.filter(r => r.turma === turma);
+                
+                let professor = 'Não atribuído';
+                for (const [profId, turmas] of Object.entries(db.atribuicoes)) {
+                    if (turmas.includes(turma)) {
+                        const prof = escolaData.professores.find(p => p.id === profId);
+                        if (prof && prof.tipo === 'Regente') {
+                            professor = prof.nome;
+                            break;
+                        }
+                    }
+                }
+                
+                return `
+                    <tr>
+                        <td><strong>${formatarTurma(turma)}</strong></td>
+                        <td>${professor}</td>
+                        <td>${mediaGeral.toFixed(1)}</td>
+                        <td>--</td>
+                        <td>${solicitacoesPendentes.length}</td>
+                        <td>${relatoriosEnviados.length}</td>
+                        <td>
+                            <button onclick="verDetalhesTurma('${turma}')" class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">👁️ Ver</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function verDetalhesTurma(turma) {
+            alert(`📊 Detalhes da ${formatarTurma(turma)}`);
+        }
+
+        // ============================================
+        // COORDENADOR - ATRIBUIÇÃO
+        // ============================================
+        function carregarProfessoresAtribuicao() {
+            const select = document.getElementById('professorSelect');
+            select.innerHTML = '<option value="">-- Selecione --</option>';
+            
+            if (!escolaData.professores || escolaData.professores.length === 0) {
+                select.innerHTML = '<option value="">-- Nenhum professor cadastrado --</option>';
+                return;
+            }
+            
+            escolaData.professores.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.nome} (${p.tipo})`;
+                select.appendChild(option);
+            });
+            
+            renderProfessoresAtribuidos();
+        }
+
+        function carregarTurmasSelect() {
+            const select = document.getElementById('turmaSelect');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.turmas.map(t =>
+                    `<option value="${t}">${formatarTurma(t)}</option>`
+                ).join('');
+        }
+
+        function renderProfessoresAtribuidos() {
+            const container = document.getElementById('professoresAtribuidos');
+            
+            if (escolaData.professores.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhum professor cadastrado.</p>';
+                return;
+            }
+            
+            container.innerHTML = escolaData.professores.map(prof => {
+                const turmas = db.atribuicoes[prof.id] || [];
+                return `
+                    <div class="professor-item">
+                        <strong>${prof.nome}</strong>
+                        <div class="especialidade">${prof.tipo}</div>
+                        <div class="turmas-atribuidas">
+                            ${turmas.length > 0 ? turmas.map(t => 
+                                `<span class="turma-tag">${formatarTurma(t)}</span>`
+                            ).join('') : '<span style="color: #a0aec0; font-size: 0.9em;">Nenhuma turma atribuída</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function atribuirTurma() {
+            const profId = document.getElementById('professorSelect').value;
+            const turma = document.getElementById('turmaSelect').value;
+            
+            if (!profId || !turma) {
+                alert('Selecione um professor e uma turma.');
+                return;
+            }
+            
+            const prof = escolaData.professores.find(p => p.id === profId);
+            if (!prof) {
+                alert('Professor não encontrado.');
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('atribuirTurma', {
+                    professorId: profId,
+                    professorNome: prof.nome,
+                    tipo: prof.tipo || 'Regente',
+                    turma: turma
+                });
+                
+                mostrarToast(`✅ Turma ${formatarTurma(turma)} atribuída a ${prof.nome}!`, 'success');
+                await carregarDadosPlanilha();
+            } catch (error) {
+                mostrarToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function removerTurma() {
+            const profId = document.getElementById('professorSelect').value;
+            const turma = document.getElementById('turmaSelect').value;
+            
+            if (!profId || !turma) {
+                alert('Selecione um professor e uma turma.');
+                return;
+            }
+            
+            const prof = escolaData.professores.find(p => p.id === profId);
+            if (!prof) {
+                alert('Professor não encontrado.');
+                return;
+            }
+            
+            if (!confirm(`Remover a turma ${formatarTurma(turma)} do professor ${prof.nome}?`)) {
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('removerTurma', {
+                    professorId: profId,
+                    turma: turma
+                });
+                
+                mostrarToast(`✅ Turma ${formatarTurma(turma)} removida!`, 'success');
+                await carregarDadosPlanilha();
+            } catch (error) {
+                mostrarToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // COORDENADOR - SOLICITAR RELATÓRIO
+        // ============================================
+        function carregarSolicitacaoTurmas() {
+            const select = document.getElementById('solicitarTurma');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.turmas.map(t =>
+                    `<option value="${t}">${formatarTurma(t)}</option>`
+                ).join('');
+            
+            document.getElementById('solicitarTurma').onchange = function() {
+                const turma = this.value;
+                const alunoSelect = document.getElementById('solicitarAluno');
+                const alunos = turma ? getAlunosByTurma(turma) : [];
+                alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
+                    alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+            };
+        }
+
+        async function solicitarRelatorio() {
+            const turma = document.getElementById('solicitarTurma').value;
+            const aluno = document.getElementById('solicitarAluno').value;
+            const bimestre = document.getElementById('solicitarBimestre').value;
+            
+            if (!turma || !aluno) {
+                alert('Selecione a turma e o aluno.');
+                return;
+            }
+            
+            try {
+                const resultado = await chamarAPI('solicitarRelatorio', {
+                    turma: turma,
+                    aluno: aluno,
+                    bimestre: bimestre,
+                    professor: currentUser.nome
+                });
+                
+                mostrarToast('✅ Relatório solicitado com sucesso!', 'success');
+                await carregarDadosPlanilha();
+            } catch (error) {
+                mostrarToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        function renderSolicitacoes() {
+            const container = document.getElementById('listaSolicitacoes');
+            
+            if (db.solicitacoes.length === 0) {
+                container.innerHTML = '<p style="color: #718096;">Nenhuma solicitação de relatório.</p>';
+                return;
+            }
+            
+            container.innerHTML = db.solicitacoes.slice().reverse().map(s => `
+                <div class="registro-item">
+                    <div class="data">📄 ${formatarTurma(s.turma)} - ${s.aluno}</div>
+                    <div class="conteudo">
+                        ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'} - Solicitado em: ${s.data}
+                        <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // COORDENADOR - RECEBER RELATÓRIOS
+        // ============================================
+        function carregarFiltrosRelatorios() {
+            const turmaSelect = document.getElementById('filtroTurma');
+            const professorSelect = document.getElementById('filtroProfessor');
+            
+            turmaSelect.innerHTML = '<option value="">Todas as Turmas</option>' +
+                escolaData.turmas.map(t =>
+                    `<option value="${t}">${formatarTurma(t)}</option>`
+                ).join('');
+            
+            const professores = [...new Set(db.relatoriosPreenchidos.map(r => r.professor))].filter(Boolean);
+            professorSelect.innerHTML = '<option value="">Todos os Professores</option>' +
+                professores.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        function filtrarRelatorios() {
+            const turma = document.getElementById('filtroTurma').value;
+            const bimestre = document.getElementById('filtroBimestre').value;
+            const professor = document.getElementById('filtroProfessor').value;
+            const aluno = document.getElementById('filtroAluno').value.toLowerCase().trim();
+            
+            let relatorios = db.relatoriosPreenchidos || [];
+            
+            if (turma) relatorios = relatorios.filter(r => r.turma === turma);
+            if (bimestre) relatorios = relatorios.filter(r => String(r.bimestre) === String(bimestre));
+            if (professor) relatorios = relatorios.filter(r => r.professor === professor);
+            if (aluno) relatorios = relatorios.filter(r => r.aluno.toLowerCase().includes(aluno));
+            
+            renderListaRelatoriosFiltrados(relatorios);
+            atualizarStatsRelatorios(relatorios);
+        }
+
+        function atualizarStatsRelatorios(relatorios) {
+            const total = relatorios.length;
+            const naoVistos = relatorios.filter(r => {
+                const id = r.ID_Relatorio || `${r.aluno}_${r.bimestre}_${r.professor}`;
+                return !relatoriosVisualizados.has(id);
+            }).length;
+            const vistos = total - naoVistos;
+            
+            document.getElementById('totalRelatorios').textContent = total;
+            document.getElementById('novosRelatorios').textContent = naoVistos;
+            document.getElementById('vistosRelatorios').textContent = vistos;
+        }
+
+        function renderListaRelatoriosFiltrados(relatorios) {
+            const container = document.getElementById('listaRelatoriosRecebidos');
+            
+            if (relatorios.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Nenhum relatório encontrado.</p>';
+                return;
+            }
+            
+            container.innerHTML = relatorios.slice().reverse().map(r => {
+                const id = r.ID_Relatorio || `${r.aluno}_${r.bimestre}_${r.professor}`;
+                const isNovo = !relatoriosVisualizados.has(id);
+                const badgeNovo = isNovo ? '<span class="status-badge novo">🆕 Novo</span>' : '<span class="status-badge visto">✅ Visto</span>';
+                
+                const bimestreLabel = r.bimestre === 'anual' ? 'Anual' : r.bimestre + 'º Bimestre';
+                const conteudoPreview = r.relatorio ? r.relatorio.substring(0, 150) + (r.relatorio.length > 150 ? '...' : '') : 'Sem conteúdo';
+                
+                return `
+                    <div class="relatorio-card ${isNovo ? 'novo-relatorio' : ''}" id="relatorio-${id}">
+                        <div class="relatorio-header">
+                            <div>
+                                <strong>${r.aluno}</strong>
+                                <span style="color: #718096; font-size: 0.9em;"> - ${formatarTurma(r.turma)}</span>
+                                ${badgeNovo}
+                            </div>
+                            <div class="relatorio-meta">
+                                <span>📚 ${bimestreLabel}</span>
+                                <span>👨‍🏫 ${r.professor}</span>
+                                <span>📅 ${r.dataEnvio || r.data || ''}</span>
+                            </div>
+                        </div>
+                        ${r.notas ? `<div style="font-size: 0.9em; color: #718096; margin-top: 5px;">📊 ${r.notas}</div>` : ''}
+                        <div style="margin-top: 10px; color: #4a5568;">${conteudoPreview}</div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="verRelatorioCompletoCoordenacao('${r.aluno.replace(/'/g, "\\'")}', '${r.bimestre}', '${r.professor.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 4px 12px;">👁️ Ver Completo</button>
+                            ${isNovo ? `<button onclick="marcarComoVisualizado('${id}')" class="btn btn-small btn-secondary" style="padding: 4px 12px;">✅ Marcar como visto</button>` : ''}
+                            <button onclick="imprimirRelatorio('${r.aluno.replace(/'/g, "\\'")}', '${r.turma.replace(/'/g, "\\'")}', '${r.bimestre}', '${r.professor.replace(/'/g, "\\'")}')" class="btn-imprimir">🖨️ Imprimir</button>
+                        </div>
+                        ${r.dataHoraVisto ? `<div style="margin-top: 5px; font-size: 0.8em; color: #718096;">✅ Visto em: ${r.dataHoraVisto}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            atualizarStatsRelatorios(relatorios);
+        }
+
+        function renderRelatoriosRecebidos() {
+            filtrarRelatorios();
+        }
+
+        function verRelatorioCompletoCoordenacao(aluno, bimestre, professor) {
+            const relatorio = db.relatoriosPreenchidos.find(r => 
+                r.aluno === aluno && 
+                String(r.bimestre) === String(bimestre) &&
+                r.professor === professor
+            );
+            
+            if (relatorio) {
+                const id = relatorio.ID_Relatorio || `${aluno}_${bimestre}_${professor}`;
+                marcarRelatorioComoVisualizado(id);
+                filtrarRelatorios();
+                atualizarNotificacoes();
+                
+                const html = `
+                    <div class="relatorio-content">
+                        <h4>📄 Relatório do Aluno</h4>
+                        <div class="info-line"><strong>Aluno:</strong> ${relatorio.aluno}</div>
+                        <div class="info-line"><strong>Turma:</strong> ${formatarTurma(relatorio.turma)}</div>
+                        <div class="info-line"><strong>Bimestre:</strong> ${relatorio.bimestre === 'anual' ? 'Anual' : relatorio.bimestre + 'º Bimestre'}</div>
+                        <div class="info-line"><strong>Professor:</strong> ${relatorio.professor}</div>
+                        <div class="info-line"><strong>Enviado em:</strong> ${relatorio.dataEnvio || relatorio.data || ''}</div>
+                        ${relatorio.notas ? `<div class="info-line"><strong>Médias:</strong> ${relatorio.notas}</div>` : ''}
+                        ${relatorio.media ? `<div class="info-line"><strong>Média Geral:</strong> ${relatorio.media}</div>` : ''}
+                        <div class="conteudo-relatorio">
+                            <strong>Relatório:</strong>
+                            <p style="margin-top: 10px;">${relatorio.relatorio || relatorio.conteudo || 'Sem conteúdo'}</p>
+                        </div>
+                        ${relatorio.recomendacao ? `
+                            <div style="margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 8px;">
+                                <strong>💡 Recomendação:</strong>
+                                <p style="margin-top: 5px;">${relatorio.recomendacao}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                document.getElementById('modalRelatorioContent').innerHTML = html;
+                document.getElementById('modalRelatorio').classList.add('active');
+            }
+        }
+
+        function marcarComoVisualizado(id) {
+            marcarRelatorioComoVisualizado(id);
+            
+            // Envia para o GAS
+            chamarAPI('marcarRelatorioComoVisto', { idRelatorio: id })
+                .then(() => {
+                    mostrarToast('✅ Relatório marcado como visualizado!', 'success');
+                })
+                .catch(err => {
+                    console.warn('Erro ao marcar no GAS:', err);
+                });
+            
+            filtrarRelatorios();
+            atualizarNotificacoes();
+        }
+
+        async function imprimirRelatorio(aluno, turma, bimestre, professor) {
+            try {
+                const resultado = await chamarAPI('getRelatorioParaImpressao', {
+                    aluno: aluno,
+                    turma: turma,
+                    bimestre: bimestre,
+                    professor: professor
+                });
+                
+                if (resultado.success && resultado.relatorio) {
+                    const rel = resultado.relatorio;
+                    
+                    const html = `
+                        <div class="relatorio-content" id="areaImpressao">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h4>📄 Relatório do Aluno</h4>
+                                <p style="color: #718096;">E.E. Fundamental I</p>
+                            </div>
+                            <div class="info-line"><strong>Aluno:</strong> ${rel.aluno}</div>
+                            <div class="info-line"><strong>Turma:</strong> ${rel.turma}</div>
+                            <div class="info-line"><strong>Ano Letivo:</strong> 2026</div>
+                            <div style="margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 8px;">
+                                <strong>📊 Frequência:</strong>
+                                <p style="margin-top: 5px; font-size: 1.1em;">${rel.textoImpressao}</p>
+                            </div>
+                            ${rel.relatorio ? `
+                                <div style="margin-top: 15px;">
+                                    <strong>📝 Relatório do Professor:</strong>
+                                    <p style="margin-top: 10px; white-space: pre-wrap;">${rel.relatorio.conteudo || rel.relatorio.relatorio || ''}</p>
+                                </div>
+                            ` : ''}
+                            ${rel.notasPorDisciplina && Object.keys(rel.notasPorDisciplina).length > 0 ? `
+                                <div style="margin-top: 15px;">
+                                    <strong>📊 Médias por Disciplina:</strong>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px;">
+                                        ${Object.entries(rel.notasPorDisciplina).map(([disc, media]) => `
+                                            <div style="padding: 10px; background: white; border-radius: 8px; text-align: center;">
+                                                <strong>${DISCIPLINAS[disc] || disc}</strong>
+                                                <p style="font-size: 1.2em;">${media}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                                <div style="text-align: center;">
+                                    <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px;"></div>
+                                    <p style="margin-top: 5px;">Professor(a)</p>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px;"></div>
+                                    <p style="margin-top: 5px;">Coordenação</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button onclick="window.print()" class="btn btn-warning">🖨️ Imprimir</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('modalImpressaoContent').innerHTML = html;
+                    document.getElementById('modalImpressao').classList.add('active');
+                }
+            } catch (error) {
+                mostrarToast('❌ Erro ao buscar relatório: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // DIRETORIA
+        // ============================================
+        function renderStatsGerenciais() {
+            const container = document.getElementById('statsGerenciais');
+            
+            let totalAlunos = 0;
+            let totalTurmas = escolaData.turmas.length;
+            let somaMedias = 0;
+            let totalComMedia = 0;
+            
+            escolaData.turmas.forEach(turma => {
+                const alunos = getAlunosByTurma(turma);
+                totalAlunos += alunos.length;
+                
+                alunos.forEach(aluno => {
+                    const media = calcularMediaGeralAluno(turma, aluno);
+                    if (media > 0) {
+                        somaMedias += media;
+                        totalComMedia++;
+                    }
+                });
+            });
+            
+            const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
+            
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-number">${mediaGeral.toFixed(1)}</div>
+                    <div class="stat-label">Média Geral</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number">${totalAlunos}</div>
+                    <div class="stat-label">Total de Alunos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏫</div>
+                    <div class="stat-number">${totalTurmas}</div>
+                    <div class="stat-label">Turmas</div>
+                </div>
+            `;
+        }
+
+        function carregarTurmasDirecao() {
+            const select = document.getElementById('direcaoTurma');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.turmas.map(t =>
+                    `<option value="${t}">${formatarTurma(t)}</option>`
+                ).join('');
+            
+            document.getElementById('direcaoTurma').onchange = function() {
+                const turma = this.value;
+                const alunoSelect = document.getElementById('direcaoAluno');
+                const alunos = turma ? getAlunosByTurma(turma) : [];
+                alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
+                    alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+            };
+        }
+
+        function visualizarRelatorioAluno() {
+            const turma = document.getElementById('direcaoTurma').value;
+            const aluno = document.getElementById('direcaoAluno').value;
+            
+            if (!turma || !aluno) {
+                alert('Selecione a turma e o aluno.');
+                return;
+            }
+            
+            const mediaGeral = calcularMediaGeralAluno(turma, aluno);
+            
+            const html = `
+                <div class="relatorio-content">
+                    <h4>📄 Relatório do Aluno</h4>
+                    <div class="info-line"><strong>Aluno:</strong> ${aluno}</div>
+                    <div class="info-line"><strong>Turma:</strong> ${formatarTurma(turma)}</div>
+                    <div class="info-line"><strong>Média Geral:</strong> ${mediaGeral.toFixed(1)}</div>
+                    <div class="info-line"><strong>Status:</strong> ${mediaGeral >= 7 ? '✅ Aprovado' : '⚠️ Em atenção'}</div>
+                </div>
+            `;
+            
+            document.getElementById('modalRelatorioContent').innerHTML = html;
+            document.getElementById('modalRelatorio').classList.add('active');
+        }
+
+        // ============================================
+        // FUNÇÕES AUXILIARES
+        // ============================================
+        function getAlunosByTurma(turma) {
+            const normalizada = normalizarTurma(turma);
+            return escolaData.alunos[normalizada] || [];
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        function logout() {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            document.getElementById('cardsContainer').innerHTML = '';
+            document.getElementById('turmasContainer').innerHTML = '';
+            turmaSelecionada = null;
+            currentUser = { cargo: '', nome: '', turmas: [] };
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataPresenca').value = hoje;
+            document.getElementById('dataObservacao').value = hoje;
+            document.getElementById('dataConteudo').value = hoje;
+            
+            ['dataPresenca', 'dataObservacao', 'dataConteudo'].forEach(id => {
+                document.getElementById(id).max = hoje;
+            });
+            
+            console.log('🚀 Sistema iniciado!');
+            
+            setTimeout(() => {
+                carregarDadosPlanilha();
+            }, 500);
+        });
     </script>
 </body>
 </html>
