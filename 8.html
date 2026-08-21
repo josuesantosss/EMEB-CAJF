@@ -630,7 +630,6 @@
 
                         <!-- Seção de Notas -->
                         <div id="section-notas" class="toggle-section">
-                            <!-- Filtro de Bimestre -->
                             <div class="form-row-4" style="margin-bottom: 15px;">
                                 <div class="form-group">
                                     <label>Bimestre</label>
@@ -1108,7 +1107,7 @@
 
         let db = {
             atribuicoes: {},
-            notas: {}, // estrutura: { turma: { aluno: { disciplina: { bimestre: nota } } } }
+            notas: {},
             presencas: {},
             observacoes: {},
             conteudos: {},
@@ -1631,48 +1630,39 @@
         const cargoConfig = {
             'direcao': {
                 titulo: '👔 Direção',
-                cores: 'direcao',
-                funcionalidades: ['Painel Gerencial', 'Relatórios Consolidados', 'Visão Completa da Escola']
+                cores: 'direcao'
             },
             'vice-direcao': {
                 titulo: '👔 Vice-Direção',
-                cores: 'direcao',
-                funcionalidades: ['Acompanhamento Gerencial', 'Relatórios', 'Suporte à Direção']
+                cores: 'direcao'
             },
             'secretaria': {
                 titulo: '📁 Secretaria Escolar',
-                cores: 'secretaria',
-                funcionalidades: ['Matrículas', 'Documentação', 'Históricos', 'Atestados']
+                cores: 'secretaria'
             },
             'coordenacao': {
                 titulo: '📚 Coordenação Pedagógica',
-                cores: 'coordenacao',
-                funcionalidades: ['Visão por Turma', 'Atribuição de Turmas', 'Solicitar Relatórios', 'Receber Relatórios']
+                cores: 'coordenacao'
             },
             'professor-regente': {
                 titulo: '👨‍🏫 Professor Regente',
-                cores: 'professor',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                cores: 'professor'
             },
             'professor-artes': {
                 titulo: '🎨 Professor de Artes',
-                cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                cores: 'especialista'
             },
             'professor-musica': {
                 titulo: '🎵 Professor de Música',
-                cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                cores: 'especialista'
             },
             'professor-ingles': {
                 titulo: '🌎 Professor de Inglês',
-                cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                cores: 'especialista'
             },
             'professor-ef': {
                 titulo: '🏃 Professor de Educação Física',
-                cores: 'especialista',
-                funcionalidades: ['Notas Bimestrais', 'Presenças', 'Conteúdos', 'Observações', 'Relatórios']
+                cores: 'especialista'
             }
         };
 
@@ -1839,12 +1829,6 @@
                     <p>Bem-vindo ao seu painel de controle</p>
                     <span class="badge">Acesso Ativo</span>
                 </div>
-                ${config.funcionalidades.map(func => `
-                    <div class="card ${config.cores}">
-                        <h3>${func}</h3>
-                        <p>Funcionalidade disponível</p>
-                    </div>
-                `).join('')}
             `;
         }
 
@@ -1901,7 +1885,6 @@
             const alunos = getAlunosByTurma(turmaSelecionada);
             const tbody = document.getElementById('tabelaNotasBody');
             
-            // Atualiza o cabeçalho
             document.getElementById('disciplinaNotaHeader').textContent = `${DISCIPLINAS[disciplina] || disciplina} - ${bimestre}º Bim`;
 
             if (alunos.length === 0) {
@@ -2367,7 +2350,6 @@
                 return;
             }
 
-            // Calcula médias por disciplina
             const mediasDisciplinas = {};
             DISCIPLINAS_LIST.forEach(disciplina => {
                 mediasDisciplinas[disciplina] = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
