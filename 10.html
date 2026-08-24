@@ -420,6 +420,12 @@
             text-align: center;
         }
 
+        .nota-input:disabled {
+            background: #f7fafc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -443,6 +449,20 @@
 
         .checkbox-grid label:hover {
             background: #edf2f7;
+        }
+
+        .checkbox-grid label.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f7fafc;
+        }
+
+        .checkbox-grid label.disabled:hover {
+            background: #f7fafc;
+        }
+
+        .checkbox-grid label input[type="checkbox"]:disabled {
+            cursor: not-allowed;
         }
 
         .registros-list {
@@ -531,6 +551,21 @@
         .status-badge.novo {
             background: #fed7d7;
             color: #742a2a;
+        }
+
+        .status-badge.inativo {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-badge.transferido {
+            background: #fefcbf;
+            color: #744210;
+        }
+
+        .status-badge.remanejado {
+            background: #e2e8f0;
+            color: #2d3748;
         }
 
         .relatorio-card {
@@ -737,6 +772,11 @@
             border-radius: 8px;
         }
 
+        .aluno-inativo {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .form-row,
             .form-row-3,
@@ -925,10 +965,10 @@
                             <label>Status da Matrícula</label>
                             <select id="filtroStatusMatricula" onchange="filtrarMatriculasSecretaria()">
                                 <option value="">Todos</option>
-                                <option value="Ativa">✅ Ativa</option>
-                                <option value="Pendente">⏳ Pendente</option>
-                                <option value="Cancelada">❌ Cancelada</option>
-                                <option value="Concluída">📌 Concluída</option>
+                                <option value="ATIVO">✅ Ativo</option>
+                                <option value="BXTR">📤 Baixa Transferência</option>
+                                <option value="REMA">🔄 Remanejado</option>
+                                <option value="TRAN">🚫 Transferido</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: 1; min-width: 200px;">
@@ -1032,7 +1072,7 @@
                     <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
                         <h4>📊 Dados do Sistema</h4>
                         <div id="dadosSistemaSecretaria">
-                            <p><strong>Total de Alunos:</strong> <span id="infoTotalAlunos">0</span></p>
+                            <p><strong>Total de Alunos Ativos:</strong> <span id="infoTotalAlunos">0</span></p>
                             <p><strong>Total de Turmas:</strong> <span id="infoTotalTurmas">0</span></p>
                             <p><strong>Total de Professores:</strong> <span id="infoTotalProfessores">0</span></p>
                             <p><strong>Última sincronização:</strong> <span id="infoUltimaSincronizacao">-</span></p>
@@ -1079,6 +1119,15 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label>Status</label>
+                                <select id="cadAlunoStatus">
+                                    <option value="ATIVO">✅ Ativo</option>
+                                    <option value="BXTR">📤 Baixa Transferência</option>
+                                    <option value="REMA">🔄 Remanejado</option>
+                                    <option value="TRAN">🚫 Transferido</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label>Observações</label>
                                 <textarea id="cadAlunoObservacoes" rows="2"></textarea>
                             </div>
@@ -1118,9 +1167,10 @@
                                 <div class="form-group">
                                     <label>Status</label>
                                     <select id="matriculaStatus">
-                                        <option value="Ativa">✅ Ativa</option>
-                                        <option value="Pendente">⏳ Pendente</option>
-                                        <option value="Concluída">📌 Concluída</option>
+                                        <option value="ATIVO">✅ Ativo</option>
+                                        <option value="BXTR">📤 Baixa Transferência</option>
+                                        <option value="REMA">🔄 Remanejado</option>
+                                        <option value="TRAN">🚫 Transferido</option>
                                     </select>
                                 </div>
                             </div>
@@ -1192,7 +1242,7 @@
                                             <th>Aluno</th>
                                             <th id="disciplinaNotaHeader">Nota</th>
                                             <th>Média</th>
-                                            <th>Ações</th>
+                                            <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelaNotasBody"></tbody>
@@ -1529,6 +1579,31 @@
         const DISCIPLINAS_LIST = ['LP', 'MAT', 'CIE', 'HIST', 'GEO', 'ING', 'EDFIS', 'ARTE', 'MUSICA'];
 
         // ============================================
+        // MAPA DE STATUS
+        // ============================================
+        const STATUS_MAP = {
+            'ATIVO': { label: '✅ Ativo', class: 'concluido' },
+            'BXTR': { label: '📤 Baixa Transferência', class: 'inativo' },
+            'REMA': { label: '🔄 Remanejado', class: 'remanejado' },
+            'TRAN': { label: '🚫 Transferido', class: 'transferido' }
+        };
+
+        function isAlunoAtivo(status) {
+            const s = (status || '').toUpperCase().trim();
+            return s === 'ATIVO' || s === '' || s === 'ATIVO';
+        }
+
+        function getStatusLabel(status) {
+            const s = (status || '').toUpperCase().trim();
+            return STATUS_MAP[s] ? STATUS_MAP[s].label : '✅ Ativo';
+        }
+
+        function getStatusClass(status) {
+            const s = (status || '').toUpperCase().trim();
+            return STATUS_MAP[s] ? STATUS_MAP[s].class : 'concluido';
+        }
+
+        // ============================================
         // CONFIGURAÇÃO GAS
         // ============================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNOBi4UyfTxwTYltbqi9HLCqZjbZ96nxjPXwqUeQbMi3YOQ5MLlDlyXEZFlrGycTRr/exec';
@@ -1646,7 +1721,7 @@
         let escolaData = {
             turmas: [],
             turmasLabel: {},
-            alunos: {},
+            alunos: {}, // { turma: [{nome, status}] }
             professores: []
         };
 
@@ -1848,7 +1923,7 @@
                     carregarFrequenciaSelectsSecretaria();
                 }
 
-                const totalAlunos = dadosPlanilha.alunos.length;
+                const totalAlunos = dadosPlanilha.alunos.filter(a => isAlunoAtivo(a.Status)).length;
                 const totalProfessores = escolaData.professores.length;
                 const totalAtribuicoes = dadosPlanilha.atribuicoes.length;
                 const totalNotas = dadosPlanilha.notas.length;
@@ -1859,7 +1934,7 @@
                 const totalRelatorios = dadosPlanilha.relatoriosGerados.length;
 
                 const status = document.getElementById('dataStatus');
-                status.innerHTML = `✅ Dados carregados: ${totalAlunos} alunos, ${totalProfessores} professores, ${totalAtribuicoes} atribuições, ${totalNotas} notas, ${totalPresencas} presenças, ${totalConteudos} conteúdos, ${totalObservacoes} observações, ${totalSolicitacoes} solicitações, ${totalRelatorios} relatórios`;
+                status.innerHTML = `✅ Dados carregados: ${totalAlunos} alunos ativos, ${totalProfessores} professores, ${totalAtribuicoes} atribuições, ${totalNotas} notas, ${totalPresencas} presenças, ${totalConteudos} conteúdos, ${totalObservacoes} observações, ${totalSolicitacoes} solicitações, ${totalRelatorios} relatórios`;
                 
                 document.getElementById('syncStatus').className = 'sync-status synced';
                 document.getElementById('syncStatus').textContent = '✅ Sincronizado';
@@ -1875,7 +1950,7 @@
                 }
 
                 console.log('📊 Resumo dos dados carregados da planilha:', {
-                    alunos: totalAlunos,
+                    alunosAtivos: totalAlunos,
                     professores: totalProfessores,
                     atribuicoes: totalAtribuicoes,
                     notas: totalNotas,
@@ -1886,7 +1961,7 @@
                     relatoriosGerados: totalRelatorios
                 });
 
-                mostrarToast(`✅ Dados carregados com sucesso! ${totalAlunos} alunos, ${totalProfessores} professores`, 'success');
+                mostrarToast(`✅ Dados carregados com sucesso! ${totalAlunos} alunos ativos, ${totalProfessores} professores`, 'success');
 
             } catch (error) {
                 console.error('❌ Erro detalhado:', error);
@@ -2076,7 +2151,7 @@
                 .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
             console.log('👨‍🏫 Professores carregados:', escolaData.professores.length);
 
-            // 2. ALUNOS POR TURMA
+            // 2. ALUNOS POR TURMA (COM STATUS DA COLUNA M)
             const novosAlunos = {};
             escolaData.turmasLabel = {};
             
@@ -2084,7 +2159,9 @@
                 const bruta = texto(aluno.Turma);
                 const turma = normalizarTurma(bruta);
                 const nome = texto(aluno.Nome_Aluno || aluno.Nome);
-                if (!turma || !nome || !isAtivo(aluno.Ativo)) return;
+                const status = texto(aluno.Status || '').toUpperCase();
+                
+                if (!turma || !nome) return;
                 
                 if (!escolaData.turmasLabel[turma]) {
                     escolaData.turmasLabel[turma] = bruta;
@@ -2092,8 +2169,8 @@
                 if (!novosAlunos[turma]) {
                     novosAlunos[turma] = [];
                 }
-                if (!novosAlunos[turma].includes(nome)) {
-                    novosAlunos[turma].push(nome);
+                if (!novosAlunos[turma].find(a => a.nome === nome)) {
+                    novosAlunos[turma].push({ nome, status: status || 'ATIVO' });
                 }
             });
             
@@ -2233,9 +2310,25 @@
         // ============================================
         // FUNÇÕES DE UTILIDADE
         // ============================================
-        function getAlunosByTurma(turma) {
+        function getAlunosByTurma(turma, apenasAtivos = true) {
             const normalizada = normalizarTurma(turma);
-            return escolaData.alunos[normalizada] || [];
+            const alunos = escolaData.alunos[normalizada] || [];
+            if (apenasAtivos) {
+                return alunos.filter(a => isAlunoAtivo(a.status));
+            }
+            return alunos;
+        }
+
+        function getAlunosNomesByTurma(turma, apenasAtivos = true) {
+            const alunos = getAlunosByTurma(turma, apenasAtivos);
+            return alunos.map(a => a.nome);
+        }
+
+        function getStatusAluno(turma, nome) {
+            const normalizada = normalizarTurma(turma);
+            const alunos = escolaData.alunos[normalizada] || [];
+            const aluno = alunos.find(a => a.nome === nome);
+            return aluno ? aluno.status : 'ATIVO';
         }
 
         function getTurmasByProfessor(profId) {
@@ -2489,12 +2582,12 @@
         function inicializarDadosSecretaria() {
             const alunos = [];
             if (escolaData.alunos) {
-                Object.entries(escolaData.alunos).forEach(([turma, nomes]) => {
-                    nomes.forEach(nome => {
+                Object.entries(escolaData.alunos).forEach(([turma, alunosData]) => {
+                    alunosData.forEach(a => {
                         alunos.push({
-                            nome: nome,
+                            nome: a.nome,
                             turma: turma,
-                            status: 'Ativo',
+                            status: a.status || 'ATIVO',
                             dataNascimento: '',
                             responsavel: '',
                             contato: ''
@@ -2512,7 +2605,7 @@
                         turma: aluno.turma,
                         dataMatricula: new Date().toISOString().split('T')[0],
                         anoLetivo: new Date().getFullYear().toString(),
-                        status: 'Ativa',
+                        status: aluno.status || 'ATIVO',
                         observacoes: ''
                     });
                 });
@@ -2559,26 +2652,32 @@
             const matriculas = secretariaDB.matriculas || [];
             const turmas = escolaData.turmas || [];
             
-            const ativas = matriculas.filter(m => m.status === 'Ativa').length;
+            const ativos = alunos.filter(a => isAlunoAtivo(a.status)).length;
             const pendentes = matriculas.filter(m => m.status === 'Pendente').length;
+            const inativos = alunos.filter(a => !isAlunoAtivo(a.status)).length;
             
-            // Calcular frequência geral
+            // Calcular frequência geral (apenas alunos ativos)
             let totalPresencas = 0;
             let totalDias = 0;
+            const alunosAtivos = alunos.filter(a => isAlunoAtivo(a.status));
             if (db.presencas) {
                 Object.values(db.presencas).forEach(presencas => {
                     presencas.forEach(p => {
                         totalDias++;
-                        totalPresencas += p.presentes ? p.presentes.length : 0;
+                        // Conta apenas alunos ativos
+                        p.presentes.forEach(nome => {
+                            const aluno = alunosAtivos.find(a => a.nome === nome);
+                            if (aluno) totalPresencas++;
+                        });
                     });
                 });
             }
-            const totalAlunos = alunos.length;
-            const taxaFrequencia = totalDias > 0 && totalAlunos > 0 ? 
-                (totalPresencas / (totalDias * totalAlunos) * 100) : 0;
+            const totalAlunosAtivos = alunosAtivos.length;
+            const taxaFrequencia = totalDias > 0 && totalAlunosAtivos > 0 ? 
+                (totalPresencas / (totalDias * totalAlunosAtivos) * 100) : 0;
 
-            document.getElementById('totalAlunosSecretaria').textContent = totalAlunos;
-            document.getElementById('matriculasAtivas').textContent = ativas;
+            document.getElementById('totalAlunosSecretaria').textContent = alunos.length;
+            document.getElementById('matriculasAtivas').textContent = ativos;
             document.getElementById('matriculasPendentes').textContent = pendentes;
             document.getElementById('totalTurmasSecretaria').textContent = turmas.length;
             document.getElementById('taxaFrequenciaGeral').textContent = taxaFrequencia.toFixed(1) + '%';
@@ -2624,13 +2723,13 @@
             // Atualiza alunos da secretaria
             const alunos = [];
             if (escolaData.alunos) {
-                Object.entries(escolaData.alunos).forEach(([turma, nomes]) => {
-                    nomes.forEach(nome => {
-                        const existing = secretariaDB.alunos.find(a => a.nome === nome && a.turma === turma);
+                Object.entries(escolaData.alunos).forEach(([turma, alunosData]) => {
+                    alunosData.forEach(a => {
+                        const existing = secretariaDB.alunos.find(al => al.nome === a.nome && al.turma === turma);
                         alunos.push({
-                            nome: nome,
+                            nome: a.nome,
                             turma: turma,
-                            status: existing ? existing.status : 'Ativo',
+                            status: a.status || 'ATIVO',
                             dataNascimento: existing ? existing.dataNascimento : '',
                             responsavel: existing ? existing.responsavel : '',
                             contato: existing ? existing.contato : ''
@@ -2661,20 +2760,24 @@
                 return;
             }
 
-            tbody.innerHTML = alunos.map(aluno => `
-                <tr>
-                    <td><strong>${aluno.nome}</strong></td>
-                    <td>${labelTurma(aluno.turma)}</td>
-                    <td>${aluno.dataNascimento || '-'}</td>
-                    <td>${aluno.responsavel || '-'}</td>
-                    <td>${aluno.contato || '-'}</td>
-                    <td><span class="status-badge ${aluno.status === 'Ativo' ? 'concluido' : 'pendente'}">${aluno.status || 'Ativo'}</span></td>
-                    <td>
-                        <button onclick="editarAlunoSecretaria('${aluno.nome.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
-                        <button onclick="excluirAlunoSecretaria('${aluno.nome.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = alunos.map(aluno => {
+                const statusLabel = getStatusLabel(aluno.status);
+                const statusClass = getStatusClass(aluno.status);
+                return `
+                    <tr>
+                        <td><strong>${aluno.nome}</strong></td>
+                        <td>${labelTurma(aluno.turma)}</td>
+                        <td>${aluno.dataNascimento || '-'}</td>
+                        <td>${aluno.responsavel || '-'}</td>
+                        <td>${aluno.contato || '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <button onclick="editarAlunoSecretaria('${aluno.nome.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
+                            <button onclick="excluirAlunoSecretaria('${aluno.nome.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function abrirModalCadastroAluno() {
@@ -2684,6 +2787,7 @@
                 turmas.map(t => `<option value="${t}">${labelTurma(t)}</option>`).join('');
             
             document.getElementById('formCadastroAluno').reset();
+            document.getElementById('cadAlunoStatus').value = 'ATIVO';
             document.getElementById('modalCadastroAluno').classList.add('active');
         }
 
@@ -2696,6 +2800,7 @@
             const numero = document.getElementById('cadAlunoNumero').value;
             const responsavel = document.getElementById('cadAlunoResponsavel').value.trim();
             const contato = document.getElementById('cadAlunoContato').value.trim();
+            const status = document.getElementById('cadAlunoStatus').value;
             const observacoes = document.getElementById('cadAlunoObservacoes').value.trim();
 
             if (!nome || !nascimento || !turma || !responsavel || !contato) {
@@ -2711,7 +2816,7 @@
                 responsavel: responsavel,
                 contato: contato,
                 observacoes: observacoes,
-                status: 'Ativo'
+                status: status
             };
 
             try {
@@ -2721,12 +2826,12 @@
                     secretariaDB.alunos.push(payload);
                     
                     if (!escolaData.alunos[turma]) escolaData.alunos[turma] = [];
-                    if (!escolaData.alunos[turma].includes(nome)) {
-                        escolaData.alunos[turma].push(nome);
+                    if (!escolaData.alunos[turma].find(a => a.nome === nome)) {
+                        escolaData.alunos[turma].push({ nome, status });
                     }
                     
                     fecharModal('modalCadastroAluno');
-                    registrarAtividadeSecretaria('📝 Cadastro', `Aluno ${nome} cadastrado na turma ${labelTurma(turma)}`);
+                    registrarAtividadeSecretaria('📝 Cadastro', `Aluno ${nome} cadastrado na turma ${labelTurma(turma)} - ${getStatusLabel(status)}`);
                     filtrarAlunosSecretaria();
                     atualizarDashboardSecretaria();
                     mostrarToast(`✅ Aluno ${nome} cadastrado com sucesso!`, 'success');
@@ -2751,7 +2856,7 @@
             
             let encontrado = false;
             for (const turma of Object.keys(escolaData.alunos || {})) {
-                const index = escolaData.alunos[turma].indexOf(nome);
+                const index = escolaData.alunos[turma].findIndex(a => a.nome === nome);
                 if (index > -1) {
                     escolaData.alunos[turma].splice(index, 1);
                     encontrado = true;
@@ -2777,14 +2882,18 @@
             const selectAluno = document.getElementById('matriculaAluno');
             const alunos = [];
             if (escolaData.alunos) {
-                Object.values(escolaData.alunos).forEach(nomes => {
-                    nomes.forEach(nome => {
-                        if (!alunos.includes(nome)) alunos.push(nome);
+                Object.values(escolaData.alunos).forEach(alunosData => {
+                    alunosData.forEach(a => {
+                        if (!alunos.find(al => al.nome === a.nome)) {
+                            alunos.push({ nome: a.nome, status: a.status || 'ATIVO' });
+                        }
                     });
                 });
             }
             selectAluno.innerHTML = '<option value="">-- Selecione --</option>' +
-                alunos.sort().map(a => `<option value="${a}">${a}</option>`).join('');
+                alunos.sort((a, b) => a.nome.localeCompare(b.nome)).map(a => 
+                    `<option value="${a.nome}">${a.nome} (${getStatusLabel(a.status)})</option>`
+                ).join('');
 
             const selectTurma = document.getElementById('matriculaTurma');
             const turmas = escolaData.turmas || [];
@@ -2799,26 +2908,23 @@
                 return;
             }
 
-            const statusMap = {
-                'Ativa': 'concluido',
-                'Pendente': 'pendente',
-                'Cancelada': 'novo',
-                'Concluída': 'concluido'
-            };
-
-            tbody.innerHTML = matriculas.map(m => `
-                <tr>
-                    <td><strong>${m.aluno}</strong></td>
-                    <td>${labelTurma(m.turma)}</td>
-                    <td>${m.dataMatricula || '-'}</td>
-                    <td>${m.anoLetivo || '-'}</td>
-                    <td><span class="status-badge ${statusMap[m.status] || 'pendente'}">${m.status || 'Pendente'}</span></td>
-                    <td>
-                        <button onclick="editarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
-                        <button onclick="cancelarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">❌</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = matriculas.map(m => {
+                const statusLabel = getStatusLabel(m.status);
+                const statusClass = getStatusClass(m.status);
+                return `
+                    <tr>
+                        <td><strong>${m.aluno}</strong></td>
+                        <td>${labelTurma(m.turma)}</td>
+                        <td>${m.dataMatricula || '-'}</td>
+                        <td>${m.anoLetivo || '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <button onclick="editarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
+                            <button onclick="cancelarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">❌</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function filtrarMatriculasSecretaria() {
@@ -2840,40 +2946,41 @@
                 return;
             }
 
-            const statusMap = {
-                'Ativa': 'concluido',
-                'Pendente': 'pendente',
-                'Cancelada': 'novo',
-                'Concluída': 'concluido'
-            };
-
-            tbody.innerHTML = matriculas.map(m => `
-                <tr>
-                    <td><strong>${m.aluno}</strong></td>
-                    <td>${labelTurma(m.turma)}</td>
-                    <td>${m.dataMatricula || '-'}</td>
-                    <td>${m.anoLetivo || '-'}</td>
-                    <td><span class="status-badge ${statusMap[m.status] || 'pendente'}">${m.status || 'Pendente'}</span></td>
-                    <td>
-                        <button onclick="editarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
-                        <button onclick="cancelarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">❌</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = matriculas.map(m => {
+                const statusLabel = getStatusLabel(m.status);
+                const statusClass = getStatusClass(m.status);
+                return `
+                    <tr>
+                        <td><strong>${m.aluno}</strong></td>
+                        <td>${labelTurma(m.turma)}</td>
+                        <td>${m.dataMatricula || '-'}</td>
+                        <td>${m.anoLetivo || '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <button onclick="editarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-info" style="padding: 2px 8px;">✏️</button>
+                            <button onclick="cancelarMatriculaSecretaria('${m.aluno.replace(/'/g, "\\'")}')" class="btn btn-small btn-danger" style="padding: 2px 8px;">❌</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function abrirModalNovaMatricula() {
             const selectAluno = document.getElementById('matriculaAluno');
             const alunos = [];
             if (escolaData.alunos) {
-                Object.values(escolaData.alunos).forEach(nomes => {
-                    nomes.forEach(nome => {
-                        if (!alunos.includes(nome)) alunos.push(nome);
+                Object.values(escolaData.alunos).forEach(alunosData => {
+                    alunosData.forEach(a => {
+                        if (!alunos.find(al => al.nome === a.nome)) {
+                            alunos.push({ nome: a.nome, status: a.status || 'ATIVO' });
+                        }
                     });
                 });
             }
             selectAluno.innerHTML = '<option value="">-- Selecione --</option>' +
-                alunos.sort().map(a => `<option value="${a}">${a}</option>`).join('');
+                alunos.sort((a, b) => a.nome.localeCompare(b.nome)).map(a => 
+                    `<option value="${a.nome}">${a.nome} (${getStatusLabel(a.status)})</option>`
+                ).join('');
 
             const selectTurma = document.getElementById('matriculaTurma');
             const turmas = escolaData.turmas || [];
@@ -2915,7 +3022,7 @@
                     secretariaDB.matriculas.push(payload);
                     
                     fecharModal('modalNovaMatricula');
-                    registrarAtividadeSecretaria('📋 Matrícula', `Matrícula de ${aluno} na turma ${labelTurma(turma)} - ${status}`);
+                    registrarAtividadeSecretaria('📋 Matrícula', `Matrícula de ${aluno} na turma ${labelTurma(turma)} - ${getStatusLabel(status)}`);
                     carregarMatriculasSecretaria();
                     atualizarDashboardSecretaria();
                     mostrarToast(`✅ Matrícula de ${aluno} registrada com sucesso!`, 'success');
@@ -2938,8 +3045,8 @@
             
             const matricula = secretariaDB.matriculas.find(m => m.aluno === aluno);
             if (matricula) {
-                matricula.status = 'Cancelada';
-                registrarAtividadeSecretaria('❌ Cancelamento', `Matrícula de ${aluno} cancelada`);
+                matricula.status = 'TRAN';
+                registrarAtividadeSecretaria('❌ Cancelamento', `Matrícula de ${aluno} cancelada - Transferido`);
                 filtrarMatriculasSecretaria();
                 atualizarDashboardSecretaria();
                 mostrarToast(`✅ Matrícula de ${aluno} cancelada.`, 'success');
@@ -2968,17 +3075,18 @@
                 return;
             }
 
-            const alunos = getAlunosByTurma(turma);
+            const alunos = getAlunosByTurma(turma, true); // Apenas ativos
             const presencas = db.presencas[turma] || [];
 
             if (alunos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma.</p>';
+                container.innerHTML = '<p style="color: #718096;">Nenhum aluno ativo nesta turma.</p>';
                 return;
             }
 
             let html = `
                 <div class="table-container">
                     <h4 style="margin-bottom: 10px;">${labelTurma(turma)} - ${periodo === 'anual' ? 'Anual' : periodo + 'º Bimestre'}</h4>
+                    <p style="font-size: 0.9em; color: #718096; margin-bottom: 10px;">⚠️ Apenas alunos com status ATIVO são exibidos.</p>
                     <table>
                         <thead>
                             <tr>
@@ -2995,7 +3103,7 @@
             alunos.forEach(aluno => {
                 let presentes = 0;
                 presencas.forEach(p => {
-                    if (p.presentes && p.presentes.includes(aluno)) presentes++;
+                    if (p.presentes && p.presentes.includes(aluno.nome)) presentes++;
                 });
                 const total = presencas.length || 1;
                 const faltas = total - presentes;
@@ -3003,7 +3111,7 @@
 
                 html += `
                     <tr>
-                        <td><strong>${aluno}</strong></td>
+                        <td><strong>${aluno.nome}</strong></td>
                         <td>${presentes}</td>
                         <td>${faltas}</td>
                         <td>${total}</td>
@@ -3020,7 +3128,7 @@
             let totalDias = presencas.length;
             alunos.forEach(aluno => {
                 presencas.forEach(p => {
-                    if (p.presentes && p.presentes.includes(aluno)) totalPresentes++;
+                    if (p.presentes && p.presentes.includes(aluno.nome)) totalPresentes++;
                 });
             });
             const mediaTurma = totalDias > 0 ? (totalPresentes / (totalDias * alunos.length) * 100) : 0;
@@ -3052,11 +3160,16 @@
                 return;
             }
 
+            const ativos = alunos.filter(a => isAlunoAtivo(a.status));
+            const inativos = alunos.filter(a => !isAlunoAtivo(a.status));
+
             let html = `
                 <div class="relatorio-content">
                     <h4>📋 Lista de Alunos</h4>
                     <div class="info-line"><strong>Data:</strong> ${new Date().toLocaleDateString()}</div>
                     <div class="info-line"><strong>Total de Alunos:</strong> ${alunos.length}</div>
+                    <div class="info-line"><strong>✅ Ativos:</strong> ${ativos.length}</div>
+                    <div class="info-line"><strong>📤 Inativos/Transferidos:</strong> ${inativos.length}</div>
                     <div style="margin-top: 15px;">
                         <table>
                             <thead>
@@ -3073,7 +3186,7 @@
                                         <td>${i + 1}</td>
                                         <td>${a.nome}</td>
                                         <td>${labelTurma(a.turma)}</td>
-                                        <td>${a.status || 'Ativo'}</td>
+                                        <td><span class="status-badge ${getStatusClass(a.status)}">${getStatusLabel(a.status)}</span></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -3097,9 +3210,9 @@
                 return;
             }
 
-            const ativas = matriculas.filter(m => m.status === 'Ativa').length;
+            const ativas = matriculas.filter(m => m.status === 'ATIVO').length;
             const pendentes = matriculas.filter(m => m.status === 'Pendente').length;
-            const canceladas = matriculas.filter(m => m.status === 'Cancelada').length;
+            const transferidas = matriculas.filter(m => m.status === 'TRAN' || m.status === 'BXTR').length;
 
             let html = `
                 <div class="relatorio-content">
@@ -3108,7 +3221,7 @@
                     <div class="info-line"><strong>Total de Matrículas:</strong> ${matriculas.length}</div>
                     <div class="info-line"><strong>✅ Ativas:</strong> ${ativas}</div>
                     <div class="info-line"><strong>⏳ Pendentes:</strong> ${pendentes}</div>
-                    <div class="info-line"><strong>❌ Canceladas:</strong> ${canceladas}</div>
+                    <div class="info-line"><strong>📤 Transferidas/Baixas:</strong> ${transferidas}</div>
                     <div style="margin-top: 15px;">
                         <table>
                             <thead>
@@ -3125,7 +3238,7 @@
                                         <td>${m.aluno}</td>
                                         <td>${labelTurma(m.turma)}</td>
                                         <td>${m.anoLetivo || '-'}</td>
-                                        <td>${m.status || 'Pendente'}</td>
+                                        <td><span class="status-badge ${getStatusClass(m.status)}">${getStatusLabel(m.status)}</span></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -3157,7 +3270,7 @@
             `;
 
             turmas.forEach(turma => {
-                const alunos = getAlunosByTurma(turma);
+                const alunos = getAlunosByTurma(turma, true); // Apenas ativos
                 const presencas = db.presencas[turma] || [];
                 
                 if (alunos.length === 0) return;
@@ -3166,7 +3279,7 @@
                 let totalDias = presencas.length;
                 alunos.forEach(aluno => {
                     presencas.forEach(p => {
-                        if (p.presentes && p.presentes.includes(aluno)) totalPresentes++;
+                        if (p.presentes && p.presentes.includes(aluno.nome)) totalPresentes++;
                     });
                 });
                 const mediaTurma = totalDias > 0 ? (totalPresentes / (totalDias * alunos.length) * 100) : 0;
@@ -3174,16 +3287,16 @@
                 html += `
                     <div style="margin-bottom: 15px; padding: 10px; background: #f7fafc; border-radius: 8px;">
                         <h5>${labelTurma(turma)}</h5>
-                        <div><strong>Alunos:</strong> ${alunos.length}</div>
+                        <div><strong>Alunos Ativos:</strong> ${alunos.length}</div>
                         <div><strong>Frequência Média:</strong> ${mediaTurma.toFixed(1)}%</div>
                         <div style="font-size: 0.9em; color: #718096;">
                             ${alunos.map(a => {
                                 let presentes = 0;
                                 presencas.forEach(p => {
-                                    if (p.presentes && p.presentes.includes(a)) presentes++;
+                                    if (p.presentes && p.presentes.includes(a.nome)) presentes++;
                                 });
                                 const taxa = totalDias > 0 ? (presentes / totalDias * 100) : 0;
-                                return `${a}: ${taxa.toFixed(1)}%`;
+                                return `${a.nome}: ${taxa.toFixed(1)}%`;
                             }).join(' | ')}
                         </div>
                     </div>
@@ -3206,12 +3319,13 @@
             const alunos = secretariaDB.alunos || [];
             const matriculas = secretariaDB.matriculas || [];
             const turmas = escolaData.turmas || [];
+            const ativos = alunos.filter(a => isAlunoAtivo(a.status));
 
             let html = `
                 <div class="relatorio-content">
                     <h4>📄 Relatório Completo - Secretaria</h4>
                     <div class="info-line"><strong>Data:</strong> ${new Date().toLocaleDateString()}</div>
-                    <div class="info-line"><strong>Total de Alunos:</strong> ${alunos.length}</div>
+                    <div class="info-line"><strong>Total de Alunos:</strong> ${alunos.length} (${ativos.length} ativos)</div>
                     <div class="info-line"><strong>Total de Matrículas:</strong> ${matriculas.length}</div>
                     <div class="info-line"><strong>Total de Turmas:</strong> ${turmas.length}</div>
                     
@@ -3221,21 +3335,21 @@
                             <thead>
                                 <tr>
                                     <th>Turma</th>
-                                    <th>Alunos</th>
+                                    <th>Alunos Ativos</th>
                                     <th>Matrículas Ativas</th>
                                     <th>Frequência Média</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${turmas.map(turma => {
-                                    const alunosTurma = getAlunosByTurma(turma);
-                                    const matriculasTurma = matriculas.filter(m => m.turma === turma && m.status === 'Ativa');
+                                    const alunosTurma = getAlunosByTurma(turma, true);
+                                    const matriculasTurma = matriculas.filter(m => m.turma === turma && m.status === 'ATIVO');
                                     const presencas = db.presencas[turma] || [];
                                     let totalPresentes = 0;
                                     let totalDias = presencas.length;
                                     alunosTurma.forEach(aluno => {
                                         presencas.forEach(p => {
-                                            if (p.presentes && p.presentes.includes(aluno)) totalPresentes++;
+                                            if (p.presentes && p.presentes.includes(aluno.nome)) totalPresentes++;
                                         });
                                     });
                                     const media = totalDias > 0 ? (totalPresentes / (totalDias * alunosTurma.length) * 100) : 0;
@@ -3297,10 +3411,11 @@
         // ============================================
         function atualizarDadosSistemaSecretaria() {
             const alunos = secretariaDB.alunos || [];
+            const ativos = alunos.filter(a => isAlunoAtivo(a.status));
             const turmas = escolaData.turmas || [];
             const professores = escolaData.professores || [];
             
-            document.getElementById('infoTotalAlunos').textContent = alunos.length;
+            document.getElementById('infoTotalAlunos').textContent = ativos.length;
             document.getElementById('infoTotalTurmas').textContent = turmas.length;
             document.getElementById('infoTotalProfessores').textContent = professores.length;
             document.getElementById('infoUltimaSincronizacao').textContent = new Date().toLocaleString();
@@ -3373,14 +3488,14 @@
 
             const disciplina = document.getElementById('disciplinaNota').value;
             const bimestre = parseInt(document.getElementById('bimestreNota').value);
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
             const tbody = document.getElementById('tabelaNotasBody');
             
             document.getElementById('disciplinaNotaHeader').textContent = 
                 `${DISCIPLINAS[disciplina] || disciplina} - ${bimestre}º Bim`;
 
             if (alunos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #718096;">Nenhum aluno nesta turma</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #718096;">Nenhum aluno ativo nesta turma</td></tr>';
                 return;
             }
 
@@ -3396,20 +3511,25 @@
             });
 
             tbody.innerHTML = alunos.map(aluno => {
-                const nota = getNotaDisciplina(turmaSelecionada, aluno, disciplina, bimestre);
-                const media = calcularMediaDisciplina(turmaSelecionada, aluno, disciplina);
-                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const nota = getNotaDisciplina(turmaSelecionada, aluno.nome, disciplina, bimestre);
+                const media = calcularMediaDisciplina(turmaSelecionada, aluno.nome, disciplina);
+                const alunoId = aluno.nome.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const statusLabel = getStatusLabel(aluno.status);
+                const isAtivo = isAlunoAtivo(aluno.status);
                 return `
                     <tr>
-                        <td><strong>${aluno}</strong></td>
+                        <td>
+                            <strong>${aluno.nome}</strong>
+                            <span class="status-badge ${getStatusClass(aluno.status)}" style="font-size: 0.7em;">${statusLabel}</span>
+                        </td>
                         <td>
                             <input type="number" class="nota-input" id="nota_${alunoId}_${disciplina}_${bimestre}" 
-                                   value="${nota}" min="0" max="10" step="0.5">
+                                   value="${nota}" min="0" max="10" step="0.5" ${!isAtivo ? 'disabled' : ''}>
                         </td>
                         <td><strong>${media.toFixed(1)}</strong></td>
                         <td>
-                            <button onclick="calcularMediaAlunoDisciplina('${aluno.replace(/'/g, "\\'")}', '${disciplina}')" 
-                                    class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;">📊</button>
+                            <button onclick="calcularMediaAlunoDisciplina('${aluno.nome.replace(/'/g, "\\'")}', '${disciplina}')" 
+                                    class="btn btn-small btn-secondary" style="padding: 4px 8px; font-size: 12px;" ${!isAtivo ? 'disabled' : ''}>📊</button>
                         </td>
                     </tr>
                 `;
@@ -3430,7 +3550,7 @@
         function calcularMediasPorDisciplina() {
             if (!turmaSelecionada) return;
             const disciplina = document.getElementById('disciplinaNota').value;
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
             let relatorio = `📊 Médias de ${DISCIPLINAS[disciplina] || disciplina}\nTurma: ${labelTurma(turmaSelecionada)}\n\n`;
             relatorio += 'Aluno | 1ºB | 2ºB | 3ºB | 4ºB | Média\n';
             relatorio += '-'.repeat(50) + '\n';
@@ -3440,12 +3560,12 @@
                 let soma = 0;
                 let count = 0;
                 for (let bim = 1; bim <= 4; bim++) {
-                    const nota = getNotaDisciplina(turmaSelecionada, aluno, disciplina, bim);
+                    const nota = getNotaDisciplina(turmaSelecionada, aluno.nome, disciplina, bim);
                     notas.push(nota);
                     if (nota > 0) { soma += nota; count++; }
                 }
                 const media = count > 0 ? soma / count : 0;
-                relatorio += `${aluno} | ${notas.join(' | ')} | ${media.toFixed(1)}\n`;
+                relatorio += `${aluno.nome} | ${notas.join(' | ')} | ${media.toFixed(1)}\n`;
             });
             alert(relatorio);
         }
@@ -3453,11 +3573,12 @@
         function carregarTodasDisciplinas() {
             if (!turmaSelecionada) return;
             const bimestre = parseInt(document.getElementById('bimestreNota').value);
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
             
             let html = `
                 <div class="table-container">
                     <h4 style="margin-bottom: 10px;">${labelTurma(turmaSelecionada)} - ${bimestre}º Bimestre</h4>
+                    <p style="font-size: 0.9em; color: #718096; margin-bottom: 10px;">⚠️ Apenas alunos com status ATIVO são exibidos.</p>
                     <table>
                         <thead>
                             <tr>
@@ -3470,14 +3591,14 @@
             `;
 
             alunos.forEach(aluno => {
-                let medias = DISCIPLINAS_LIST.map(d => calcularMediaDisciplina(turmaSelecionada, aluno, d));
+                let medias = DISCIPLINAS_LIST.map(d => calcularMediaDisciplina(turmaSelecionada, aluno.nome, d));
                 let soma = 0, count = 0;
                 medias.forEach(m => { if (m > 0) { soma += m; count++; } });
                 const mediaGeral = count > 0 ? soma / count : 0;
                 
                 html += `
                     <tr>
-                        <td><strong>${aluno}</strong></td>
+                        <td><strong>${aluno.nome}</strong> <span class="status-badge ${getStatusClass(aluno.status)}" style="font-size: 0.7em;">${getStatusLabel(aluno.status)}</span></td>
                         ${medias.map(m => `<td>${m.toFixed(1)}</td>`).join('')}
                         <td><strong>${mediaGeral.toFixed(1)}</strong></td>
                     </tr>
@@ -3507,24 +3628,29 @@
 
             const disciplina = document.getElementById('disciplinaNota').value;
             const bimestre = parseInt(document.getElementById('bimestreNota').value);
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
             const notasSalvas = [];
 
             alunos.forEach(aluno => {
-                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const alunoId = aluno.nome.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                 const input = document.getElementById(`nota_${alunoId}_${disciplina}_${bimestre}`);
-                if (input) {
+                if (input && !input.disabled) {
                     const valor = parseFloat(input.value) || 0;
-                    setNotaDisciplina(turmaSelecionada, aluno, disciplina, bimestre, valor);
+                    setNotaDisciplina(turmaSelecionada, aluno.nome, disciplina, bimestre, valor);
                     notasSalvas.push({ 
                         turma: turmaSelecionada, 
-                        aluno, 
+                        aluno: aluno.nome, 
                         disciplina: disciplina.toUpperCase(), 
                         bimestre, 
                         nota: valor 
                     });
                 }
             });
+
+            if (notasSalvas.length === 0) {
+                mostrarToast('⚠️ Nenhuma nota para salvar.', 'warning');
+                return;
+            }
 
             try {
                 const resultado = await enviarParaGAS('salvarNotas', { 
@@ -3548,20 +3674,22 @@
         function carregarPresenca() {
             if (!turmaSelecionada) return;
 
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
             const container = document.getElementById('alunosPresenca');
 
             if (alunos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma</p>';
+                container.innerHTML = '<p style="color: #718096;">Nenhum aluno ativo nesta turma</p>';
                 return;
             }
 
             container.innerHTML = alunos.map(aluno => {
-                const alunoId = aluno.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const alunoId = aluno.nome.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const isAtivo = isAlunoAtivo(aluno.status);
                 return `
-                    <label>
-                        <input type="checkbox" id="pres_${alunoId}" value="${aluno}" checked>
-                        ${aluno}
+                    <label class="${!isAtivo ? 'disabled' : ''}">
+                        <input type="checkbox" id="pres_${alunoId}" value="${aluno.nome}" ${!isAtivo ? 'disabled' : ''} checked>
+                        ${aluno.nome}
+                        ${!isAtivo ? `<span style="font-size: 0.7em; color: #a0aec0;">(${getStatusLabel(aluno.status)})</span>` : ''}
                     </label>
                 `;
             }).join('');
@@ -3595,7 +3723,7 @@
 
             const data = document.getElementById('dataPresenca').value;
             const obs = document.getElementById('obsPresenca').value.trim();
-            const checkboxes = document.querySelectorAll('#alunosPresenca input[type="checkbox"]:checked');
+            const checkboxes = document.querySelectorAll('#alunosPresenca input[type="checkbox"]:checked:not(:disabled)');
             const presentes = Array.from(checkboxes).map(cb => cb.value);
 
             if (presentes.length === 0) {
@@ -3603,14 +3731,14 @@
                 return;
             }
 
-            const todosAlunos = getAlunosByTurma(turmaSelecionada);
-            const faltantes = todosAlunos.filter(aluno => !presentes.includes(aluno));
+            const todosAlunos = getAlunosByTurma(turmaSelecionada, true);
+            const faltantes = todosAlunos.filter(aluno => !presentes.includes(aluno.nome));
 
             const payload = {
                 turma: turmaSelecionada,
                 data: data,
                 alunosPresentes: presentes,
-                alunosFaltantes: faltantes,
+                alunosFaltantes: faltantes.map(a => a.nome),
                 observacao: obs
             };
 
@@ -3625,7 +3753,7 @@
                     renderRegistrosPresenca();
                     mostrarToast('✅ Presença salva com sucesso!', 'success');
                     
-                    document.querySelectorAll('#alunosPresenca input[type="checkbox"]').forEach(cb => cb.checked = true);
+                    document.querySelectorAll('#alunosPresenca input[type="checkbox"]:not(:disabled)').forEach(cb => cb.checked = true);
                     document.getElementById('obsPresenca').value = '';
                 } else {
                     mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
@@ -3740,6 +3868,13 @@
             const observacao = document.getElementById('observacaoText').value.trim();
             const tipo = document.getElementById('tipoObservacao').value;
 
+            // Verifica se o aluno está ativo
+            const status = getStatusAluno(turmaSelecionada, aluno);
+            if (!isAlunoAtivo(status)) {
+                mostrarToast(`⚠️ Não é possível registrar observação para aluno inativo (${getStatusLabel(status)}).`, 'warning');
+                return;
+            }
+
             if (!observacao) {
                 alert('Digite a observação.');
                 return;
@@ -3790,16 +3925,23 @@
                 return;
             }
 
-            container.innerHTML = solicitacoes.map(s => `
-                <div class="registro-item" style="border-left-color: #ed8936;">
-                    <div class="data">📄 ${s.aluno} - ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'}</div>
-                    <div class="conteudo">
-                        Solicitado em: ${s.data}
-                        <span class="status-badge pendente">Pendente</span>
-                        <button onclick="prepararRelatorio('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-info" style="margin-left: 10px; padding: 4px 12px;">✏️ Preencher</button>
+            container.innerHTML = solicitacoes.map(s => {
+                const status = getStatusAluno(turmaSelecionada, s.aluno);
+                const isAtivo = isAlunoAtivo(status);
+                return `
+                    <div class="registro-item" style="border-left-color: ${isAtivo ? '#ed8936' : '#a0aec0'};">
+                        <div class="data">📄 ${s.aluno} - ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'}</div>
+                        <div class="conteudo">
+                            Solicitado em: ${s.data}
+                            <span class="status-badge ${isAtivo ? 'pendente' : 'inativo'}">${isAtivo ? 'Pendente' : getStatusLabel(status)}</span>
+                            ${isAtivo ? 
+                                `<button onclick="prepararRelatorio('${s.aluno.replace(/'/g, "\\'")}', '${s.bimestre}')" class="btn btn-small btn-info" style="margin-left: 10px; padding: 4px 12px;">✏️ Preencher</button>` :
+                                `<span style="font-size: 0.8em; color: #a0aec0;">Aluno inativo - não é possível preencher</span>`
+                            }
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderRelatoriosEnviados() {
@@ -3828,6 +3970,12 @@
         }
 
         function prepararRelatorio(aluno, bimestre) {
+            const status = getStatusAluno(turmaSelecionada, aluno);
+            if (!isAlunoAtivo(status)) {
+                mostrarToast(`⚠️ Não é possível gerar relatório para aluno inativo (${getStatusLabel(status)}).`, 'warning');
+                return;
+            }
+            
             document.getElementById('alunoRelatorioPreencher').value = aluno;
             document.getElementById('bimestreRelatorioPreencher').value = bimestre;
             document.getElementById('relatorioTexto').value = '';
@@ -3848,6 +3996,13 @@
 
             if (!aluno) {
                 alert('Selecione um aluno.');
+                return;
+            }
+
+            // Verifica se o aluno está ativo
+            const status = getStatusAluno(turmaSelecionada, aluno);
+            if (!isAlunoAtivo(status)) {
+                mostrarToast(`⚠️ Não é possível enviar relatório para aluno inativo (${getStatusLabel(status)}).`, 'warning');
                 return;
             }
 
@@ -3962,14 +4117,14 @@
 
         function carregarAlunosSelects() {
             if (!turmaSelecionada) return;
-            const alunos = getAlunosByTurma(turmaSelecionada);
+            const alunos = getAlunosByTurma(turmaSelecionada, true); // Apenas ativos
 
             ['alunoRelatorioPreencher', 'alunoObservacao'].forEach(id => {
                 const select = document.getElementById(id);
                 if (select) {
                     const valorAtual = select.value;
                     select.innerHTML = alunos.map(aluno =>
-                        `<option value="${aluno}" ${aluno === valorAtual ? 'selected' : ''}>${aluno}</option>`
+                        `<option value="${aluno.nome}" ${aluno.nome === valorAtual ? 'selected' : ''}>${aluno.nome}</option>`
                     ).join('');
                 }
             });
@@ -3987,14 +4142,14 @@
             }
 
             tbody.innerHTML = escolaData.turmas.map(turma => {
-                const alunos = getAlunosByTurma(turma);
+                const alunos = getAlunosByTurma(turma, true); // Apenas ativos
                 let somaMedias = 0;
                 let totalAlunos = 0;
                 let totalPresencas = 0;
                 let totalDias = 0;
                 
                 alunos.forEach(aluno => {
-                    const media = calcularMediaGeralAluno(turma, aluno);
+                    const media = calcularMediaGeralAluno(turma, aluno.nome);
                     if (media > 0) {
                         somaMedias += media;
                         totalAlunos++;
@@ -4218,9 +4373,9 @@
             document.getElementById('solicitarTurma').onchange = function() {
                 const turma = this.value;
                 const alunoSelect = document.getElementById('solicitarAluno');
-                const alunos = turma ? getAlunosByTurma(turma) : [];
+                const alunos = turma ? getAlunosByTurma(turma, true) : []; // Apenas ativos
                 alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
-                    alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    alunos.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
             };
         }
 
@@ -4231,6 +4386,13 @@
 
             if (!turma || !aluno) {
                 alert('Selecione a turma e o aluno.');
+                return;
+            }
+
+            // Verifica se o aluno está ativo
+            const status = getStatusAluno(turma, aluno);
+            if (!isAlunoAtivo(status)) {
+                mostrarToast(`⚠️ Não é possível solicitar relatório para aluno inativo (${getStatusLabel(status)}).`, 'warning');
                 return;
             }
 
@@ -4274,16 +4436,21 @@
                 return;
             }
 
-            container.innerHTML = db.solicitacoes.slice().reverse().map(s => `
-                <div class="registro-item">
-                    <div class="data">📄 ${labelTurma(s.turma)} - ${s.aluno}</div>
-                    <div class="conteudo">
-                        ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'} - Solicitado em: ${s.data}
-                        <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
-                        ${s.status === 'Concluído' ? `<span style="font-size: 0.8em; color: #718096;">Concluído em: ${s.dataConclusao || ''}</span>` : ''}
+            container.innerHTML = db.solicitacoes.slice().reverse().map(s => {
+                const status = getStatusAluno(s.turma, s.aluno);
+                const isAtivo = isAlunoAtivo(status);
+                return `
+                    <div class="registro-item">
+                        <div class="data">📄 ${labelTurma(s.turma)} - ${s.aluno}</div>
+                        <div class="conteudo">
+                            ${s.bimestre === 'anual' ? 'Anual' : s.bimestre + 'º Bimestre'} - Solicitado em: ${s.data}
+                            <span class="status-badge ${s.status === 'Concluído' ? 'concluido' : 'pendente'}">${s.status}</span>
+                            ${!isAtivo ? `<span class="status-badge inativo">${getStatusLabel(status)}</span>` : ''}
+                            ${s.status === 'Concluído' ? `<span style="font-size: 0.8em; color: #718096;">Concluído em: ${s.dataConclusao || ''}</span>` : ''}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // ============================================
@@ -4550,11 +4717,11 @@
             let totalObservacoes = 0;
 
             escolaData.turmas.forEach(turma => {
-                const alunos = getAlunosByTurma(turma);
+                const alunos = getAlunosByTurma(turma, true); // Apenas ativos
                 totalAlunos += alunos.length;
                 
                 alunos.forEach(aluno => {
-                    const media = calcularMediaGeralAluno(turma, aluno);
+                    const media = calcularMediaGeralAluno(turma, aluno.nome);
                     if (media > 0) {
                         somaMedias += media;
                         totalComMedia++;
@@ -4572,7 +4739,7 @@
             });
 
             const mediaGeral = totalComMedia > 0 ? (somaMedias / totalComMedia) : 0;
-            const taxaPresenca = totalDias > 0 ? (totalPresencas / (totalDias * (totalAlunos / totalTurmas || 1)) * 100) : 0;
+            const taxaPresenca = totalDias > 0 && totalAlunos > 0 ? (totalPresencas / (totalDias * totalAlunos) * 100) : 0;
             const taxaAprovacao = mediaGeral >= 7 ? 85 : 75;
 
             container.innerHTML = `
@@ -4589,7 +4756,7 @@
                 <div class="stat-card">
                     <div class="stat-icon">👥</div>
                     <div class="stat-number">${totalAlunos}</div>
-                    <div class="stat-label">Total de Alunos</div>
+                    <div class="stat-label">Total de Alunos Ativos</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">✅</div>
@@ -4638,13 +4805,13 @@
                     <div class="info-line"><strong>Data:</strong> ${new Date().toLocaleDateString()}</div>
                     <div class="info-line"><strong>Total de Turmas:</strong> ${escolaData.turmas.length}</div>
                     <div class="info-line"><strong>Total de Professores:</strong> ${escolaData.professores.length}</div>
-                    <div class="info-line"><strong>Total de Alunos:</strong> ${Object.values(escolaData.alunos).reduce((a, b) => a + b.length, 0)}</div>
+                    <div class="info-line"><strong>Total de Alunos Ativos:</strong> ${Object.values(escolaData.alunos).reduce((acc, turma) => acc + turma.filter(a => isAlunoAtivo(a.status)).length, 0)}</div>
                     <div style="margin-top: 15px;">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Turma</th>
-                                    <th>Alunos</th>
+                                    <th>Alunos Ativos</th>
                                     <th>Média</th>
                                     <th>Presença</th>
                                     <th>Conteúdos</th>
@@ -4654,11 +4821,11 @@
                             </thead>
                             <tbody>
                                 ${escolaData.turmas.map(turma => {
-                                    const alunos = getAlunosByTurma(turma);
+                                    const alunos = getAlunosByTurma(turma, true);
                                     let somaMedias = 0;
                                     let count = 0;
                                     alunos.forEach(aluno => {
-                                        const media = calcularMediaGeralAluno(turma, aluno);
+                                        const media = calcularMediaGeralAluno(turma, aluno.nome);
                                         if (media > 0) { somaMedias += media; count++; }
                                     });
                                     const media = count > 0 ? somaMedias / count : 0;
@@ -4701,7 +4868,7 @@
                     <h4>📊 Relatório por Turma</h4>
                     <div style="margin-top: 15px;">
                         ${escolaData.turmas.map(turma => {
-                            const alunos = getAlunosByTurma(turma);
+                            const alunos = getAlunosByTurma(turma, true);
                             return `
                                 <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
                                     <h5>${labelTurma(turma)}</h5>
@@ -4712,26 +4879,31 @@
                                                 ${DISCIPLINAS_LIST.map(d => `<th>${DISCIPLINAS[d]}</th>`).join('')}
                                                 <th>Média</th>
                                                 <th>Presença</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             ${alunos.map(aluno => {
-                                                const medias = DISCIPLINAS_LIST.map(d => calcularMediaDisciplina(turma, aluno, d));
-                                                const mediaGeral = calcularMediaGeralAluno(turma, aluno);
+                                                const medias = DISCIPLINAS_LIST.map(d => calcularMediaDisciplina(turma, aluno.nome, d));
+                                                const mediaGeral = calcularMediaGeralAluno(turma, aluno.nome);
                                                 
                                                 const presencas = db.presencas[turma] || [];
                                                 let totalPres = 0, totalDias = presencas.length;
                                                 presencas.forEach(p => {
-                                                    if (p.presentes.includes(aluno)) totalPres++;
+                                                    if (p.presentes.includes(aluno.nome)) totalPres++;
                                                 });
                                                 const taxaPres = totalDias > 0 ? (totalPres / totalDias * 100) : 0;
                                                 
+                                                const statusLabel = getStatusLabel(aluno.status);
+                                                const statusClass = getStatusClass(aluno.status);
+                                                
                                                 return `
                                                     <tr>
-                                                        <td>${aluno}</td>
+                                                        <td>${aluno.nome}</td>
                                                         ${medias.map(m => `<td>${m.toFixed(1)}</td>`).join('')}
                                                         <td><strong>${mediaGeral.toFixed(1)}</strong></td>
                                                         <td>${taxaPres.toFixed(1)}%</td>
+                                                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                                                     </tr>
                                                 `;
                                             }).join('')}
@@ -4765,7 +4937,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>Turma</th>
-                                                    <th>Alunos</th>
+                                                    <th>Alunos Ativos</th>
                                                     <th>Média Geral</th>
                                                     <th>Presença</th>
                                                     <th>Conteúdos</th>
@@ -4773,10 +4945,10 @@
                                             </thead>
                                             <tbody>
                                                 ${turmas.map(turma => {
-                                                    const alunos = getAlunosByTurma(turma);
+                                                    const alunos = getAlunosByTurma(turma, true);
                                                     let somaMedias = 0, count = 0;
                                                     alunos.forEach(aluno => {
-                                                        const media = calcularMediaGeralAluno(turma, aluno);
+                                                        const media = calcularMediaGeralAluno(turma, aluno.nome);
                                                         if (media > 0) { somaMedias += media; count++; }
                                                     });
                                                     const media = count > 0 ? somaMedias / count : 0;
@@ -4824,9 +4996,9 @@
             document.getElementById('direcaoTurma').onchange = function() {
                 const turma = this.value;
                 const alunoSelect = document.getElementById('direcaoAluno');
-                const alunos = turma ? getAlunosByTurma(turma) : [];
+                const alunos = turma ? getAlunosByTurma(turma, true) : []; // Apenas ativos
                 alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
-                    alunos.map(a => `<option value="${a}">${a}</option>`).join('');
+                    alunos.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
             };
         }
 
@@ -4839,6 +5011,9 @@
                 return;
             }
 
+            const status = getStatusAluno(turma, aluno);
+            const statusLabel = getStatusLabel(status);
+            
             const notas = {};
             DISCIPLINAS_LIST.forEach(disciplina => {
                 notas[disciplina] = calcularMediaDisciplina(turma, aluno, disciplina);
@@ -4864,12 +5039,14 @@
                     <h4>📄 Relatório Completo do Aluno</h4>
                     <div class="info-line"><strong>Aluno:</strong> ${aluno}</div>
                     <div class="info-line"><strong>Turma:</strong> ${labelTurma(turma)}</div>
+                    <div class="info-line"><strong>Status:</strong> <span class="status-badge ${getStatusClass(status)}">${statusLabel}</span></div>
                     <div class="info-line"><strong>Data:</strong> ${new Date().toLocaleDateString()}</div>
+                    ${!isAlunoAtivo(status) ? `<div class="info-line" style="color: #f56565;">⚠️ Aluno inativo - dados históricos</div>` : ''}
                     <div style="margin-top: 15px;">
                         <strong>Médias por Disciplina:</strong><br>
                         ${DISCIPLINAS_LIST.map(d => `${DISCIPLINAS[d]}: <strong>${notas[d].toFixed(1)}</strong>`).join(' | ')}
                         <br><strong>Média Geral:</strong> ${mediaGeral.toFixed(1)}
-                        <br><strong>Status:</strong> ${mediaGeral >= 7 ? '✅ Aprovado' : mediaGeral >= 5 ? '⚠️ Recuperação' : '❌ Reprovado'}
+                        <br><strong>Status Acadêmico:</strong> ${mediaGeral >= 7 ? '✅ Aprovado' : mediaGeral >= 5 ? '⚠️ Recuperação' : '❌ Reprovado'}
                     </div>
                     <div style="margin-top: 10px;">
                         <strong>Frequência:</strong> ${taxaPresenca.toFixed(1)}% (${totalPresencas}/${totalDias} dias)
