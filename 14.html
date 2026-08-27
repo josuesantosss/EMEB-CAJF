@@ -5250,7 +5250,7 @@
             if (match) {
                 const num = parseInt(match[1]);
                 const extenso = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto'];
-                anoTexto = `${extenso[num-1] || num}º`;
+                anoTexto = `${extenso[num-1] || num}`;
             }
 
             const raCompleto = dadosAluno.ra ? `${dadosAluno.ra}${dadosAluno.digra ? '-' + dadosAluno.digra : ''}${dadosAluno.ufra ? '/' + dadosAluno.ufra : ''}` : '';
