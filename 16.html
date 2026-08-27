@@ -2594,7 +2594,7 @@
                 const vinculo = texto(prof.Vínculo || prof.Vinculo || 'Efetivo');
                 const etnia = texto(prof.Etnia || '');
                 const telefone = texto(prof.Telefone || '');
-                const email = texto(prof.E-mail || prof.Email || '');
+                const email = texto(prof.Email || prof['E-mail'] || '');  // CORREÇÃO: usar email
                 const status = texto(prof.Status || 'ATIVO');
                 
                 if (id && nome) {
@@ -2605,7 +2605,7 @@
                         vinculo, 
                         etnia, 
                         telefone, 
-                        email, 
+                        email,  // CORREÇÃO: email
                         status: status.toUpperCase()
                     });
                 }
