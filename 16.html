@@ -889,6 +889,44 @@
             border-color: #4299e1;
             box-shadow: 0 0 0 3px rgba(66,153,225,0.1);
         }
+
+        /* Garante que a listagem da tabela não tenha scroll e expanda verticalmente */
+        #section-presencas .table-container {
+            max-height: none !important;
+            overflow-y: visible !important;
+            overflow-x: hidden !important;
+        }
+
+        #alunosPresencaTabela tr {
+            display: table-row !important;
+        }
+
+        /* Estilos para a tabela de presenças */
+        #alunosPresencaTabela td {
+            padding: 8px 12px;
+            vertical-align: middle;
+        }
+
+        #alunosPresencaTabela .presenca-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #48bb78;
+        }
+
+        #alunosPresencaTabela .presenca-checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        #alunosPresencaTabela tr.inativo {
+            opacity: 0.5;
+            background-color: #f7fafc;
+        }
+
+        #alunosPresencaTabela tr.inativo .presenca-checkbox {
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -1512,7 +1550,7 @@
                             </div>
                         </div>
 
-                        <!-- Seção de Presenças -->
+                        <!-- Seção de Presenças - MODIFICADA -->
                         <div id="section-presencas" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
@@ -1524,11 +1562,27 @@
                                     <input type="text" id="obsPresenca" placeholder="Ex: Aula sobre adição">
                                 </div>
                             </div>
+                            
                             <div class="form-group">
                                 <label>Alunos Presentes</label>
-                                <div id="alunosPresenca" class="checkbox-grid lista-alunos-sem-scroll"></div>
+                                <!-- Tabela configurada sem barra de rolagem e com colunas específicas -->
+                                <div class="table-container" style="max-height: none !important; overflow-y: visible !important;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 15%; text-align: center;">Nº do Aluno</th>
+                                                <th style="width: 70%;">Nome do Aluno</th>
+                                                <th style="width: 15%; text-align: center;">Presença</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="alunosPresencaTabela">
+                                            <!-- Os alunos serão injetados dinamicamente aqui via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
+                            
+                            <button onclick="salvarPresenca()" class="btn btn-secondary btn-small" style="margin-top: 15px;">✅ Salvar Presença</button>
                             <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
 
@@ -2594,7 +2648,7 @@
                 const vinculo = texto(prof.Vínculo || prof.Vinculo || 'Efetivo');
                 const etnia = texto(prof.Etnia || '');
                 const telefone = texto(prof.Telefone || '');
-                const email = texto(prof.Email || prof['E-mail'] || '');  // CORREÇÃO: usar email
+                const email = texto(prof.Email || prof['E-mail'] || '');
                 const status = texto(prof.Status || 'ATIVO');
                 
                 if (id && nome) {
@@ -2605,7 +2659,7 @@
                         vinculo, 
                         etnia, 
                         telefone, 
-                        email,  // CORREÇÃO: email
+                        email,
                         status: status.toUpperCase()
                     });
                 }
@@ -4287,35 +4341,45 @@
         }
 
         // ============================================
-        // PROFESSOR - PRESENÇAS
+        // PROFESSOR - PRESENÇAS (MODIFICADA)
         // ============================================
         function carregarPresenca() {
             if (!turmaSelecionada) return;
-
+            
             const alunos = getAlunosByTurma(turmaSelecionada, false);
-            const container = document.getElementById('alunosPresenca');
-
+            const container = document.getElementById('alunosPresencaTabela');
+            
+            if (!container) return;
+            
             if (alunos.length === 0) {
-                container.innerHTML = '<p style="color: #718096;">Nenhum aluno nesta turma</p>';
+                container.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #718096;">Nenhum aluno encontrado nesta turma.</td></tr>`;
                 return;
             }
-
-            alunos.sort((a, b) => (a.numero || 999) - (b.numero || 999));
-
+            
+            // Ordena por número da chamada
+            alunos.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+            
             container.innerHTML = alunos.map(aluno => {
                 const isAtivo = isAlunoAtivo(aluno.status);
                 const statusLabel = getStatusLabel(aluno.status);
                 return `
-                    <label class="${!isAtivo ? 'disabled aluno-presenca-item' : 'aluno-presenca-item'}" style="display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <span class="numero" style="font-weight: bold; color: #2d3748; min-width: 35px; font-size: 0.9em;">${aluno.numero || '-'}</span>
-                        <span class="nome" style="flex: 1; font-size: 0.95em;">${aluno.nome}</span>
-                        <input type="checkbox" id="pres_${aluno.nome.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '')}" 
-                               value="${aluno.nome}" ${isAtivo ? 'checked' : ''} ${!isAtivo ? 'disabled' : ''}>
-                        ${!isAtivo ? `<span style="font-size: 0.7em; color: #a0aec0; margin-left: 5px;">(${statusLabel})</span>` : ''}
-                    </label>
+                    <tr class="${!isAtivo ? 'inativo' : ''}">
+                        <td style="text-align: center; font-weight: bold; color: #2d3748;">${aluno.numero || '-'}</td>
+                        <td>${aluno.nome} ${!isAtivo ? `<span style="font-size: 0.7em; color: #a0aec0;">(${statusLabel})</span>` : ''}</td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="presenca-checkbox" data-aluno="${aluno.nome}" ${isAtivo ? 'checked' : ''} ${!isAtivo ? 'disabled' : ''}>
+                        </td>
+                    </tr>
                 `;
             }).join('');
-
+            
+            // Define a data de hoje por padrão se estiver vazia
+            const inputData = document.getElementById('dataPresenca');
+            if (inputData && !inputData.value) {
+                const hoje = new Date().toISOString().split('T')[0];
+                inputData.value = hoje;
+            }
+            
             renderRegistrosPresenca();
         }
 
@@ -4347,8 +4411,8 @@
             const data = dataInput ? formatarDataParaPlanilha(dataInput) : getDataAtualFormatada();
             const obs = document.getElementById('obsPresenca').value.trim();
             
-            const checkboxes = document.querySelectorAll('#alunosPresenca input[type="checkbox"]:checked:not(:disabled)');
-            const presentes = Array.from(checkboxes).map(cb => cb.value);
+            const checkboxes = document.querySelectorAll('#alunosPresencaTabela input[type="checkbox"]:checked:not(:disabled)');
+            const presentes = Array.from(checkboxes).map(cb => cb.dataset.aluno || cb.value);
 
             if (presentes.length === 0) {
                 alert('Marque pelo menos um aluno presente!');
@@ -4378,7 +4442,7 @@
                     renderRegistrosPresenca();
                     mostrarToast('✅ Presença salva com sucesso!', 'success');
                     
-                    document.querySelectorAll('#alunosPresenca input[type="checkbox"]:not(:disabled)').forEach(cb => cb.checked = true);
+                    document.querySelectorAll('#alunosPresencaTabela input[type="checkbox"]:not(:disabled)').forEach(cb => cb.checked = true);
                     document.getElementById('obsPresenca').value = '';
                 } else {
                     mostrarToast(`❌ Erro ao salvar: ${resultado.error}`, 'error');
