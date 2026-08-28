@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Escolar - Gestão Completa</title>
+    <title>Sistema de Gestão Escolar - Fundamental I</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,28 +18,39 @@
 
     <div class="container">
         <div class="header">
-            <h1>🏫 Sistema de Gestão Escolar</h1>
-            <p class="subtitle">Fundamental I - Gestão Completa</p>
+            <div>
+                <h1>🏫 Sistema de Gestão - EMEF Cel. Aureliano Junqueira Franco</h1>
+                <p class="subtitle">Fundamental I - Gestão Completa</p>
+            </div>
             <div class="badge-google">📊 Integrado com Google Sheets</div>
         </div>
 
         <!-- Tela de Login -->
         <div id="loginContainer" class="login-container">
             <h2>🔐 Acesso ao Sistema</h2>
-            <div id="loginError" class="login-error">❌ Usuário ou senha inválidos. Tente novamente.</div>
+            <div class="login-info">
+                <strong>📌 Professores:</strong>
+                <span>Use o nome conforme cadastrado na planilha (ex: Maria Helena).</span>
+            </div>
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginUsuario">Selecione seu Nome</label>
-                    <select id="loginUsuario" required>
-                        <option value="">-- Selecione --</option>
+                    <label for="cargo">Selecione seu Cargo</label>
+                    <select id="cargo" required>
+                        <option value="">-- Escolha --</option>
+                        <option value="direcao">👔 Direção</option>
+                        <option value="vice-direcao">👔 Vice-Direção</option>
+                        <option value="secretaria">📁 Secretaria Escolar</option>
+                        <option value="coordenacao">📚 Coordenação Pedagógica</option>
+                        <option value="professor-regente">👨‍🏫 Professor Regente</option>
+                        <option value="professor-artes">🎨 Professor de Artes</option>
+                        <option value="professor-musica">🎵 Professor de Música</option>
+                        <option value="professor-ingles">🌎 Professor de Inglês</option>
+                        <option value="professor-ef">🏃 Professor de Educação Física</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="loginSenha">Senha</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="loginSenha" placeholder="Digite sua senha" required autocomplete="current-password">
-                        <button type="button" class="password-toggle" onclick="toggleSenha()" aria-label="Mostrar/ocultar senha">👁️</button>
-                    </div>
+                    <label for="nome">Seu Nome</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome conforme cadastrado na planilha" required style="text-transform: uppercase;">
                 </div>
                 <button type="submit" class="btn">Entrar no Sistema</button>
             </form>
@@ -65,6 +76,559 @@
             <!-- Cards dinâmicos -->
             <div id="cardsContainer" class="cards-grid"></div>
 
+            <!-- ÁREA DA SECRETARIA -->
+            <div id="secretariaArea" class="hidden">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="toggle-btn active" onclick="toggleSecretaria('dashboard', event)">📊 Dashboard</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('alunos', event)">👥 Gestão de Alunos</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('matriculas', event)">📋 Matrículas</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('professores', event)">👨‍🏫 Gestão de Professores</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('frequencia', event)">✅ Frequência</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('atestados', event)">📋 Atestados</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('relatorios', event)">📄 Relatórios</button>
+                    <button class="toggle-btn" onclick="toggleSecretaria('configuracoes', event)">⚙️ Configurações</button>
+                </div>
+
+                <!-- Dashboard da Secretaria -->
+                <div id="secretaria-dashboard" class="section-container">
+                    <h3>📊 Painel da Secretaria</h3>
+                    <div class="stats-grid" id="secretariaStats">
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-number" id="totalAlunosSecretaria">0</div>
+                            <div class="stat-label">Total de Alunos Ativos</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #48bb78;">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-number" id="matriculasAtivas">0</div>
+                            <div class="stat-label">Matrículas Ativas</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #ed8936;">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-number" id="matriculasPendentes">0</div>
+                            <div class="stat-label">Matrículas Pendentes</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #4299e1;">
+                            <div class="stat-icon">🏫</div>
+                            <div class="stat-number" id="totalTurmasSecretaria">0</div>
+                            <div class="stat-label">Turmas</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #9f7aea;">
+                            <div class="stat-icon">👨‍🏫</div>
+                            <div class="stat-number" id="totalProfessoresSecretaria">0</div>
+                            <div class="stat-label">Professores</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #f56565;">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-number" id="totalRelatoriosSecretaria">0</div>
+                            <div class="stat-label">Relatórios Gerados</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #ed8936;">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-number" id="totalAtestadosSecretaria">0</div>
+                            <div class="stat-label">Atestados Registrados</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h4>📌 Últimas Atividades</h4>
+                        <div id="ultimasAtividades" class="registros-list">
+                            <p style="color: #718096;">Nenhuma atividade registrada.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestão de Alunos -->
+                <div id="secretaria-alunos" class="section-container hidden">
+                    <h3>👥 Gestão de Alunos</h3>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Filtrar por Turma</label>
+                            <select id="filtroTurmaSecretaria" onchange="filtrarAlunosSecretaria()">
+                                <option value="">Todas as Turmas</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Buscar Aluno</label>
+                            <input type="text" id="buscaAlunoSecretaria" placeholder="Digite o nome..." oninput="filtrarAlunosSecretaria()">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="abrirModalCadastroAluno()" class="btn btn-secondary">➕ Novo Aluno</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nº</th>
+                                    <th>Nome</th>
+                                    <th>Turma</th>
+                                    <th>Série</th>
+                                    <th>RA</th>
+                                    <th>Data Nascimento</th>
+                                    <th>Status</th>
+                                    <th>Situação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaAlunosSecretaria">
+                                <tr><td colspan="9" style="text-align: center; color: #718096;">Carregando alunos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Matrículas -->
+                <div id="secretaria-matriculas" class="section-container hidden">
+                    <h3>📋 Gestão de Matrículas</h3>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Status da Matrícula</label>
+                            <select id="filtroStatusMatricula" onchange="filtrarMatriculasSecretaria()">
+                                <option value="">Todos</option>
+                                <option value="ATIVO">✅ Ativo</option>
+                                <option value="BXTR">📤 Baixa Transferência</option>
+                                <option value="REMA">🔄 Remanejado</option>
+                                <option value="TRAN">🚫 Transferido</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Buscar</label>
+                            <input type="text" id="buscaMatriculaSecretaria" placeholder="Nome do aluno..." oninput="filtrarMatriculasSecretaria()">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="abrirModalNovaMatricula()" class="btn btn-secondary">➕ Nova Matrícula</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Turma</th>
+                                    <th>Data Matrícula</th>
+                                    <th>Ano Letivo</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaMatriculasSecretaria">
+                                <tr><td colspan="6" style="text-align: center; color: #718096;">Carregando matrículas...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Gestão de Professores -->
+                <div id="secretaria-professores" class="section-container hidden">
+                    <h3>👨‍🏫 Gestão de Professores</h3>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Filtrar por Tipo</label>
+                            <select id="filtroTipoProfessor" onchange="filtrarProfessoresSecretaria()">
+                                <option value="">Todos</option>
+                                <option value="Efetivo">Efetivo</option>
+                                <option value="Contratado">Contratado</option>
+                                <option value="Substituto">Substituto</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Buscar Professor</label>
+                            <input type="text" id="buscaProfessorSecretaria" placeholder="Digite o nome..." oninput="filtrarProfessoresSecretaria()">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="abrirModalCadastroProfessor()" class="btn btn-secondary">➕ Novo Professor</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Vínculo</th>
+                                    <th>Etnia</th>
+                                    <th>Telefone</th>
+                                    <th>E-mail</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaProfessoresSecretaria">
+                                <tr><td colspan="8" style="text-align: center; color: #718096;">Carregando professores...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Frequência -->
+                <div id="secretaria-frequencia" class="section-container hidden">
+                    <h3>✅ Relatório de Frequência</h3>
+                    
+                    <div class="form-row" style="margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Turma</label>
+                            <select id="frequenciaTurmaSelect" onchange="carregarFrequenciaSecretaria()">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Período</label>
+                            <select id="frequenciaPeriodo" onchange="carregarFrequenciaSecretaria()">
+                                <option value="1">1º Bimestre</option>
+                                <option value="2">2º Bimestre</option>
+                                <option value="3">3º Bimestre</option>
+                                <option value="4">4º Bimestre</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="carregarFrequenciaSecretaria()" class="btn btn-info btn-small">📊 Carregar</button>
+                        </div>
+                    </div>
+
+                    <div id="frequenciaResultados">
+                        <p style="color: #718096;">Selecione uma turma para visualizar a frequência.</p>
+                    </div>
+                </div>
+
+                <!-- Atestados -->
+                <div id="secretaria-atestados" class="section-container hidden">
+                    <h3>📋 Gestão de Atestados</h3>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label>Selecione a Turma</label>
+                            <select id="atestadoTurmaSelect" onchange="carregarAtestados()">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="salvarAtestados()" class="btn btn-secondary btn-small">💾 Salvar Atestados</button>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="limparAtestados()" class="btn btn-danger btn-small">🗑️ Limpar Tudo</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container" id="atestadosContainer">
+                        <table id="tabelaAtestados" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%; text-align: left;">Nome do Aluno</th>
+                                    <th style="width: 10%; text-align: center;">Atestado</th>
+                                    <th style="width: 25%; text-align: center;">Data do Atestado</th>
+                                    <th style="width: 15%; text-align: center;">Dias Afastado</th>
+                                    <th style="width: 15%; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaAtestadosBody">
+                                <tr><td colspan="5" style="text-align: center; color: #718096;">Selecione uma turma para visualizar os alunos.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 10px; background: #f7fafc; border-radius: 8px;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div><strong>📊 Resumo:</strong></div>
+                            <div id="atestadosResumo">
+                                <span>Total de alunos: <strong id="totalAlunosAtestados">0</strong></span>
+                                <span style="margin-left: 20px;">Com atestado: <strong id="totalComAtestado">0</strong></span>
+                                <span style="margin-left: 20px;">Sem atestado: <strong id="totalSemAtestado">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <h4>📋 Histórico de Atestados</h4>
+                        <div id="historicoAtestados" class="registros-list">
+                            <p style="color: #718096;">Nenhum atestado registrado.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Relatórios -->
+                <div id="secretaria-relatorios" class="section-container hidden">
+                    <h3>📄 Relatórios da Secretaria</h3>
+                    
+                    <div class="btn-group" style="margin-bottom: 20px;">
+                        <button onclick="gerarRelatorioAlunosSecretaria()" class="btn btn-secondary btn-small">📋 Lista de Alunos</button>
+                        <button onclick="gerarRelatorioMatriculasSecretaria()" class="btn btn-secondary btn-small">📋 Matrículas</button>
+                        <button onclick="gerarRelatorioFrequenciaSecretaria()" class="btn btn-secondary btn-small">📊 Frequência</button>
+                        <button onclick="gerarRelatorioAtestadosSecretaria()" class="btn btn-secondary btn-small">📋 Atestados</button>
+                        <button onclick="gerarRelatorioCompletoSecretaria()" class="btn btn-secondary btn-small">📄 Relatório Completo</button>
+                    </div>
+
+                    <div id="relatorioSecretariaOutput" style="margin-top: 20px;">
+                        <p style="color: #718096;">Clique em um botão acima para gerar um relatório.</p>
+                    </div>
+                </div>
+
+                <!-- Configurações -->
+                <div id="secretaria-configuracoes" class="section-container hidden">
+                    <h3>⚙️ Configurações da Secretaria</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ano Letivo Atual</label>
+                            <input type="number" id="anoLetivoSecretaria" value="2026" min="2020" max="2030">
+                        </div>
+                        <div class="form-group">
+                            <label>Período de Matrículas</label>
+                            <select id="periodoMatriculas">
+                                <option value="aberto">🟢 Aberto</option>
+                                <option value="fechado">🔴 Fechado</option>
+                                <option value="previsto">🟡 Previsto</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="salvarConfiguracoesSecretaria()" class="btn btn-secondary">💾 Salvar Configurações</button>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                        <h4>📊 Dados do Sistema</h4>
+                        <div id="dadosSistemaSecretaria">
+                            <p><strong>Total de Alunos Ativos:</strong> <span id="infoTotalAlunos">0</span></p>
+                            <p><strong>Total de Turmas:</strong> <span id="infoTotalTurmas">0</span></p>
+                            <p><strong>Total de Professores:</strong> <span id="infoTotalProfessores">0</span></p>
+                            <p><strong>Total de Atestados:</strong> <span id="infoTotalAtestados">0</span></p>
+                            <p><strong>Última sincronização:</strong> <span id="infoUltimaSincronizacao">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para cadastro de aluno -->
+                <div id="modalCadastroAluno" class="modal-overlay">
+                    <div class="modal-content">
+                        <span class="modal-close" onclick="fecharModal('modalCadastroAluno')">&times;</span>
+                        <h2>📝 Cadastro de Aluno</h2>
+                        <form id="formCadastroAluno">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nome Completo *</label>
+                                    <input type="text" id="cadAlunoNome" required style="text-transform: uppercase;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Nascimento *</label>
+                                    <input type="date" id="cadAlunoNascimento" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Turma *</label>
+                                    <select id="cadAlunoTurma" required>
+                                        <option value="">-- Selecione --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Série</label>
+                                    <select id="cadAlunoSerie">
+                                        <option value="">-- Selecione --</option>
+                                        <option value="1º Ano">1º Ano</option>
+                                        <option value="2º Ano">2º Ano</option>
+                                        <option value="3º Ano">3º Ano</option>
+                                        <option value="4º Ano">4º Ano</option>
+                                        <option value="5º Ano">5º Ano</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número da Chamada</label>
+                                    <input type="number" id="cadAlunoNumero" min="1" max="50">
+                                </div>
+                                <div class="form-group">
+                                    <label>RA</label>
+                                    <input type="text" id="cadAlunoRA" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Digito RA</label>
+                                    <input type="text" id="cadAlunoDigRA" maxlength="1" style="text-transform: uppercase;">
+                                </div>
+                                <div class="form-group">
+                                    <label>UF-RA</label>
+                                    <input type="text" id="cadAlunoUFRA" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Responsável</label>
+                                    <input type="text" id="cadAlunoResponsavel" style="text-transform: uppercase;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Contato</label>
+                                    <input type="tel" id="cadAlunoContato">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="cadAlunoStatus">
+                                        <option value="ATIVO">✅ Ativo</option>
+                                        <option value="BXTR">📤 Baixa Transferência</option>
+                                        <option value="REMA">🔄 Remanejado</option>
+                                        <option value="TRAN">🚫 Transferido</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Situação</label>
+                                    <select id="cadAlunoSituacao">
+                                        <option value="">-- Selecione --</option>
+                                        <option value="Regular">Regular</option>
+                                        <option value="Irregular">Irregular</option>
+                                        <option value="Trancado">Trancado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="cadAlunoObservacoes" rows="2"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button type="submit" class="btn btn-secondary">💾 Salvar Aluno</button>
+                                <button type="button" onclick="fecharModal('modalCadastroAluno')" class="btn btn-danger">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal para cadastro de professor -->
+                <div id="modalCadastroProfessor" class="modal-overlay">
+                    <div class="modal-content">
+                        <span class="modal-close" onclick="fecharModal('modalCadastroProfessor')">&times;</span>
+                        <h2>👨‍🏫 Cadastro de Professor</h2>
+                        <form id="formCadastroProfessor">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ID Professor</label>
+                                    <input type="text" id="cadProfessorID" readonly style="background: #f7fafc;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nome Completo *</label>
+                                    <input type="text" id="cadProfessorNome" required style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tipo</label>
+                                    <select id="cadProfessorTipo">
+                                        <option value="Regente">Regente</option>
+                                        <option value="Artes">Artes</option>
+                                        <option value="Música">Música</option>
+                                        <option value="Inglês">Inglês</option>
+                                        <option value="Educação Física">Educação Física</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Vínculo *</label>
+                                    <select id="cadProfessorVinculo" required>
+                                        <option value="">-- Selecione --</option>
+                                        <option value="Efetivo">Efetivo</option>
+                                        <option value="Contratado">Contratado</option>
+                                        <option value="Substituto">Substituto</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Etnia</label>
+                                    <select id="cadProfessorEtnia">
+                                        <option value="">-- Selecione --</option>
+                                        <option value="Branca">Branca</option>
+                                        <option value="Preta">Preta</option>
+                                        <option value="Parda">Parda</option>
+                                        <option value="Amarela">Amarela</option>
+                                        <option value="Indígena">Indígena</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Telefone *</label>
+                                    <input type="tel" id="cadProfessorTelefone" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input type="email" id="cadProfessorEmail">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="cadProfessorStatus">
+                                        <option value="ATIVO">✅ Ativo</option>
+                                        <option value="INATIVO">❌ Inativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="cadProfessorObservacoes" rows="2"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button type="submit" class="btn btn-secondary">💾 Salvar Professor</button>
+                                <button type="button" onclick="fecharModal('modalCadastroProfessor')" class="btn btn-danger">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal para nova matrícula -->
+                <div id="modalNovaMatricula" class="modal-overlay">
+                    <div class="modal-content">
+                        <span class="modal-close" onclick="fecharModal('modalNovaMatricula')">&times;</span>
+                        <h2>📋 Nova Matrícula</h2>
+                        <form id="formNovaMatricula">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Aluno *</label>
+                                    <select id="matriculaAluno" required>
+                                        <option value="">-- Selecione --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Turma *</label>
+                                    <select id="matriculaTurma" required>
+                                        <option value="">-- Selecione --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Ano Letivo *</label>
+                                    <input type="number" id="matriculaAno" value="2026" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="matriculaStatus">
+                                        <option value="ATIVO">✅ Ativo</option>
+                                        <option value="BXTR">📤 Baixa Transferência</option>
+                                        <option value="REMA">🔄 Remanejado</option>
+                                        <option value="TRAN">🚫 Transferido</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações da Matrícula</label>
+                                <textarea id="matriculaObservacoes" rows="2"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button type="submit" class="btn btn-secondary">📋 Registrar Matrícula</button>
+                                <button type="button" onclick="fecharModal('modalNovaMatricula')" class="btn btn-danger">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- ÁREA DO PROFESSOR -->
             <div id="professorArea" class="hidden">
                 <div id="turmasSection" class="hidden">
@@ -74,25 +638,50 @@
                 <div id="registrosSection" class="hidden">
                     <div class="section-container">
                         <h3>📝 Registros da Turma: <span id="turmaSelecionadaNome">-</span></h3>
-                        <div class="tabs">
-                            <button class="tab active" onclick="switchTab('notas')">📊 Notas Bimestrais</button>
-                            <button class="tab" onclick="switchTab('presencas')">✅ Presenças</button>
-                            <button class="tab" onclick="switchTab('conteudos')">📚 Conteúdos</button>
-                            <button class="tab" onclick="switchTab('observacoes')">✏️ Observações</button>
-                            <button class="tab" onclick="switchTab('relatorios')">📄 Relatórios</button>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <button class="toggle-btn active" onclick="toggleSection('notas', event)">📊 Notas</button>
+                            <button class="toggle-btn" onclick="toggleSection('presencas', event)">✅ Presenças</button>
+                            <button class="toggle-btn" onclick="toggleSection('conteudos', event)">📚 Conteúdos</button>
+                            <button class="toggle-btn" onclick="toggleSection('observacoes', event)">✏️ Observações</button>
+                            <button class="toggle-btn" onclick="toggleSection('relatorios', event)">📄 Relatórios</button>
                         </div>
-                        <div id="tab-notas" class="tab-content active">
+
+                        <!-- Seção de Notas -->
+                        <div id="section-notas" class="toggle-section">
+                            <div class="form-row-4" style="margin-bottom: 15px;">
+                                <div class="form-group">
+                                    <label>Bimestre</label>
+                                    <select id="bimestreNota" onchange="carregarTabelaNotas()">
+                                        <option value="1">1º Bimestre</option>
+                                        <option value="2">2º Bimestre</option>
+                                        <option value="3">3º Bimestre</option>
+                                        <option value="4">4º Bimestre</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label id="disciplinaLabel">Disciplina</label>
+                                    <select id="disciplinaNota" onchange="carregarTabelaNotas()">
+                                        <!-- Será preenchido dinamicamente conforme o cargo do professor -->
+                                    </select>
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: flex-end;">
+                                    <button onclick="carregarTabelaNotas()" class="btn btn-secondary btn-small">📊 Carregar</button>
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: flex-end;">
+                                    <button onclick="calcularMediasPorDisciplina()" class="btn btn-info btn-small">📈 Calcular Médias</button>
+                                </div>
+                            </div>
+
                             <div class="table-container">
                                 <table id="tabelaNotas">
                                     <thead>
                                         <tr>
+                                            <th>Nº</th>
                                             <th>Aluno</th>
-                                            <th>1º Bim</th>
-                                            <th>2º Bim</th>
-                                            <th>3º Bim</th>
-                                            <th>4º Bim</th>
+                                            <th id="disciplinaNotaHeader">Nota</th>
                                             <th>Média</th>
-                                            <th>Ações</th>
+                                            <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelaNotasBody"></tbody>
@@ -100,10 +689,13 @@
                             </div>
                             <div style="margin-top: 15px;">
                                 <button onclick="salvarNotas()" class="btn btn-secondary btn-small">💾 Salvar Todas as Notas</button>
-                                <button onclick="calcularMedias()" class="btn btn-small">📊 Calcular Médias</button>
+                                <button onclick="calcularMediasPorDisciplina()" class="btn btn-info btn-small">📊 Calcular Médias</button>
+                                <button onclick="carregarTodasDisciplinas()" class="btn btn-warning btn-small">📚 Ver todas disciplinas</button>
                             </div>
                         </div>
-                        <div id="tab-presencas" class="tab-content">
+
+                        <!-- Seção de Presenças -->
+                        <div id="section-presencas" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Data</label>
@@ -114,14 +706,31 @@
                                     <input type="text" id="obsPresenca" placeholder="Ex: Aula sobre adição">
                                 </div>
                             </div>
+                            
                             <div class="form-group">
                                 <label>Alunos Presentes</label>
-                                <div id="alunosPresenca" class="checkbox-grid"></div>
+                                <div class="table-container" style="max-height: none !important; overflow-y: visible !important;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 15%; text-align: center;">Nº do Aluno</th>
+                                                <th style="width: 70%;">Nome do Aluno</th>
+                                                <th style="width: 15%; text-align: center;">Presença</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="alunosPresencaTabela">
+                                            <!-- Os alunos serão injetados dinamicamente aqui via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <button onclick="salvarPresenca()" class="btn btn-secondary btn-small">✅ Salvar Presença</button>
+                            
+                            <button onclick="salvarPresenca()" class="btn btn-secondary btn-small" style="margin-top: 15px;">✅ Salvar Presença</button>
                             <div id="registrosPresenca" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-conteudos" class="tab-content">
+
+                        <!-- Seção de Conteúdos -->
+                        <div id="section-conteudos" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Data</label>
@@ -143,7 +752,9 @@
                             <button onclick="salvarConteudo()" class="btn btn-secondary btn-small">💾 Salvar Conteúdo</button>
                             <div id="registrosConteudos" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-observacoes" class="tab-content">
+
+                        <!-- Seção de Observações -->
+                        <div id="section-observacoes" class="toggle-section hidden">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Aluno</label>
@@ -169,15 +780,23 @@
                             <button onclick="salvarObservacao()" class="btn btn-secondary btn-small">💾 Salvar Observação</button>
                             <div id="registrosObservacoes" class="registros-list" style="margin-top: 20px;"></div>
                         </div>
-                        <div id="tab-relatorios" class="tab-content">
-                            <div class="form-row">
+
+                        <!-- Seção de Relatórios -->
+                        <div id="section-relatorios" class="toggle-section hidden">
+                            <div style="margin-bottom: 30px;">
+                                <h4>📋 Solicitações da Coordenação</h4>
+                                <div id="solicitacoesRelatorios" class="registros-list"></div>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 20px; background: #ebf8ff; border-radius: 10px; border-left: 4px solid #4299e1;">
+                                <h4>✏️ Preencher Relatório Pedagógico</h4>
                                 <div class="form-group">
                                     <label>Aluno</label>
-                                    <select id="alunoRelatorio"></select>
+                                    <select id="alunoRelatorioPreencher"></select>
                                 </div>
                                 <div class="form-group">
                                     <label>Bimestre</label>
-                                    <select id="bimestreRelatorio">
+                                    <select id="bimestreRelatorioPreencher">
                                         <option value="1">1º Bimestre</option>
                                         <option value="2">2º Bimestre</option>
                                         <option value="3">3º Bimestre</option>
@@ -185,12 +804,16 @@
                                         <option value="anual">Anual</option>
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>Relatório Pedagógico</label>
+                                    <textarea id="relatorioTexto" rows="6" placeholder="Digite o relatório pedagógico do aluno..."></textarea>
+                                </div>
+                                <button onclick="enviarRelatorioCoordenacao()" class="btn btn-info btn-small">📤 Enviar Relatório para Coordenação</button>
                             </div>
-                            <button onclick="gerarRelatorio()" class="btn btn-warning btn-small">📄 Gerar Relatório</button>
-                            <div id="relatorioGerado" style="margin-top: 20px;"></div>
-                            <div style="margin-top: 30px;">
-                                <h4>📋 Relatórios Solicitados pela Coordenação</h4>
-                                <div id="solicitacoesRelatorios" class="registros-list"></div>
+
+                            <div style="margin-top: 20px;">
+                                <h4>📄 Relatórios Enviados</h4>
+                                <div id="relatoriosEnviados" class="registros-list"></div>
                             </div>
                         </div>
                     </div>
@@ -199,7 +822,16 @@
 
             <!-- ÁREA DO COORDENADOR -->
             <div id="coordenadorArea" class="hidden">
-                <div class="section-container">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="toggle-btn active" onclick="toggleCoordenacao('visao', event)">📊 Visão por Turma</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('atribuicao', event)">📋 Atribuição</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('solicitar', event)">📄 Solicitar Relatórios</button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('receber', event)">📥 Receber Relatórios <span id="notificacaoRelatorios" class="notification-badge hidden">0</span></button>
+                    <button class="toggle-btn" onclick="toggleCoordenacao('declaracao', event)">📜 Declaração Frequência</button>
+                </div>
+
+                <!-- Visão por Turma -->
+                <div id="coordenacao-visao" class="section-container">
                     <h3>📊 Visão Geral por Turma</h3>
                     <div class="table-container">
                         <table>
@@ -210,6 +842,7 @@
                                     <th>Média Geral</th>
                                     <th>Presença</th>
                                     <th>Relatórios Pendentes</th>
+                                    <th>Relatórios Enviados</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -217,7 +850,9 @@
                         </table>
                     </div>
                 </div>
-                <div class="section-container">
+
+                <!-- Atribuição de Turmas -->
+                <div id="coordenacao-atribuicao" class="section-container hidden">
                     <h3>📋 Atribuição de Turmas</h3>
                     <div class="form-row">
                         <div class="form-group">
@@ -242,8 +877,10 @@
                         <div id="professoresAtribuidos" class="professores-list"></div>
                     </div>
                 </div>
-                <div class="section-container">
-                    <h3>📄 Solicitar Relatório do Aluno</h3>
+
+                <!-- Solicitar Relatórios -->
+                <div id="coordenacao-solicitar" class="section-container hidden">
+                    <h3>📄 Solicitar Relatório</h3>
                     <div class="form-row-3">
                         <div class="form-group">
                             <label>Turma</label>
@@ -258,13 +895,10 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Bimestre</label>
-                            <select id="solicitarBimestre">
-                                <option value="1">1º Bimestre</option>
-                                <option value="2">2º Bimestre</option>
-                                <option value="3">3º Bimestre</option>
-                                <option value="4">4º Bimestre</option>
-                                <option value="anual">Anual</option>
+                            <label>Tipo de Relatório</label>
+                            <select id="solicitarTipo">
+                                <option value="pedagogico">📝 Pedagógico</option>
+                                <option value="administrativo">📊 Administrativo (Faltas e Notas)</option>
                             </select>
                         </div>
                     </div>
@@ -273,6 +907,70 @@
                         <h4>📋 Relatórios Solicitados</h4>
                         <div id="listaSolicitacoes" class="registros-list"></div>
                     </div>
+                </div>
+
+                <!-- Receber Relatórios -->
+                <div id="coordenacao-receber" class="section-container hidden">
+                    <h3>📥 Relatórios Recebidos dos Professores 
+                        <span id="notificacaoRelatoriosBadge" class="notification-badge hidden">0</span>
+                    </h3>
+                    
+                    <div class="filtro-relatorios">
+                        <select id="filtroTurma" onchange="filtrarRelatorios()">
+                            <option value="">Todas as Turmas</option>
+                        </select>
+                        <select id="filtroTipoRelatorio" onchange="filtrarRelatorios()">
+                            <option value="">Todos os Tipos</option>
+                            <option value="pedagogico">📝 Pedagógico</option>
+                            <option value="administrativo">📊 Administrativo</option>
+                        </select>
+                        <select id="filtroProfessor" onchange="filtrarRelatorios()">
+                            <option value="">Todos os Professores</option>
+                        </select>
+                        <input type="text" id="filtroAluno" placeholder="Buscar aluno..." oninput="filtrarRelatorios()">
+                        <button onclick="marcarTodosComoVistos()" class="btn btn-secondary btn-small">✅ Marcar todos como vistos</button>
+                    </div>
+
+                    <div class="stats-grid" id="relatoriosStats" style="margin-bottom: 15px;">
+                        <div class="stat-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-number" id="totalRelatorios">0</div>
+                            <div class="stat-label">Total de Relatórios</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #e53e3e;">
+                            <div class="stat-icon">🔴</div>
+                            <div class="stat-number" id="novosRelatorios">0</div>
+                            <div class="stat-label">Não Visualizados</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 4px solid #48bb78;">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-number" id="vistosRelatorios">0</div>
+                            <div class="stat-label">Visualizados</div>
+                        </div>
+                    </div>
+
+                    <div id="listaRelatoriosRecebidos" class="registros-list"></div>
+                </div>
+
+                <!-- Declaração de Frequência -->
+                <div id="coordenacao-declaracao" class="section-container hidden">
+                    <h3>📜 Gerar Declaração de Frequência</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Turma</label>
+                            <select id="declaracaoTurma" onchange="carregarAlunosDeclaracao()">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Aluno</label>
+                            <select id="declaracaoAluno">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="gerarDeclaracaoFrequencia()" class="btn btn-secondary btn-small" style="margin-top: 15px;">📜 Gerar Declaração</button>
+                    <div id="declaracaoOutput" style="margin-top: 20px;"></div>
                 </div>
             </div>
 
@@ -316,10 +1014,97 @@
 
     <!-- Modal para Relatório -->
     <div id="modalRelatorio" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" id="modalRelatorioContentWrapper">
             <span class="modal-close" onclick="fecharModal('modalRelatorio')">&times;</span>
-            <h2>📄 Relatório do Aluno</h2>
+            <h2>📄 Relatório</h2>
             <div id="modalRelatorioContent"></div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="imprimirRelatorioModal()" class="btn btn-info" style="padding: 10px 20px; font-size: 16px; width: auto;">🖨️ Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Todas as Disciplinas -->
+    <div id="modalTodasDisciplinas" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="fecharModal('modalTodasDisciplinas')">&times;</span>
+            <h2>📚 Notas por Disciplina</h2>
+            <div id="modalTodasDisciplinasContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Professor -->
+    <div id="modalEditarProfessor" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="fecharModal('modalEditarProfessor')">&times;</span>
+            <h2>✏️ Editar Professor</h2>
+            <form id="formEditarProfessor">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ID Professor</label>
+                        <input type="text" id="editProfessorID" readonly style="background: #f7fafc;">
+                    </div>
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="editProfessorNome" required style="text-transform: uppercase;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="editProfessorTipo">
+                            <option value="Regente">Regente</option>
+                            <option value="Artes">Artes</option>
+                            <option value="Música">Música</option>
+                            <option value="Inglês">Inglês</option>
+                            <option value="Educação Física">Educação Física</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Vínculo *</label>
+                        <select id="editProfessorVinculo" required>
+                            <option value="">-- Selecione --</option>
+                            <option value="Efetivo">Efetivo</option>
+                            <option value="Contratado">Contratado</option>
+                            <option value="Substituto">Substituto</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Etnia</label>
+                        <select id="editProfessorEtnia">
+                            <option value="">-- Selecione --</option>
+                            <option value="Branca">Branca</option>
+                            <option value="Preta">Preta</option>
+                            <option value="Parda">Parda</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Indígena">Indígena</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone *</label>
+                        <input type="tel" id="editProfessorTelefone" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="editProfessorEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editProfessorStatus">
+                            <option value="ATIVO">✅ Ativo</option>
+                            <option value="INATIVO">❌ Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn btn-secondary">💾 Salvar Alterações</button>
+                    <button type="button" onclick="fecharModal('modalEditarProfessor')" class="btn btn-danger">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
