@@ -1309,6 +1309,7 @@
 
         const DISCIPLINAS_LIST = ['LP', 'MAT', 'CIE', 'HIST', 'GEO', 'ING', 'EDFIS', 'ARTE', 'MUSICA'];
 
+        // Mapeamento de cargos para disciplinas permitidas
         const CARGO_DISCIPLINAS = {
             'professor-regente': ['LP', 'MAT', 'CIE', 'HIST', 'GEO'],
             'professor-artes': ['ARTE'],
@@ -1492,6 +1493,57 @@
         };
 
         // ============================================
+        // CONTROLE DE RELATÓRIOS VISUALIZADOS
+        // ============================================
+        let relatoriosVisualizados = new Set();
+        let relatoriosNaoVisualizados = new Set();
+
+        function marcarRelatorioComoVisualizado(idRelatorio) {
+            relatoriosVisualizados.add(idRelatorio);
+            relatoriosNaoVisualizados.delete(idRelatorio);
+            atualizarNotificacoes();
+            localStorage.setItem('relatoriosVisualizados', JSON.stringify([...relatoriosVisualizados]));
+        }
+
+        function isRelatorioVisualizado(idRelatorio) {
+            return relatoriosVisualizados.has(idRelatorio);
+        }
+
+        function carregarRelatoriosVisualizados() {
+            try {
+                const saved = localStorage.getItem('relatoriosVisualizados');
+                if (saved) {
+                    relatoriosVisualizados = new Set(JSON.parse(saved));
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar visualizações:', e);
+            }
+            relatoriosNaoVisualizados.clear();
+            if (db.relatoriosPreenchidos) {
+                db.relatoriosPreenchidos.forEach(r => {
+                    const id = r.ID_Relatorio || `${r.aluno}_${r.bimestre}_${r.professor}_${r.tipo || 'pedagogico'}`;
+                    if (!relatoriosVisualizados.has(id)) {
+                        relatoriosNaoVisualizados.add(id);
+                    }
+                });
+            }
+        }
+
+        function atualizarNotificacoes() {
+            const count = relatoriosNaoVisualizados.size;
+            const badge = document.getElementById('notificacaoRelatorios');
+            const badge2 = document.getElementById('notificacaoRelatoriosBadge');
+            
+            if (count > 0) {
+                if (badge) { badge.textContent = count; badge.classList.remove('hidden'); }
+                if (badge2) { badge2.textContent = count; badge2.classList.remove('hidden'); }
+            } else {
+                if (badge) { badge.classList.add('hidden'); }
+                if (badge2) { badge2.classList.add('hidden'); }
+            }
+        }
+
+        // ============================================
         // CARREGAR TELEFONES
         // ============================================
         async function carregarTelefones() {
@@ -1554,6 +1606,48 @@
             if (!nomeCompleto) return '';
             const partes = nomeCompleto.trim().split(' ');
             return partes[0] || nomeCompleto;
+        }
+
+        // ============================================
+        // FUNÇÃO PARA DETECTAR DISCIPLINA DO PROFESSOR
+        // ============================================
+        function getProfessorDisciplina(tipo) {
+            if (!tipo) return null;
+            
+            const tipoUpper = tipo.toUpperCase().trim();
+            
+            const mapaDisciplinas = {
+                'ARTE': 'ARTE',
+                'ARTES': 'ARTE',
+                'MÚSICA': 'MUSICA',
+                'MUSICA': 'MUSICA',
+                'INGLÊS': 'ING',
+                'INGLES': 'ING',
+                'EDUCAÇÃO FÍSICA': 'EDFIS',
+                'EDUCACAO FISICA': 'EDFIS',
+                'EDUCAÇÃO FISICA': 'EDFIS',
+                'EF': 'EDFIS',
+                'ED. FÍSICA': 'EDFIS',
+                'ED. FISICA': 'EDFIS'
+            };
+            
+            for (const [key, value] of Object.entries(mapaDisciplinas)) {
+                if (tipoUpper.includes(key) || tipoUpper === key) {
+                    return value;
+                }
+            }
+            
+            if (tipoUpper === 'REGENTE' || tipoUpper === 'PROFESSOR REGENTE') {
+                return null;
+            }
+            
+            for (const [disc, nome] of Object.entries(DISCIPLINAS)) {
+                if (tipoUpper.includes(disc) || tipoUpper === nome.toUpperCase()) {
+                    return disc;
+                }
+            }
+            
+            return null;
         }
 
         // ============================================
@@ -1667,6 +1761,7 @@
                     await carregarAbaEspecifica(aba, key);
                 }
                 
+                // Carrega telefones
                 await carregarTelefones();
 
                 atualizarBancoDados();
@@ -2196,10 +2291,11 @@
                 const semana = texto(f.Semana || getSemanaData(new Date()));
                 const faltas = parseInt(texto(f.Faltas)) || 0;
                 const dataRegistro = texto(f.Data_Registro || getDataAtualFormatada());
+                const id = texto(f.ID_FALTA || 'FALTA_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000));
                 
                 if (turma && aluno) {
                     db.faltas.push({
-                        id: f.ID_FALTA || 'FALTA_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000),
+                        id,
                         turma,
                         aluno,
                         semana,
@@ -2258,48 +2354,6 @@
 
         function getUltimosRegistros(registros, limite = 10) {
             return registros.slice(-limite).reverse();
-        }
-
-        // ============================================
-        // FUNÇÃO PARA DETECTAR DISCIPLINA DO PROFESSOR
-        // ============================================
-        function getProfessorDisciplina(tipo) {
-            if (!tipo) return null;
-            
-            const tipoUpper = tipo.toUpperCase().trim();
-            
-            const mapaDisciplinas = {
-                'ARTE': 'ARTE',
-                'ARTES': 'ARTE',
-                'MÚSICA': 'MUSICA',
-                'MUSICA': 'MUSICA',
-                'INGLÊS': 'ING',
-                'INGLES': 'ING',
-                'EDUCAÇÃO FÍSICA': 'EDFIS',
-                'EDUCACAO FISICA': 'EDFIS',
-                'EDUCAÇÃO FISICA': 'EDFIS',
-                'EF': 'EDFIS',
-                'ED. FÍSICA': 'EDFIS',
-                'ED. FISICA': 'EDFIS'
-            };
-            
-            for (const [key, value] of Object.entries(mapaDisciplinas)) {
-                if (tipoUpper.includes(key) || tipoUpper === key) {
-                    return value;
-                }
-            }
-            
-            if (tipoUpper === 'REGENTE' || tipoUpper === 'PROFESSOR REGENTE') {
-                return null;
-            }
-            
-            for (const [disc, nome] of Object.entries(DISCIPLINAS)) {
-                if (tipoUpper.includes(disc) || tipoUpper === nome.toUpperCase()) {
-                    return disc;
-                }
-            }
-            
-            return null;
         }
 
         // ============================================
@@ -3678,6 +3732,7 @@
                 }
             });
 
+            // Remove faltas existentes da turma/semana
             const faltasExistentes = db.faltas.filter(f => 
                 normalizarTurma(f.turma) === normalizarTurma(turma) && 
                 f.semana === semana
@@ -3719,8 +3774,9 @@
                 if (resultado && resultado.success) {
                     if (!db.faltas) db.faltas = [];
                     
+                    const id = resultado.id || 'FALTA_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
                     db.faltas.push({
-                        id: resultado.id || 'FALTA_' + new Date().getTime(),
+                        id: id,
                         turma: turma,
                         aluno: aluno,
                         semana: semana,
@@ -4282,7 +4338,7 @@
                     <div class="info-line"><strong>Total de Turmas:</strong> ${turmas.length}</div>
                     <div class="info-line"><strong>Total de Professores:</strong> ${professores.length}</div>
                     <div class="info-line"><strong>Total de Atestados:</strong> ${atestados.length}</div>
-                    <div class="info-line"><strong>Total de Faltas:</strong> ${faltas.length}</div>
+                    <div class="info-line"><strong>Total de Faltas Semanais:</strong> ${faltas.length}</div>
                     
                     <div style="margin-top: 15px;">
                         <h5>📌 Resumo por Turma</h5>
@@ -4314,6 +4370,7 @@
                                         });
                                     });
                                     const media = totalDias > 0 && alunosAtivos.length > 0 ? (totalPresentes / (totalDias * alunosAtivos.length) * 100) : 0;
+                                    const totalFaltasTurma = faltasTurma.reduce((acc, f) => acc + (f.faltas || 0), 0);
                                     
                                     return `
                                         <tr>
@@ -4322,7 +4379,7 @@
                                             <td>${alunosAtivos.length}</td>
                                             <td>${matriculasTurma.length}</td>
                                             <td>${atestadosTurma.length}</td>
-                                            <td>${faltasTurma.length}</td>
+                                            <td>${totalFaltasTurma}</td>
                                             <td>${media.toFixed(1)}%</td>
                                         </tr>
                                     `;
@@ -5926,7 +5983,7 @@
                 <div class="stat-card">
                     <div class="stat-icon">📊</div>
                     <div class="stat-number">${totalFaltas}</div>
-                    <div class="stat-label">Faltas Registradas</div>
+                    <div class="stat-label">Faltas Semanais</div>
                 </div>
             `;
         }
@@ -5945,7 +6002,7 @@
                     <div class="info-line"><strong>Total de Professores:</strong> ${escolaData.professores.length}</div>
                     <div class="info-line"><strong>Total de Alunos Ativos:</strong> ${Object.values(escolaData.alunos).reduce((acc, turma) => acc + turma.filter(a => isAlunoAtivo(a.status)).length, 0)}</div>
                     <div class="info-line"><strong>Total de Atestados:</strong> ${db.atestados ? db.atestados.length : 0}</div>
-                    <div class="info-line"><strong>Total de Faltas:</strong> ${db.faltas ? db.faltas.length : 0}</div>
+                    <div class="info-line"><strong>Total de Faltas Semanais:</strong> ${db.faltas ? db.faltas.length : 0}</div>
                     <div style="margin-top: 15px;">
                         <table>
                             <thead>
@@ -5982,6 +6039,7 @@
                                     const observacoes = db.observacoes[turma] || [];
                                     const atestadosTurma = db.atestados.filter(a => normalizarTurma(a.turma) === normalizarTurma(turma));
                                     const faltasTurma = db.faltas.filter(f => normalizarTurma(f.turma) === normalizarTurma(turma));
+                                    const totalFaltas = faltasTurma.reduce((acc, f) => acc + (f.faltas || 0), 0);
                                     
                                     return `
                                         <tr>
@@ -5993,7 +6051,7 @@
                                             <td>${observacoes.length}</td>
                                             <td>${solicitacoes.length}</td>
                                             <td>${atestadosTurma.length}</td>
-                                            <td>${faltasTurma.length}</td>
+                                            <td>${totalFaltas}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -6010,25 +6068,319 @@
         // DIRETORIA - RELATÓRIO POR TURMA
         // ============================================
         function gerarRelatorioPorTurma() {
-            // ... (mesmo código anterior com adição de coluna Faltas)
+            const container = document.getElementById('relatorioConsolidado');
+            
+            let html = `
+                <div class="relatorio-content">
+                    <h4>📊 Relatório por Turma</h4>
+                    <div style="margin-top: 15px;">
+                        ${escolaData.turmas.map(turma => {
+                            const alunos = getAlunosByTurma(turma, false);
+                            const alunosAtivos = alunos.filter(a => isAlunoAtivo(a.status));
+                            const atestadosTurma = db.atestados.filter(a => normalizarTurma(a.turma) === normalizarTurma(turma));
+                            const faltasTurma = db.faltas.filter(f => normalizarTurma(f.turma) === normalizarTurma(turma));
+                            
+                            const notasAlunos = [];
+                            dadosPlanilha.notas.forEach(nota => {
+                                if (normalizarTurma(nota.Turma) === turma) {
+                                    const alunoNome = texto(nota.Nome_Aluno || nota.Nome).toUpperCase();
+                                    if (!notasAlunos.find(n => n.aluno === alunoNome)) {
+                                        const disciplinas = {};
+                                        DISCIPLINAS_LIST.forEach(disc => {
+                                            disciplinas[disc] = [];
+                                            for (let bim = 1; bim <= 4; bim++) {
+                                                const col = `${disc}-${bim}`;
+                                                const valor = parseFloat(nota[col]) || 0;
+                                                disciplinas[disc].push(valor);
+                                            }
+                                        });
+                                        notasAlunos.push({ aluno: alunoNome, disciplinas });
+                                    }
+                                }
+                            });
+                            
+                            return `
+                                <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
+                                    <h5>${labelTurma(turma)}</h5>
+                                    <div style="font-size: 0.9em; color: #718096; margin-bottom: 10px;">
+                                        <strong>Total de Alunos:</strong> ${alunos.length} (${alunosAtivos.length} ativos)
+                                        <span style="margin-left: 20px;"><strong>Atestados:</strong> ${atestadosTurma.length}</span>
+                                        <span style="margin-left: 20px;"><strong>Faltas:</strong> ${faltasTurma.reduce((acc, f) => acc + f.faltas, 0)}</span>
+                                    </div>
+                                    <div class="table-container">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Nº</th>
+                                                    <th>Aluno</th>
+                                                    <th>Status</th>
+                                                    ${DISCIPLINAS_LIST.map(d => `<th>${DISCIPLINAS[d]}</th>`).join('')}
+                                                    <th>Média</th>
+                                                    <th>Presença</th>
+                                                    <th>Atestado</th>
+                                                    <th>Faltas</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${alunos.map(aluno => {
+                                                    const isAtivo = isAlunoAtivo(aluno.status);
+                                                    const statusLabel = getStatusLabel(aluno.status);
+                                                    const statusClass = getStatusClass(aluno.status);
+                                                    const temAtestado = atestadosTurma.some(a => a.aluno === aluno.nome);
+                                                    const falta = faltasTurma.find(f => f.aluno === aluno.nome);
+                                                    const faltas = falta ? falta.faltas : 0;
+                                                    
+                                                    let medias = DISCIPLINAS_LIST.map(d => 0);
+                                                    let mediaGeral = 0;
+                                                    const notaAluno = notasAlunos.find(n => n.aluno === aluno.nome);
+                                                    if (notaAluno && isAtivo) {
+                                                        medias = DISCIPLINAS_LIST.map(d => {
+                                                            const notas = notaAluno.disciplinas[d] || [];
+                                                            let soma = 0;
+                                                            let count = 0;
+                                                            notas.forEach(n => { if (n > 0) { soma += n; count++; } });
+                                                            return count > 0 ? soma / count : 0;
+                                                        });
+                                                        let soma = 0, count = 0;
+                                                        medias.forEach(m => { if (m > 0) { soma += m; count++; } });
+                                                        mediaGeral = count > 0 ? soma / count : 0;
+                                                    }
+                                                    
+                                                    const presencas = db.presencas[turma] || [];
+                                                    let totalPres = 0, totalDias = presencas.length;
+                                                    presencas.forEach(p => {
+                                                        if (p.presentes && p.presentes.includes(aluno.nome)) totalPres++;
+                                                    });
+                                                    const taxaPres = totalDias > 0 ? (totalPres / totalDias * 100) : 0;
+                                                    
+                                                    return `
+                                                        <tr style="${!isAtivo ? 'opacity: 0.6;' : ''}">
+                                                            <td>${aluno.numero || '-'}</td>
+                                                            <td>${aluno.nome}</td>
+                                                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                                                            ${medias.map(m => `<td>${isAtivo ? m.toFixed(1) : '-'}</td>`).join('')}
+                                                            <td><strong>${isAtivo ? mediaGeral.toFixed(1) : '-'}</strong></td>
+                                                            <td>${isAtivo ? taxaPres.toFixed(1) + '%' : '-'}</td>
+                                                            <td>${isAtivo ? (temAtestado ? '📋 Sim' : '❌ Não') : '-'}</td>
+                                                            <td>${isAtivo ? (faltas > 0 ? `⚠️ ${faltas}` : '✅') : '-'}</td>
+                                                        </tr>
+                                                    `;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
         }
 
         // ============================================
         // DIRETORIA - RELATÓRIO POR PROFESSOR
         // ============================================
         function gerarRelatorioPorProfessor() {
-            // ... (mesmo código anterior com adição de coluna Faltas)
+            const container = document.getElementById('relatorioConsolidado');
+            
+            let html = `
+                <div class="relatorio-content">
+                    <h4>📊 Relatório por Professor</h4>
+                    <div style="margin-top: 15px;">
+                        ${escolaData.professores.map(prof => {
+                            const turmas = getTurmasByProfessor(prof.id);
+                            return `
+                                <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
+                                    <h5>${prof.nome} (${prof.vinculo || 'Efetivo'})</h5>
+                                    <p style="color: #718096; font-size: 0.9em;">Turmas: ${turmas.length > 0 ? turmas.map(t => labelTurma(t)).join(', ') : 'Nenhuma'}</p>
+                                    ${turmas.length > 0 ? `
+                                        <div class="table-container">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Turma</th>
+                                                        <th>Alunos Matriculados</th>
+                                                        <th>Alunos Ativos</th>
+                                                        <th>Média Geral</th>
+                                                        <th>Presença</th>
+                                                        <th>Conteúdos</th>
+                                                        <th>Atestados</th>
+                                                        <th>Faltas</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${turmas.map(turma => {
+                                                        const alunos = getAlunosByTurma(turma, false);
+                                                        const alunosAtivos = alunos.filter(a => isAlunoAtivo(a.status));
+                                                        const atestadosTurma = db.atestados.filter(a => normalizarTurma(a.turma) === normalizarTurma(turma));
+                                                        const faltasTurma = db.faltas.filter(f => normalizarTurma(f.turma) === normalizarTurma(turma));
+                                                        
+                                                        let somaMedias = 0, count = 0;
+                                                        alunosAtivos.forEach(aluno => {
+                                                            const media = calcularMediaGeralAluno(turma, aluno.nome);
+                                                            if (media > 0) { somaMedias += media; count++; }
+                                                        });
+                                                        const media = count > 0 ? somaMedias / count : 0;
+                                                        
+                                                        const presencas = db.presencas[turma] || [];
+                                                        let totalPres = 0, totalDias = 0;
+                                                        presencas.forEach(p => { totalDias++; totalPres += p.presentes.length; });
+                                                        const taxaPres = totalDias > 0 && alunosAtivos.length > 0 ? (totalPres / (totalDias * alunosAtivos.length) * 100) : 0;
+                                                        
+                                                        const conteudos = db.conteudos[turma] || [];
+                                                        const totalFaltas = faltasTurma.reduce((acc, f) => acc + f.faltas, 0);
+                                                        
+                                                        return `
+                                                            <tr>
+                                                                <td>${labelTurma(turma)}</td>
+                                                                <td>${alunos.length}</td>
+                                                                <td>${alunosAtivos.length}</td>
+                                                                <td>${media.toFixed(1)}</td>
+                                                                <td>${taxaPres.toFixed(1)}%</td>
+                                                                <td>${conteudos.length}</td>
+                                                                <td>${atestadosTurma.length}</td>
+                                                                <td>${totalFaltas}</td>
+                                                            </tr>
+                                                        `;
+                                                    }).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ` : '<p style="color: #a0aec0; font-size: 0.9em;">Nenhuma turma atribuída</p>'}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
         }
 
         // ============================================
         // DIRETORIA - RELATÓRIO INDIVIDUAL
         // ============================================
         function carregarTurmasDirecao() {
-            // ... (mesmo código anterior)
+            const select = document.getElementById('direcaoTurma');
+            select.innerHTML = '<option value="">-- Selecione --</option>' +
+                escolaData.turmas.map(t =>
+                    `<option value="${t}">${labelTurma(t)}</option>`
+                ).join('');
+            
+            document.getElementById('direcaoTurma').onchange = function() {
+                const turma = this.value;
+                const alunoSelect = document.getElementById('direcaoAluno');
+                const alunos = turma ? getAlunosByTurma(turma, true) : [];
+                alunoSelect.innerHTML = '<option value="">-- Selecione --</option>' +
+                    alunos.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
+            };
         }
 
         function visualizarRelatorioAluno() {
-            // ... (mesmo código anterior com adição de informações de faltas)
+            const turma = document.getElementById('direcaoTurma').value;
+            const aluno = document.getElementById('direcaoAluno').value;
+
+            if (!turma || !aluno) {
+                alert('Selecione a turma e o aluno.');
+                return;
+            }
+
+            const status = getStatusAluno(turma, aluno);
+            const statusLabel = getStatusLabel(status);
+            const dados = getDadosAluno(turma, aluno);
+            
+            const notas = {};
+            DISCIPLINAS_LIST.forEach(disciplina => {
+                notas[disciplina] = calcularMediaDisciplina(turma, aluno, disciplina);
+            });
+            const mediaGeral = calcularMediaGeralAluno(turma, aluno);
+            const presencas = db.presencas[turma] || [];
+            const observacoes = db.observacoes[turma] || [];
+            const obsAluno = observacoes.filter(o => o.aluno === aluno);
+            const conteudos = db.conteudos[turma] || [];
+            const atestadosAluno = db.atestados.filter(a => a.aluno === aluno && normalizarTurma(a.turma) === normalizarTurma(turma));
+            const faltasAluno = db.faltas.filter(f => f.aluno === aluno && normalizarTurma(f.turma) === normalizarTurma(turma));
+            const totalFaltas = faltasAluno.reduce((acc, f) => acc + f.faltas, 0);
+
+            const relatorioProfessor = db.relatoriosPreenchidos ? 
+                db.relatoriosPreenchidos.find(r => r.turma === turma && r.aluno === aluno) : null;
+
+            let totalPresencas = 0;
+            let totalDias = presencas.length;
+            presencas.forEach(p => {
+                if (p.presentes && p.presentes.includes(aluno)) totalPresencas++;
+            });
+            const taxaPresenca = totalDias > 0 ? (totalPresencas / totalDias * 100) : 0;
+
+            const raCompleto = dados ? `${dados.ra || ''}${dados.digra ? '-' + dados.digra : ''}${dados.ufra ? '/' + dados.ufra : ''}` : '';
+
+            const relatorioHtml = `
+                <div class="relatorio-content">
+                    <h4>📄 Relatório Completo do Aluno</h4>
+                    <div class="info-line"><strong>Aluno:</strong> ${aluno}</div>
+                    <div class="info-line"><strong>Turma:</strong> ${labelTurma(turma)}</div>
+                    <div class="info-line"><strong>Série:</strong> ${dados ? dados.serie || '-' : '-'}</div>
+                    <div class="info-line"><strong>RA:</strong> ${raCompleto || '-'}</div>
+                    <div class="info-line"><strong>Status:</strong> <span class="status-badge ${getStatusClass(status)}">${statusLabel}</span></div>
+                    <div class="info-line"><strong>Data:</strong> ${getDataAtualFormatada()}</div>
+                    ${!isAlunoAtivo(status) ? `<div class="info-line" style="color: #f56565;">⚠️ Aluno inativo - dados históricos</div>` : ''}
+                    <div style="margin-top: 15px;">
+                        <strong>Médias por Disciplina:</strong><br>
+                        ${DISCIPLINAS_LIST.map(d => `${DISCIPLINAS[d]}: <strong>${notas[d].toFixed(1)}</strong>`).join(' | ')}
+                        <br><strong>Média Geral:</strong> ${mediaGeral.toFixed(1)}
+                        <br><strong>Status Acadêmico:</strong> ${mediaGeral >= 7 ? '✅ Aprovado' : mediaGeral >= 5 ? '⚠️ Recuperação' : '❌ Reprovado'}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>Frequência:</strong> ${taxaPresenca.toFixed(1)}% (${totalPresencas}/${totalDias} dias)
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>Atestados:</strong>
+                        ${atestadosAluno.length > 0 ? atestadosAluno.map(a => 
+                            `<br>• ${a.data || '-'}: ${a.dias || 0} dias afastado`
+                        ).join('') : '<br>Nenhum atestado registrado.'}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>Faltas Semanais:</strong>
+                        ${faltasAluno.length > 0 ? faltasAluno.map(f => 
+                            `<br>• Semana ${f.semana || '-'}: ${f.faltas} falta(s)`
+                        ).join('') : '<br>Nenhuma falta registrada.'}
+                        ${totalFaltas > 0 ? `<br><strong>Total de faltas:</strong> ${totalFaltas}` : ''}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>Conteúdos Trabalhados:</strong>
+                        ${conteudos.length > 0 ? conteudos.slice(-5).map(c => 
+                            `<br>• ${c.data} - ${c.disciplina}: ${c.conteudo}`
+                        ).join('') : '<br>Nenhum conteúdo registrado.'}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>Observações:</strong>
+                        ${obsAluno.length > 0 ? obsAluno.map(o => 
+                            `<br>• ${o.data}: ${o.observacao} (${o.tipo})`
+                        ).join('') : '<br>Nenhuma observação registrada.'}
+                    </div>
+                    ${relatorioProfessor ? `
+                        <div style="margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 8px; border-left: 4px solid #4299e1;">
+                            <strong>📝 Relatório do Professor (${relatorioProfessor.professor}):</strong>
+                            <p style="margin-top: 10px; white-space: pre-wrap;">${relatorioProfessor.relatorio}</p>
+                            <div style="font-size: 0.85em; color: #718096;">Enviado em: ${relatorioProfessor.dataEnvio || relatorioProfessor.data}</div>
+                            <div style="font-size: 0.85em; color: #718096;">Tipo: ${relatorioProfessor.tipo === 'administrativo' ? '📊 Administrativo' : '📝 Pedagógico'}</div>
+                        </div>
+                    ` : ''}
+                    <div style="margin-top: 10px; padding: 10px; background: #ebf8ff; border-radius: 5px;">
+                        <strong>💡 Recomendação Pedagógica:</strong>
+                        ${mediaGeral >= 7 ? 'Aluno com bom desempenho. Continuar estimulando o aprendizado.' :
+                          mediaGeral >= 5 ? 'Aluno em processo de recuperação. Reforçar conteúdos com atividades complementares.' :
+                          'Aluno necessita de atenção especial. Recomenda-se plano de recuperação intensivo.'}
+                        ${totalFaltas > 5 ? '<br>⚠️ Atenção: Aluno com alto índice de faltas. Recomenda-se contato com a família.' : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('relatorioAlunoCompleto').innerHTML = relatorioHtml;
+            document.getElementById('modalRelatorioContent').innerHTML = relatorioHtml;
+            document.getElementById('modalRelatorio').classList.add('active');
         }
 
         // ============================================
@@ -6097,6 +6449,7 @@
                 for (const [key, aba] of Object.entries(SHEET_CONFIG.abas)) {
                     await carregarAbaEspecifica(aba, key);
                 }
+                await carregarTelefones();
                 atualizarBancoDados();
                 carregarRelatoriosVisualizados();
                 atualizarNotificacoes();
