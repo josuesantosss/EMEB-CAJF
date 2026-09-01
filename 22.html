@@ -1109,72 +1109,100 @@
                     <div id="relatorioAlunoCompleto" style="margin-top: 20px;"></div>
                 </div>
 
-                <!-- ===== BOTÃO DE ADVERTÊNCIA ===== -->
-                <div class="section-container" style="border-top: 4px solid #e53e3e;">
-                    <h3>⚠️ Comunicado de Advertência</h3>
-                    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
-                        <div class="form-group" style="flex: 1; min-width: 180px;">
-                            <label>Selecione a Turma</label>
-                            <select id="advertenciaTurma" onchange="carregarAlunosAdvertencia()">
-                                <option value="">-- Selecione --</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex: 1; min-width: 180px;">
-                            <label>Selecione o Aluno</label>
-                            <select id="advertenciaAluno">
-                                <option value="">-- Selecione --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <button onclick="gerarDocumentoAdvertencia()" class="btn-advertencia">⚠️ Gerar Advertência</button>
-                        </div>
-                    </div>
-
-                    <!-- Documento de Advertência -->
-                    <div id="documentoAdvertencia" style="margin-top: 24px; display: none; background: white; padding: 40px 50px; max-width: 210mm; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-                        <!-- Cabeçalho -->
-                        <div class="titulo-prefeitura">PREFEITURA DO MUNICÍPIO DE MONTE AZUL PAULISTA</div>
-                        <div class="titulo-divisao">DIVISÃO DE EDUCAÇÃO</div>
-                        <div class="titulo-escola">EMEF "Cel. Aureliano Junqueira Franco"</div>
-                        <div class="endereco">Pça. Emb. Macedo Soares, 13–Centro–Fone/Fax (17)3361.1098–CEP 14730-000–Monte Azul Paulista–SP.</div>
-                        <div class="email">E-mail: coordenacaoaureliano@gmail.com / aureliano@monteazulpaulista.sp.gov.br</div>
-
-                        <hr style="border: 1px solid #ccc; margin: 12px 0;">
-
-                        <!-- Título -->
-                        <div class="titulo-comunicado">COMUNICADO DE ADVERTÊNCIA</div>
-
-                        <!-- Corpo -->
-                        <div class="corpo-texto">
-                            O aluno <strong id="docAlunoNome">[NOME DO ALUNO]</strong> matriculado no <strong id="docAlunoAno">[ANO]</strong> ano, foi advertido em virtude de constantes atos de indisciplina, foi advertido e será suspenso caso não melhore seu comportamento e não se enquadrar nas regras internas desta unidade escolar.
-                        </div>
-                        <div class="corpo-texto">
-                            A direção desta U.E. solicita aos Srs. Pais ou responsáveis que acompanhe o comportamento do aluno e nos ajude, caso contrário, a Escola tomará as providências previstas em Lei, conforme art.27 e art. 47 do Estatuto do aluno.
-                        </div>
-
-                        <!-- Box para conteúdo adicional -->
-                        <div class="box-conteudo" id="docBoxConteudo" contenteditable="true" style="outline: none; min-height: 60px;">
-                            <!-- Conteúdo editável -->
-                        </div>
-
-                        <!-- Assinatura e Data -->
-                        <div class="assinatura">
-                            Ciente da advertência: <span class="linha-assinatura"></span>
-                        </div>
-                        <div class="data-direita">
-                            Monte Azul Paulista, <span id="docDataAtual">26 de agosto de 2026</span>
-                        </div>
-
-                        <!-- Botão imprimir -->
-                        <div style="text-align: center; margin-top: 24px;" class="no-print">
-                            <button onclick="imprimirDocumentoAdvertencia()" class="btn btn-info" style="padding: 10px 30px; font-size: 16px;">🖨️ Imprimir Documento</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- ===== BOTÃO DE ADVERTÊNCIA ===== -->
+<div class="section-container" style="border-top: 4px solid #e53e3e;">
+    <h3>⚠️ Comunicado de Advertência</h3>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
+        <div class="form-group" style="flex: 1; min-width: 180px;">
+            <label>Selecione a Turma</label>
+            <select id="advertenciaTurma" onchange="carregarAlunosAdvertencia()">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+        <div class="form-group" style="flex: 1; min-width: 180px;">
+            <label>Selecione o Aluno</label>
+            <select id="advertenciaAluno">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button onclick="gerarDocumentoAdvertencia()" class="btn-advertencia">⚠️ Gerar Advertência</button>
         </div>
     </div>
 
+    <!-- Documento de Advertência -->
+    <div id="documentoAdvertencia" style="margin-top: 24px; display: none; background: white; padding: 40px 50px; max-width: 210mm; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-family: Arial, sans-serif;">
+        <!-- Cabeçalho -->
+        <div class="titulo-prefeitura" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, sans-serif;">PREFEITURA DO MUNICÍPIO DE MONTE AZUL PAULISTA</div>
+        <div class="titulo-divisao" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, sans-serif;">DIVISÃO DE EDUCAÇÃO</div>
+        <div class="titulo-escola" style="font-size: 14px; font-weight: 400; text-align: center; font-family: Arial, sans-serif;">EMEF "Cel. Aureliano Junqueira Franco"</div>
+        <div class="endereco" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, sans-serif;">Pça. Emb. Macedo Soares, 13–Centro–Fone/Fax (17)3361.1098–CEP 14730-000–Monte Azul Paulista–SP.</div>
+        <div class="email" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, sans-serif;">E-mail: coordenacaoaureliano@gmail.com / aureliano@monteazulpaulista.sp.gov.br</div>
+
+        <hr style="border: 1px solid #ccc; margin: 12px 0;">
+
+        <!-- Título -->
+        <div class="titulo-comunicado" style="font-size: 14px; font-weight: 700; text-align: center; margin: 16px 0 12px 0; font-family: Arial, sans-serif;">COMUNICADO DE ADVERTÊNCIA</div>
+
+        <!-- Corpo -->
+        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, sans-serif;">
+            O aluno <strong id="docAlunoNome">[NOME DO ALUNO]</strong> matriculado no <strong id="docAlunoAno">[ANO]</strong> ano, foi advertido em virtude de constantes atos de indisciplina, foi advertido e será suspenso caso não melhore seu comportamento e não se enquadrar nas regras internas desta unidade escolar.
+        </div>
+        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, sans-serif;">
+            A direção desta U.E. solicita aos Srs. Pais ou responsáveis que acompanhe o comportamento do aluno e nos ajude, caso contrário, a Escola tomará as providências previstas em Lei, conforme art.27 e art. 47 do Estatuto do aluno.
+        </div>
+
+        <!-- Box para conteúdo adicional com placeholder transparente -->
+        <div class="box-conteudo" id="docBoxConteudo" contenteditable="true" style="outline: none; min-height: 60px; border: 1px solid #333; padding: 12px; margin: 8px 0 16px 0; font-size: 12px; text-align: justify; background: #fafafa; font-family: Arial, sans-serif; color: #333;" data-placeholder="Digite aqui o motivo da advertência ou informações adicionais...">
+            <span style="color: transparent;">Digite aqui o motivo da advertência ou informações adicionais...</span>
+        </div>
+
+        <!-- Assinatura e Data -->
+        <div class="assinatura" style="font-size: 12px; text-align: left; margin-top: 30px; font-family: Arial, sans-serif;">
+            Ciente da advertência: <span class="linha-assinatura" style="display: inline-block; width: 200px; border-bottom: 1px solid #000; margin-left: 8px;"></span>
+        </div>
+        <div class="data-direita" style="font-size: 12px; text-align: right; margin-top: 20px; font-family: Arial, sans-serif;">
+            Monte Azul Paulista, <span id="docDataAtual">26 de agosto de 2026</span>
+        </div>
+
+        <!-- Botão imprimir -->
+        <div style="text-align: center; margin-top: 24px;" class="no-print">
+            <button onclick="imprimirDocumentoAdvertencia()" class="btn btn-info" style="padding: 10px 30px; font-size: 16px; font-family: Arial, sans-serif;">🖨️ Imprimir Documento</button>
+        </div>
+    </div>
+</div>
+
+<!-- Script para controlar o placeholder transparente -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const box = document.getElementById('docBoxConteudo');
+        if (box) {
+            box.addEventListener('focus', function() {
+                // Remove o texto transparente ao focar
+                if (this.innerHTML.includes('color: transparent;')) {
+                    this.innerHTML = '';
+                }
+            });
+            box.addEventListener('blur', function() {
+                // Restaura o texto transparente se estiver vazio
+                if (this.innerText.trim() === '' || this.innerHTML.trim() === '') {
+                    this.innerHTML = '<span style="color: transparent;">Digite aqui o motivo da advertência ou informações adicionais...</span>';
+                }
+            });
+        }
+    });
+
+    // Atualiza a função gerarDocumentoAdvertencia para usar o placeholder transparente
+    const gerarDocumentoAdvertenciaOriginal = gerarDocumentoAdvertencia;
+    gerarDocumentoAdvertencia = function() {
+        gerarDocumentoAdvertenciaOriginal();
+        // Garante que o placeholder transparente seja mantido
+        const box = document.getElementById('docBoxConteudo');
+        if (box && box.innerText.trim() === '') {
+            box.innerHTML = '<span style="color: transparent;">Digite aqui o motivo da advertência ou informações adicionais...</span>';
+        }
+    };
+</script>
     <!-- ===== MODAL ADVERTÊNCIA ===== -->
     <div id="modalAdvertencia" class="modal-overlay">
         <div class="modal-content" style="max-width: 210mm; padding: 20px 30px;">
