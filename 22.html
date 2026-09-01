@@ -1109,69 +1109,68 @@
                     <div id="relatorioAlunoCompleto" style="margin-top: 20px;"></div>
                 </div>
 
-                <!-- ===== BOTÃO DE ADVERTÊNCIA ===== -->
-<div class="section-container" style="border-top: 4px solid #e53e3e;">
-    <h3>⚠️ Comunicado de Advertência</h3>
-    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
-        <div class="form-group" style="flex: 1; min-width: 180px;">
-            <label>Selecione a Turma</label>
-            <select id="advertenciaTurma" onchange="carregarAlunosAdvertencia()">
-                <option value="">-- Selecione --</option>
-            </select>
-        </div>
-        <div class="form-group" style="flex: 1; min-width: 180px;">
-            <label>Selecione o Aluno</label>
-            <select id="advertenciaAluno">
-                <option value="">-- Selecione --</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <button onclick="gerarDocumentoAdvertencia()" class="btn-advertencia">⚠️ Gerar Advertência</button>
-        </div>
-    </div>
+<!-- ===== BOTÃO DE ADVERTÊNCIA ===== -->
+                <div class="section-container" style="border-top: 4px solid #e53e3e;">
+                    <h3>⚠️ Comunicado de Advertência</h3>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; min-width: 180px;">
+                            <label>Selecione a Turma</label>
+                            <select id="advertenciaTurma" onchange="carregarAlunosAdvertencia()">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 180px;">
+                            <label>Selecione o Aluno</label>
+                            <select id="advertenciaAluno">
+                                <option value="">-- Selecione --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button onclick="gerarDocumentoAdvertencia()" class="btn-advertencia">⚠️ Gerar Advertência</button>
+                        </div>
+                    </div>
 
-    <!-- Documento de Advertência -->
-    <div id="documentoAdvertencia" style="margin-top: 24px; display: none; background: white; padding: 40px 50px; max-width: 210mm; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-family: Arial, Helvetica, sans-serif;">
-        <!-- Cabeçalho -->
-        <div class="titulo-prefeitura" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;">PREFEITURA DO MUNICÍPIO DE MONTE AZUL PAULISTA</div>
-        <div class="titulo-divisao" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;">DIVISÃO DE EDUCAÇÃO</div>
-        <div class="titulo-escola" style="font-size: 14px; font-weight: 400; text-align: center; font-family: Arial, Helvetica, sans-serif;">EMEF "Cel. Aureliano Junqueira Franco"</div>
-        <div class="endereco" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, Helvetica, sans-serif;">Pça. Emb. Macedo Soares, 13–Centro–Fone/Fax (17)3361.1098–CEP 14730-000–Monte Azul Paulista–SP.</div>
-        <div class="email" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, Helvetica, sans-serif;">E-mail: coordenacaoaureliano@gmail.com / aureliano@monteazulpaulista.sp.gov.br</div>
+                    <!-- Documento de Advertência -->
+                    <div id="documentoAdvertencia" style="margin-top: 24px; display: none; background: white; padding: 40px 50px; max-width: 210mm; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-family: Arial, sans-serif;">
+                        <!-- Cabeçalho -->
+                        <div class="titulo-prefeitura" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, sans-serif;">PREFEITURA DO MUNICÍPIO DE MONTE AZUL PAULISTA</div>
+                        <div class="titulo-divisao" style="font-size: 16px; font-weight: 700; text-align: center; text-transform: uppercase; font-family: Arial, sans-serif;">DIVISÃO DE EDUCAÇÃO</div>
+                        <div class="titulo-escola" style="font-size: 14px; font-weight: 400; text-align: center; font-family: Arial, sans-serif;">EMEF "Cel. Aureliano Junqueira Franco"</div>
+                        <div class="endereco" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, sans-serif;">Pça. Emb. Macedo Soares, 13–Centro–Fone/Fax (17)3361.1098–CEP 14730-000–Monte Azul Paulista–SP.</div>
+                        <div class="email" style="font-size: 10px; text-align: center; font-weight: 400; color: #333; font-family: Arial, sans-serif;">E-mail: coordenacaoaureliano@gmail.com / aureliano@monteazulpaulista.sp.gov.br</div>
 
-        <hr style="border: 1px solid #ccc; margin: 12px 0;">
+                        <hr style="border: 1px solid #ccc; margin: 12px 0;">
 
-        <!-- Título -->
-        <div class="titulo-comunicado" style="font-size: 14px; font-weight: 700; text-align: center; margin: 16px 0 12px 0; font-family: Arial, Helvetica, sans-serif;">COMUNICADO DE ADVERTÊNCIA</div>
+                        <!-- Título -->
+                        <div class="titulo-comunicado" style="font-size: 14px; font-weight: 700; text-align: center; margin: 16px 0 12px 0; font-family: Arial, sans-serif;">COMUNICADO DE ADVERTÊNCIA</div>
 
-        <!-- Corpo -->
-        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; text-indent: 1.25cm;">
-            O aluno <strong id="docAlunoNome">[NOME DO ALUNO]</strong> matriculado no <strong id="docAlunoAno">[ANO]</strong> ano, foi advertido em virtude de constantes atos de indisciplina, foi advertido e será suspenso caso não melhore seu comportamento e não se enquadrar nas regras internas desta unidade escolar.
-        </div>
-        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; text-indent: 1.25cm;">
-            A direção desta U.E. solicita aos Srs. Pais ou responsáveis que acompanhe o comportamento do aluno e nos ajude, caso contrário, a Escola tomará as providências previstas em Lei, conforme art.27 e art. 47 do Estatuto do aluno.
-        </div>
+                        <!-- Corpo -->
+                        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, sans-serif; text-indent: 1.25cm;">
+                            O aluno <strong id="docAlunoNome">[NOME DO ALUNO]</strong> matriculado no <strong id="docAlunoAno">[ANO]</strong> ano, foi advertido em virtude de constantes atos de indisciplina, foi advertido e será suspenso caso não melhore seu comportamento e não se enquadrar nas regras internas desta unidade escolar.
+                        </div>
+                        <div class="corpo-texto" style="font-size: 12px; text-align: justify; line-height: 1.8; margin-bottom: 12px; font-family: Arial, sans-serif; text-indent: 1.25cm;">
+                            A direção desta U.E. solicita aos Srs. Pais ou responsáveis que acompanhe o comportamento do aluno e nos ajude, caso contrário, a Escola tomará as providências previstas em Lei, conforme art.27 e art. 47 do Estatuto do aluno.
+                        </div>
 
-        <!-- Box para conteúdo adicional -->
-        <div class="box-conteudo" id="docBoxConteudo" contenteditable="true" style="outline: none; min-height: 60px; border: 1px solid #333; padding: 12px; margin: 8px 0 16px 0; font-size: 12px; text-align: justify; background: #fafafa; font-family: Arial, Helvetica, sans-serif; color: #888; position: relative;" data-placeholder="Digite aqui o motivo da advertência ou informações adicionais...">
-            Digite aqui o motivo da advertência ou informações adicionais...
-        </div>
+                        <!-- Box para conteúdo adicional - NÃO APARECE NA IMPRESSÃO -->
+                        <div class="box-conteudo no-print" id="docBoxConteudo" contenteditable="true" style="outline: none; min-height: 60px; font-size: 12px; text-align: justify; font-family: Arial, sans-serif; text-indent: 1.25cm; border: 1px solid #333; padding: 12px; margin: 8px 0 16px 0; background: #fafafa; color: #999;" data-placeholder="Descreva aqui o motivo da advertência...">
+                            Descreva aqui o motivo da advertência...
+                        </div>
 
-        <!-- Assinatura e Data -->
-        <div class="assinatura" style="font-size: 12px; text-align: left; margin-top: 30px; font-family: Arial, Helvetica, sans-serif;">
-            Ciente da advertência: <span class="linha-assinatura" style="display: inline-block; width: 200px; border-bottom: 1px solid #000; margin-left: 8px;"></span>
-        </div>
-        <div class="data-direita" style="font-size: 12px; text-align: right; margin-top: 20px; font-family: Arial, Helvetica, sans-serif;">
-            Monte Azul Paulista, <span id="docDataAtual">26 de agosto de 2026</span>
-        </div>
+                        <!-- Assinatura e Data -->
+                        <div class="assinatura" style="font-size: 12px; text-align: left; margin-top: 30px; font-family: Arial, sans-serif;">
+                            Ciente da advertência: <span class="linha-assinatura" style="display: inline-block; width: 200px; border-bottom: 1px solid #000; margin-left: 8px;"></span>
+                        </div>
+                        <div class="data-direita" style="font-size: 12px; text-align: right; margin-top: 20px; font-family: Arial, sans-serif;">
+                            Monte Azul Paulista, <span id="docDataAtual">26 de agosto de 2026</span>
+                        </div>
 
-        <!-- Botão imprimir -->
-        <div style="text-align: center; margin-top: 24px;" class="no-print">
-            <button onclick="imprimirDocumentoAdvertencia()" class="btn btn-info" style="padding: 10px 30px; font-size: 16px; font-family: Arial, Helvetica, sans-serif;">🖨️ Imprimir Documento</button>
-        </div>
-    </div>
-</div>
-                
+                        <!-- Botão imprimir -->
+                        <div style="text-align: center; margin-top: 24px;" class="no-print">
+                            <button onclick="imprimirDocumentoAdvertencia()" class="btn btn-info" style="padding: 10px 30px; font-size: 16px;">🖨️ Imprimir Documento</button>
+                        </div>
+                    </div>
+                </div>                
                 
                 <!-- ===== MODAL ADVERTÊNCIA ===== -->
     <div id="modalAdvertencia" class="modal-overlay">
@@ -5110,29 +5109,154 @@
                 mostrarToast(`❌ Erro de conexão: ${error.message}`, 'error');
             }
         });
-        // ================================================================
-// PLACEHOLDER DA BOX DE ADVERTÊNCIA
-// ================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const box = document.getElementById('docBoxConteudo');
-    if (box) {
-        // Ao focar, se o conteúdo for o placeholder, limpa
-        box.addEventListener('focus', function() {
-            if (this.textContent.trim() === 'Digite aqui o motivo da advertência ou informações adicionais...') {
-                this.textContent = '';
-                this.style.color = '#333';
-            }
-        });
-        
-        // Ao perder o foco, se estiver vazio, restaura o placeholder
-        box.addEventListener('blur', function() {
-            if (this.textContent.trim() === '') {
-                this.textContent = 'Digite aqui o motivo da advertência ou informações adicionais...';
-                this.style.color = '#888';
-            }
-        });
+        function imprimirDocumentoAdvertencia() {
+    const doc = document.getElementById('documentoAdvertencia');
+    if (!doc) return;
+
+    // Salva o conteúdo do box editável (se não for o placeholder)
+    const boxConteudo = document.getElementById('docBoxConteudo');
+    let conteudoEditavel = boxConteudo.innerHTML;
+    
+    // Se for o placeholder, não envia conteúdo
+    if (boxConteudo.textContent === 'Descreva aqui o motivo da advertência...' || boxConteudo.textContent.trim() === '') {
+        conteudoEditavel = '';
     }
-});
+
+    const janelaImpressao = window.open('', '_blank', 'width=800,height=600');
+    janelaImpressao.document.write(`
+        <html>
+        <head>
+            <title>Comunicado de Advertência</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 40px 50px;
+                    margin: 0;
+                    background: white;
+                }
+                .titulo-prefeitura {
+                    font-size: 16px;
+                    font-weight: 700;
+                    text-align: center;
+                    text-transform: uppercase;
+                    font-family: Arial, sans-serif;
+                }
+                .titulo-divisao {
+                    font-size: 16px;
+                    font-weight: 700;
+                    text-align: center;
+                    text-transform: uppercase;
+                    font-family: Arial, sans-serif;
+                }
+                .titulo-escola {
+                    font-size: 14px;
+                    font-weight: 400;
+                    text-align: center;
+                    font-family: Arial, sans-serif;
+                }
+                .endereco {
+                    font-size: 10px;
+                    text-align: center;
+                    font-weight: 400;
+                    color: #333;
+                    font-family: Arial, sans-serif;
+                }
+                .email {
+                    font-size: 10px;
+                    text-align: center;
+                    font-weight: 400;
+                    color: #333;
+                    font-family: Arial, sans-serif;
+                }
+                .titulo-comunicado {
+                    font-size: 14px;
+                    font-weight: 700;
+                    text-align: center;
+                    margin: 16px 0 12px 0;
+                    font-family: Arial, sans-serif;
+                }
+                .corpo-texto {
+                    font-size: 12px;
+                    text-align: justify;
+                    line-height: 1.8;
+                    margin-bottom: 12px;
+                    font-family: Arial, sans-serif;
+                    text-indent: 1.25cm;
+                }
+                .box-conteudo {
+                    font-size: 12px;
+                    text-align: justify;
+                    font-family: Arial, sans-serif;
+                    text-indent: 1.25cm;
+                    border: 1px solid #333;
+                    padding: 12px;
+                    min-height: 60px;
+                    margin: 8px 0 16px 0;
+                    background: #fafafa;
+                }
+                .assinatura {
+                    font-size: 12px;
+                    text-align: left;
+                    margin-top: 30px;
+                    font-family: Arial, sans-serif;
+                }
+                .data-direita {
+                    font-size: 12px;
+                    text-align: right;
+                    margin-top: 20px;
+                    font-family: Arial, sans-serif;
+                }
+                .linha-assinatura {
+                    display: inline-block;
+                    width: 200px;
+                    border-bottom: 1px solid #000;
+                    margin-left: 8px;
+                }
+                hr {
+                    border: 1px solid #ccc;
+                    margin: 12px 0;
+                }
+                .no-print {
+                    display: none !important;
+                }
+                @media print {
+                    body { padding: 20px 30px; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="titulo-prefeitura">PREFEITURA DO MUNICÍPIO DE MONTE AZUL PAULISTA</div>
+            <div class="titulo-divisao">DIVISÃO DE EDUCAÇÃO</div>
+            <div class="titulo-escola">EMEF "Cel. Aureliano Junqueira Franco"</div>
+            <div class="endereco">Pça. Emb. Macedo Soares, 13–Centro–Fone/Fax (17)3361.1098–CEP 14730-000–Monte Azul Paulista–SP.</div>
+            <div class="email">E-mail: coordenacaoaureliano@gmail.com / aureliano@monteazulpaulista.sp.gov.br</div>
+            <hr>
+            <div class="titulo-comunicado">COMUNICADO DE ADVERTÊNCIA</div>
+            <div class="corpo-texto">
+                O aluno <strong>${document.getElementById('docAlunoNome').textContent}</strong> matriculado no <strong>${document.getElementById('docAlunoAno').textContent}</strong> ano, foi advertido em virtude de constantes atos de indisciplina, foi advertido e será suspenso caso não melhore seu comportamento e não se enquadrar nas regras internas desta unidade escolar.
+            </div>
+            <div class="corpo-texto">
+                A direção desta U.E. solicita aos Srs. Pais ou responsáveis que acompanhe o comportamento do aluno e nos ajude, caso contrário, a Escola tomará as providências previstas em Lei, conforme art.27 e art. 47 do Estatuto do aluno.
+            </div>
+            ${conteudoEditavel ? `<div class="box-conteudo">${conteudoEditavel}</div>` : ''}
+            <div class="assinatura">
+                Ciente da advertência: <span class="linha-assinatura"></span>
+            </div>
+            <div class="data-direita">
+                Monte Azul Paulista, ${document.getElementById('docDataAtual').textContent}
+            </div>
+            <div style="text-align: center; margin-top: 30px;" class="no-print">
+                <button onclick="window.print()" style="padding: 10px 30px; font-size: 14px; cursor: pointer;">🖨️ Imprimir</button>
+            </div>
+        </body>
+        </html>
+    `);
+    janelaImpressao.document.close();
+    setTimeout(() => {
+        janelaImpressao.print();
+    }, 500);
+}
     </script>
 
 </body>
